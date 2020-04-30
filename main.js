@@ -59,7 +59,7 @@ app.post('/image_upload', (req, res) => {
 
     let promises = []
 
-    // need an wait here
+    // go through all the files of the request
     for (var key in files) {
 
       let original_file = files[key]
