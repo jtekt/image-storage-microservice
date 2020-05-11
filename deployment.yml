@@ -29,7 +29,10 @@ spec:
       labels:
         app: ${APPLICATION_NAME}
     spec:
-
+      volumes:
+      - name: ${APPLICATION_NAME}
+        persistentVolumeClaim:
+          claimName: ${APPLICATION_NAME}
       containers:
       - name: ${APPLICATION_NAME}
         image: ${CONTAINER_REGISTRY}/${APPLICATION_NAME}
