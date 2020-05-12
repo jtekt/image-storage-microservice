@@ -13,8 +13,8 @@ process.env.TZ = 'Asia/Tokyo'
 const port = 8435
 
 // uploads directory in deployment
-//const uploads_directory_path = "/usr/share/pv"
-const uploads_directory_path = path.join(__dirname, 'uploads')
+const uploads_directory_path = "/usr/share/pv"
+//const uploads_directory_path = path.join(__dirname, 'uploads')
 
 // Helper objects for mongodb
 const MongoClient = mongodb.MongoClient;
@@ -45,7 +45,7 @@ app.use(cors())
 
 app.get('/', (req, res) => {
   // Home route
-  res.send('Storage microservice v1.0.2')
+  res.send('Storage microservice v1.0.3')
 })
 
 
