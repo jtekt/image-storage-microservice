@@ -35,7 +35,7 @@ const DB_config = {
 const app = express()
 
 // provide express the ability to read json request bodies
-app.use(bodyParser.json({limit: '50mb', extended: true}))
+app.use(bodyParser.json())
 
 // serve static content from uploads directory
 app.use(express.static(uploads_directory_path))
@@ -45,7 +45,7 @@ app.use(cors())
 
 app.get('/', (req, res) => {
   // Home route
-  res.send('Storage microservice')
+  res.send('Storage microservice v1.0.2')
 })
 
 
@@ -55,17 +55,22 @@ app.post('/image_upload', (req, res) => {
   // using formidable to parse the content of the multipart/form-data
   var form = new formidable.IncomingForm()
 
-  // NOTE: is async necessary?
+  // Async used so as to use await inside
   form.parse(req, async (err, fields, files) => {
 
     // Handle form parsing errors
-    if (err) return res.status(400).send('Error parsing form')
+    if (err) {
+      console.log(err)
+      res.status(400).send('Error parsing form')
+      return
+    }
 
-    // Input sanitation (check if vody contains everything needed)
-    // NOTE: Could use JOY for that
-    if(!('image_inner' in files)) return res.status(503)
-    if(!('image_outer' in files)) return res.status(503)
-    if(!('prediction' in fields)) return res.status(503)
+    // Input sanitation (check if request contains at least one file)
+    if(!Object.keys(files).length) {
+      console.log("Request does not contain any file")
+      return res.status(503).send(`Request does not contain any file`)
+    }
+
 
     // Using promises so as to create DB record only when all files have been saved successfully
     let promises = []
@@ -73,6 +78,7 @@ app.post('/image_upload', (req, res) => {
     // go through all the files of the request
     for (var key in files) {
 
+      let image_type = key
       let original_file = files[key]
       let original_path = original_file.path
       let file_name = original_file.name
@@ -83,16 +89,17 @@ app.post('/image_upload', (req, res) => {
       promises.push( new Promise ((resolve, reject) => {
         mv(original_path, destination_path, {mkdirp: true}, (err) => {
           if (err) return res.status(500).send('Error moving file')
-          resolve(file_name)
+          resolve({
+            type: image_type,
+            file_name: file_name,
+          })
         })
       }))
     }
 
     // Once all promises have been resolved, i.e. all files have been stored
     Promise.all(promises)
-    .then( file_names => {
-
-
+    .then( images => {
 
       MongoClient.connect(DB_config.url,DB_config.options, (err, db) => {
         // Handle DB connection errors
@@ -102,23 +109,26 @@ app.post('/image_upload', (req, res) => {
           return
         }
 
-        let record = {
+        let new_document = {
           time: new Date(),
-          outer: {
-            file_name: file_names[1],
-            ai: {
-              pediction: fields.prediction
-            },
-          },
-          inner: {
-            file_name: file_names[0],
-          },
         }
 
+        // Add AI result to the new_document
+        if(fields.AI_prediction){
+          new_document.AI = {
+            pediction: fields.AI_prediction
+          }
+        }
 
+        // Add images to the new_document
+        images.forEach( image => {
+          new_document[image.type] = image.file_name
+        })
+
+        // Insert into the DB
         db.db(DB_config.db)
         .collection(DB_config.collection)
-        .insertOne(record, (err, result) => {
+        .insertOne(new_document, (err, result) => {
 
           if (err) {
             console.log(err)
@@ -132,6 +142,7 @@ app.post('/image_upload', (req, res) => {
           res.send("OK")
         })
       })
+
     })
   })
 })
