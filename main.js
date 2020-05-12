@@ -45,7 +45,7 @@ app.use(cors())
 
 app.get('/', (req, res) => {
   // Home route
-  res.send('Storage microservice v1.0.3')
+  res.send('Storage microservice v1.0.4')
 })
 
 
@@ -70,6 +70,8 @@ app.post('/image_upload', (req, res) => {
       console.log("Request does not contain any file")
       return res.status(503).send(`Request does not contain any file`)
     }
+
+    console.log(fields)
 
 
     // Using promises so as to create DB record only when all files have been saved successfully
@@ -113,16 +115,16 @@ app.post('/image_upload', (req, res) => {
           time: new Date(),
         }
 
-        // Add AI result to the new_document
-        if(fields.AI_prediction){
-          new_document.AI = {
-            pediction: fields.AI_prediction
-          }
-        }
-
         // Add images to the new_document
         images.forEach( image => {
-          new_document[image.type] = image.file_name
+          new_document[image.type] = { image: image.file_name }
+
+          // Add the result of the AI if available
+          if(fields[image.type]) {
+            new_document[image.type].AI = {
+              pediction: fields[image.type]
+            }
+          }
         })
 
         // Insert into the DB
