@@ -63,8 +63,8 @@ app.post('/image_upload', (req, res) => {
 
     // Input sanitation (check if vody contains everything needed)
     // NOTE: Could use JOY for that
-    if(!('image_0' in files)) return res.status(503)
-    if(!('image_1' in files)) return res.status(503)
+    if(!('image_inner' in files)) return res.status(503)
+    if(!('image_outer' in files)) return res.status(503)
     if(!('prediction' in fields)) return res.status(503)
 
     // Using promises so as to create DB record only when all files have been saved successfully
