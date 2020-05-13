@@ -169,6 +169,8 @@ app.get('/all', (req, res) => {
 })
 
 app.get('/drop', (req, res) => {
+  if(!('collection' in req.query)) return res.status(400).send('Collection not defined')
+
   MongoClient.connect(DB_config.url,DB_config.options, (err, db) => {
     // Handle DB connection errors
     if (err) {
@@ -178,7 +180,7 @@ app.get('/drop', (req, res) => {
     }
 
     db.db(DB_config.db)
-    .collection(DB_config.collection)
+    .collection(req.query.collection)
     .drop( (err, delOK) => {
       if (err) {
         console.log(err)
