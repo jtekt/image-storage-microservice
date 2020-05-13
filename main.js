@@ -105,6 +105,7 @@ app.post('/image_upload', (req, res) => {
           new_document.AI = {
             prediction: fields.AI_prediction,
             version: fields.AI_version,
+            inference_time: fields.AI_inference_time,
           }
         }
 
