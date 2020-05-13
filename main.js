@@ -13,7 +13,7 @@ process.env.TZ = 'Asia/Tokyo'
 const port = 8435
 
 // uploads directory in deployment
-const uploads_directory_path = "/usr/share/pv"
+const uploads_directory_path = "/usr/share/pv" // For k8s
 //const uploads_directory_path = path.join(__dirname, 'uploads')
 
 // Helper objects for mongodb
@@ -23,7 +23,6 @@ const ObjectID = mongodb.ObjectID;
 const DB_config = {
   url: 'mongodb://172.16.98.151:27017/',
   db: 'tokushima_bearings',
-  collection: 'test',
   options: {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -45,7 +44,7 @@ app.use(cors())
 
 app.get('/', (req, res) => {
   // Home route
-  res.send('Storage microservice v1.0.4')
+  res.send('Storage microservice v1.0.5')
 })
 
 
@@ -71,37 +70,21 @@ app.post('/image_upload', (req, res) => {
       return res.status(503).send(`Request does not contain any file`)
     }
 
-    console.log(fields)
+    let image_key = 'image'
+    let original_file = files[image_key]
+    let original_path = original_file.path
+    let file_name = original_file.name
 
+    let destination_path = path.join(uploads_directory_path, file_name)
 
-    // Using promises so as to create DB record only when all files have been saved successfully
-    let promises = []
+    // using promises for asynchronousity
+    mv(original_path, destination_path, {mkdirp: true}, (err) => {
+      // Handling errors while moving file
+      if (err) {
+        console.log(err)
+        return res.status(500).send('Error moving file')
+      }
 
-    // go through all the files of the request
-    for (var key in files) {
-
-      let image_type = key
-      let original_file = files[key]
-      let original_path = original_file.path
-      let file_name = original_file.name
-
-      let destination_path = path.join(uploads_directory_path, file_name)
-
-      // using promises for asynchronousity
-      promises.push( new Promise ((resolve, reject) => {
-        mv(original_path, destination_path, {mkdirp: true}, (err) => {
-          if (err) return res.status(500).send('Error moving file')
-          resolve({
-            type: image_type,
-            file_name: file_name,
-          })
-        })
-      }))
-    }
-
-    // Once all promises have been resolved, i.e. all files have been stored
-    Promise.all(promises)
-    .then( images => {
 
       MongoClient.connect(DB_config.url,DB_config.options, (err, db) => {
         // Handle DB connection errors
@@ -113,23 +96,21 @@ app.post('/image_upload', (req, res) => {
 
         let new_document = {
           time: new Date(),
+          image_id: fields.image_id,
+          image: file_name,
         }
 
-        // Add images to the new_document
-        images.forEach( image => {
-          new_document[image.type] = { image: image.file_name }
-
-          // Add the result of the AI if available
-          if(fields[image.type]) {
-            new_document[image.type].AI = {
-              pediction: fields[image.type]
-            }
+        // if an AI prediction is available, save it
+        if(('AI_prediction') in fields) {
+          new_document.AI = {
+            prediction: fields.AI_prediction,
+            version: fields.AI_version,
           }
-        })
+        }
 
         // Insert into the DB
         db.db(DB_config.db)
-        .collection(DB_config.collection)
+        .collection(fields.image_type)
         .insertOne(new_document, (err, result) => {
 
           if (err) {
@@ -145,6 +126,8 @@ app.post('/image_upload', (req, res) => {
         })
       })
 
+
+
     })
   })
 })
@@ -157,6 +140,8 @@ app.post('/debug', (req, res) => {
 
 
 app.get('/all', (req, res) => {
+  if(!('collection' in req.query)) return res.status(400).send('Collection not defined')
+
   MongoClient.connect(DB_config.url,DB_config.options, (err, db) => {
     // Handle DB connection errors
     if (err) {
@@ -166,7 +151,7 @@ app.get('/all', (req, res) => {
     }
 
     db.db(DB_config.db)
-    .collection(DB_config.collection)
+    .collection(req.query.collection)
     .find({})
     .toArray( (err, result) => {
 
