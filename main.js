@@ -6,7 +6,10 @@ const cors = require('cors')
 const formidable = require('formidable')
 const mongodb = require('mongodb')
 const mv = require('mv')
+const socketio = require('socket.io')
+const http = require('http')
 
+// Setting timezone
 process.env.TZ = 'Asia/Tokyo'
 
 // Todo: set port using dotenv
@@ -29,9 +32,12 @@ const DB_config = {
   },
 }
 
+const viewer_url = 'http://172.16.98.152:12345/ml_result'
 
 // Express config
 const app = express()
+const http_server = http.Server(app)
+const io = socketio(http_server)
 
 // provide express the ability to read json request bodies
 app.use(bodyParser.json())
@@ -114,6 +120,7 @@ app.post('/image_upload', (req, res) => {
         .collection(fields.image_type)
         .insertOne(new_document, (err, result) => {
 
+          // DB insertion error handling
           if (err) {
             console.log(err)
             res.status(500).send(err)
@@ -121,9 +128,27 @@ app.post('/image_upload', (req, res) => {
           }
 
           console.log("Document inserted");
+
+          // Important: close connection to DB
           db.close()
 
+          // Respond to the client
           res.send("OK")
+
+          // Emit result with socket.io
+          io.sockets.emit(fields.image_type, new_document)
+
+          // Viewer webhook
+          /*
+          if(('AI_prediction') in fields) {
+            axios.post(viewer_url, {img_path: file_name, ng_prob: fields.AI_prediction})
+            .then(response => console.long(response.data))
+            .catch(error => console.log(error))
+          }
+          */
+
+
+
         })
       })
 
@@ -194,11 +219,46 @@ app.get('/drop', (req, res) => {
   })
 })
 
-app.get('/image_info', (req, res) => {
+app.get('/document', (req, res) => {
   if(!('id' in req.query)) return res.status(400).send(`ID not specified`)
-  res.status(501) // not implemented
+  if(!('collection' in req.query)) return res.status(400).send('Collection not defined')
+
+  MongoClient.connect(DB_config.url,DB_config.options, (err, db) => {
+    // Handle DB connection errors
+    if (err) {
+      console.log(err)
+      res.status(500).send(err)
+      return
+    }
+
+    let query = { _id: ObjectID(req.query.id)};
+
+    db.db(DB_config.db)
+    .collection(req.query.collection)
+    .findOne(query,(err, result) => {
+      if (err) {
+        console.log(err)
+        res.status(500).send(err)
+        return
+      }
+      res.send(result)
+      db.close();
+    });
+  })
 })
 
-app.listen(port, () => {
+// Start the web server
+http_server.listen(port, () => {
   console.log(`Storage microservice running on port ${port}`)
+})
+
+// Handle WS
+io.sockets.on('connection', (socket) => {
+  // Deals with Websocket connections
+  console.log('[WS] User connected')
+
+  socket.on('disconnect', () => {
+    console.log('[WS] user disconnected');
+  })
+
 })

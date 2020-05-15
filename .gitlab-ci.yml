@@ -4,7 +4,6 @@ stages:
 
 variables:
   APPLICATION_NAME: tokushima-bearings-storage
-  CONTAINER_REGISTRY: 172.16.98.151:5000
 
 containerization:
   stage: containerization
