@@ -247,6 +247,34 @@ app.get('/document', (req, res) => {
   })
 })
 
+app.delete('/document', (req, res) => {
+  if(!('id' in req.query)) return res.status(400).send(`ID not specified`)
+  if(!('collection' in req.query)) return res.status(400).send('Collection not defined')
+
+  MongoClient.connect(DB_config.url,DB_config.options, (err, db) => {
+    // Handle DB connection errors
+    if (err) {
+      console.log(err)
+      res.status(500).send(err)
+      return
+    }
+
+    let query = { _id: ObjectID(req.query.id)};
+
+    db.db(DB_config.db)
+    .collection(req.query.collection)
+    .deleteOne(query,(err, result) => {
+      if (err) {
+        console.log(err)
+        res.status(500).send(err)
+        return
+      }
+      res.send(result)
+      db.close();
+    });
+  })
+})
+
 // Start the web server
 http_server.listen(port, () => {
   console.log(`Storage microservice running on port ${port}`)
