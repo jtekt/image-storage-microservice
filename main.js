@@ -179,6 +179,7 @@ app.get('/all', (req, res) => {
     db.db(DB_config.db)
     .collection(req.query.collection)
     .find({})
+    .sort({time: -1})
     .toArray( (err, result) => {
 
       if (err) {
