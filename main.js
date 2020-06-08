@@ -50,7 +50,7 @@ app.use(cors())
 
 app.get('/', (req, res) => {
   // Home route
-  res.send('Storage microservice v1.0.5')
+  res.send('Storage microservice v1.0.6')
 })
 
 
