@@ -159,11 +159,6 @@ app.post('/image_upload', (req, res) => {
   })
 })
 
-app.post('/debug', (req, res) => {
-  // Debugging route
-  console.log(req.body.message)
-  res.send('OK')
-})
 
 
 app.get('/all', (req, res) => {
@@ -181,6 +176,7 @@ app.get('/all', (req, res) => {
     .collection(req.query.collection)
     .find({})
     .sort({time: -1})
+    .limit(100)
     .toArray( (err, result) => {
 
       if (err) {
