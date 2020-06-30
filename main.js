@@ -104,7 +104,7 @@ app.post('/image_upload', (req, res) => {
           time: new Date(),
           image_id: fields.image_id,
           image: file_name,
-          //demo: true,
+          demo: true,
         }
 
         // if an AI prediction is available, save it
