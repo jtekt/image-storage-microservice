@@ -111,7 +111,6 @@ exports.image_upload = (req, res) => {
 }
 
 exports.get_all_images = (req, res) => {
-  if(!('collection' in req.query)) return res.status(400).send('Collection not defined')
 
   MongoClient.connect(DB_config.url,DB_config.options, (err, db) => {
     // Handle DB connection errors
