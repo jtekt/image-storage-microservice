@@ -1,0 +1,13 @@
+stages:
+  - containerization
+  - deployment
+
+containerization:
+  stage: containerization
+  script:
+    - echo "Containerization not configured"
+
+deployment:
+  stage: deployment
+  script:
+    - echo "Deployment not configured"
