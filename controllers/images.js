@@ -12,7 +12,7 @@ const ObjectID = mongodb.ObjectID;
 
 const DB_config = {
   url: 'mongodb://172.16.98.151:27017/',
-  db: 'tokushima_bearings',
+  db: 'seikaibu_edge_ai',
   options: {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -182,8 +182,6 @@ exports.get_single_image = (req, res) => {
 
   if(!image_id) return res.status(400).send(`ID not specified`)
 
-  if(!('collection' in req.query)) return res.status(400).send('Collection not defined')
-
   MongoClient.connect(DB_config.url,DB_config.options, (err, db) => {
     // Handle DB connection errors
     if (err) {
@@ -195,7 +193,7 @@ exports.get_single_image = (req, res) => {
     let query = { _id: ObjectID(image_id)};
 
     db.db(DB_config.db)
-    .collection(req.query.collection)
+    .collection(DB_config.collection)
     .findOne(query,(err, result) => {
       if (err) {
         console.log(err)
@@ -216,8 +214,6 @@ exports.delete_image = (req, res) => {
 
   if(!image_id) return res.status(400).send(`ID not specified`)
 
-  if(!('collection' in req.query)) return res.status(400).send('Collection not defined')
-
   MongoClient.connect(DB_config.url,DB_config.options, (err, db) => {
     // Handle DB connection errors
     if (err) {
@@ -229,7 +225,7 @@ exports.delete_image = (req, res) => {
     let query = { _id: ObjectID(image_id)};
 
     db.db(DB_config.db)
-    .collection(req.query.collection)
+    .collection(DB_config.collection)
     .deleteOne(query,(err, result) => {
       if (err) {
         console.log(err)

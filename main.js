@@ -44,7 +44,7 @@ app.route('/images/:image_id')
 
 // Start the web server
 http_server.listen(port, () => {
-  console.log(`Storage microservice running on port ${port}`)
+  console.log(`[HTTP] Storage microservice running on port ${port}`)
 })
 
 // Handle WS
