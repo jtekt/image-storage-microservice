@@ -2,7 +2,8 @@ stages:
   - containerization
   - deployment
 
-APPLICATION_NAME: seikaibu-storage
+variables:
+  APPLICATION_NAME: seikaibu-storage
 
 containerization:
   stage: containerization
