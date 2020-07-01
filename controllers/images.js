@@ -32,21 +32,28 @@ exports.image_upload = (req, res) => {
     // Handle form parsing errors
     if (err) {
       console.log(err)
-      res.status(400).send('Error parsing form')
+      res.status(500).send('Error parsing form')
       return
     }
 
     // Input sanitation (check if request contains at least one file)
     if(!Object.keys(files).length) {
       console.log("Request does not contain any file")
-      return res.status(503).send(`Request does not contain any file`)
+      res.status(400).send(`Request does not contain any file`)
+      return
     }
 
-    let image_key = 'image'
-    let original_file = files[image_key]
+    // Read the form files
+    let original_file = files['image']
+
+    if(!original_file) {
+      console.log("Request does not contain an image")
+      res.status(400).send(`Request does not contain an image`)
+      return
+    }
+
     let original_path = original_file.path
     let file_name = original_file.name
-
     let destination_path = path.join(uploads_directory_path, file_name)
 
     // using promises for asynchronousity
@@ -66,14 +73,17 @@ exports.image_upload = (req, res) => {
           return
         }
 
+        // Basic document consists of a timestamp and the image nam
         let new_document = {
           time: new Date(),
-          image_id: fields.image_id,
           image: file_name,
         }
 
+        // Save image info if available
+        if('image_info' in fields) new_document.image_info = fields.image_info
+
         // if an AI prediction is available, save it
-        if(('AI_prediction') in fields) {
+        if('AI_prediction' in fields) {
           new_document.AI = {
             prediction: fields.AI_prediction,
             version: fields.AI_version,
@@ -101,7 +111,7 @@ exports.image_upload = (req, res) => {
           // Respond to the client
           res.send("OK")
 
-          // Emit result with socket.io
+          // Broadcast result with socket.io
           io.sockets.emit(fields.image_type, new_document)
 
         })

@@ -19,7 +19,7 @@ const images_controller = require('./controllers/images.js')
 const uploads_directory_path = require('./config.js').uploads_directory_path
 
 
-// provide express the ability to read json request bodies
+// provide express with the ability to read json request bodies
 app.use(bodyParser.json())
 
 // serve static content from uploads directory

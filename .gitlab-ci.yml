@@ -2,12 +2,24 @@ stages:
   - containerization
   - deployment
 
+APPLICATION_NAME: seikaibu-storage
+
 containerization:
   stage: containerization
   script:
-    - echo "Containerization not configured"
+    # Build and push container image (CONTAINER_REIGSTRY obtained from GitLab)
+    - docker build -t ${CONTAINER_REGISTRY}/${APPLICATION_NAME} .
+    - docker push ${CONTAINER_REGISTRY}/${APPLICATION_NAME}
+    # Cleanup
+    - docker image rm ${CONTAINER_REGISTRY}/${APPLICATION_NAME}
 
 deployment:
   stage: deployment
   script:
-    - echo "Deployment not configured"
+    - envsubst < deployment.yml | kubectl apply -f -
+    - kubectl rollout restart deployment/${APPLICATION_NAME}
+  environment:
+    name: staging
+    kubernetes:
+      # namespace Obtained from GitLab
+      namespace: ${KUBERNETES_NAMESPACE}
