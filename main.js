@@ -2,6 +2,8 @@ const express = require('express')
 const path = require('path')
 const bodyParser = require('body-parser')
 const cors = require('cors')
+const http = require('http')
+const socketio = require('socket.io')
 
 // Setting timezone
 process.env.TZ = 'Asia/Tokyo'
@@ -10,9 +12,12 @@ process.env.TZ = 'Asia/Tokyo'
 const port = 8435
 
 // Servers
-const app = require('./servers.js').app
-const http_server = require('./servers.js').http_server
-const io = require('./servers.js').io
+const app = express()
+const http_server = http.Server(app)
+const io = socketio(http_server)
+
+// Make socket io available to other files
+exports.io = io
 
 const images_controller = require('./controllers/images.js')
 

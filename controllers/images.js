@@ -3,8 +3,7 @@ const mv = require('mv')
 const formidable = require('formidable')
 const path = require('path')
 
-const io = require('../servers.js').io
-
+const io = require('../main').io
 const uploads_directory_path = require('../config.js').uploads_directory_path
 
 const MongoClient = mongodb.MongoClient;
