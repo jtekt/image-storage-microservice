@@ -2,6 +2,10 @@ const mongodb = require('mongodb')
 const mv = require('mv')
 const formidable = require('formidable')
 const path = require('path')
+const dotenv = require('dotenv')
+
+// Parse environment variables
+dotenv.config()
 
 const io = require('../main').io
 const uploads_directory_path = require('../config.js').uploads_directory_path
@@ -9,6 +13,7 @@ const uploads_directory_path = require('../config.js').uploads_directory_path
 const MongoClient = mongodb.MongoClient;
 const ObjectID = mongodb.ObjectID;
 
+// Todo: use environment variables for this
 const DB_config = {
   url: 'mongodb://172.16.98.151:27017/',
   db: 'seikaibu_edge_ai',
@@ -23,7 +28,8 @@ const DB_config = {
 exports.image_upload = (req, res) => {
 
   // using formidable to parse the content of the multipart/form-data
-  var form = new formidable.IncomingForm()
+  // TODO: use multer
+  let form = new formidable.IncomingForm()
 
   // Async used so as to use await inside
   form.parse(req, async (err, fields, files) => {
@@ -95,6 +101,9 @@ exports.image_upload = (req, res) => {
         .collection(DB_config.collection)
         .insertOne(new_document, (err, result) => {
 
+          // Important: close connection to DB
+          db.close()
+
           // DB insertion error handling
           if (err) {
             console.log(err)
@@ -102,10 +111,7 @@ exports.image_upload = (req, res) => {
             return
           }
 
-          console.log("Document inserted");
-
-          // Important: close connection to DB
-          db.close()
+          console.log("Document inserted")
 
           // Respond to the client
           res.send("OK")
@@ -129,20 +135,24 @@ exports.get_all_images = (req, res) => {
       return
     }
 
+    let limit = req.query.limit || 0
+
     db.db(DB_config.db)
     .collection(DB_config.collection)
     .find({})
-    .sort({time: -1})
-    .limit(100)
+    .sort({time: -1}) // sort by timestamp
+    .limit(limit)
     .toArray( (err, result) => {
 
+      // Close the connection to the DB
+      db.close()
+
+      // Handle errors
       if (err) {
         console.log(err)
         res.status(500).send(err)
         return
       }
-
-      db.close()
 
       res.send(result)
     })
@@ -162,13 +172,17 @@ exports.drop_collection = (req, res) => {
     db.db(DB_config.db)
     .collection(DB_config.collection)
     .drop( (err, delOK) => {
+      // Close the connection to the DB
+      db.close()
+
+      // Handle errors
       if (err) {
         console.log(err)
         res.status(500).send(err)
         return
       }
       if (delOK) res.send('Collection deleted')
-      db.close();
+
     })
   })
 }
@@ -189,19 +203,23 @@ exports.get_single_image = (req, res) => {
       return
     }
 
-    let query = { _id: ObjectID(image_id)};
+    let query = { _id: ObjectID(image_id)}
 
     db.db(DB_config.db)
     .collection(DB_config.collection)
     .findOne(query,(err, result) => {
+
+      // Close the connection to the DB
+      db.close()
+
       if (err) {
         console.log(err)
         res.status(500).send(err)
         return
       }
       res.send(result)
-      db.close();
-    });
+
+    })
   })
 }
 
@@ -226,13 +244,18 @@ exports.delete_image = (req, res) => {
     db.db(DB_config.db)
     .collection(DB_config.collection)
     .deleteOne(query,(err, result) => {
+
+      // Close the connection to the DB
+      db.close()
+
+      // Handle errors
       if (err) {
         console.log(err)
         res.status(500).send(err)
         return
       }
       res.send(result)
-      db.close();
+
     });
   })
 }

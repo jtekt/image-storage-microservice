@@ -4,12 +4,18 @@ const bodyParser = require('body-parser')
 const cors = require('cors')
 const http = require('http')
 const socketio = require('socket.io')
+const dotenv = require('dotenv')
+const pjson = require('./package.json')
+
+// Parse environment variables
+dotenv.config()
+
 
 // Setting timezone
 process.env.TZ = 'Asia/Tokyo'
 
-// Todo: set port using dotenv
-const port = 8435
+// Application port, defaults to 80
+const port = process.env.APP_PORT || 80
 
 // Servers
 const app = express()
@@ -19,24 +25,26 @@ const io = socketio(http_server)
 // Make socket io available to other files
 exports.io = io
 
-const images_controller = require('./controllers/images.js')
-
-const uploads_directory_path = require('./config.js').uploads_directory_path
-
-
 // provide express with the ability to read json request bodies
 app.use(bodyParser.json())
 
 // serve static content from uploads directory
-app.use(express.static(uploads_directory_path))
+app.use(express.static(require('./config.js').uploads_directory_path))
 
 // Authorize requests from different origins
 app.use(cors())
 
 // Home route
 app.get('/', (req, res) => {
-  res.send('Storage microservice API')
+  res.send({
+    application_name: pjson.name,
+    version: pjson.version,
+    mongodb_url: process.env.MONGODB_URL,
+  })
 })
+
+const images_controller = require('./controllers/images.js')
+
 
 app.route('/images')
   .post(images_controller.image_upload)
@@ -49,10 +57,10 @@ app.route('/images/:image_id')
 
 // Start the web server
 http_server.listen(port, () => {
-  console.log(`[HTTP] Storage microservice running on port ${port}`)
+  console.log(`[Express] Storage microservice running on port ${port}`)
 })
 
-// Handle WS
+// Handle Websockets
 io.sockets.on('connection', (socket) => {
   // Deals with Websocket connections
   console.log('[WS] User connected')
