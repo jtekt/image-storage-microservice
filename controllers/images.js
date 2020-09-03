@@ -13,15 +13,14 @@ const uploads_directory_path = require('../config.js').uploads_directory_path
 const MongoClient = mongodb.MongoClient;
 const ObjectID = mongodb.ObjectID;
 
-// Todo: use environment variables for this
 const DB_config = {
-  url: process.env.MONGODB_URL,
-  db: 'seikaibu_edge_ai',
+  url: process.env.MONGODB_URL || 'mongodb://mongodb:27017',
+  db: 'seikaibu_edge_ai', // TODO: Generalize this
+  collection: 'test',
   options: {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   },
-  collection: 'test',
 }
 
 
