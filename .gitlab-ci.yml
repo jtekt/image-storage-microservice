@@ -3,7 +3,7 @@ stages:
   - deployment
 
 variables:
-  APPLICATION_NAME: storage-microservice
+  APPLICATION_NAME: storage
 
 containerization:
   stage: containerization
