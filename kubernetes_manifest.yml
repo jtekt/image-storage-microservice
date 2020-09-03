@@ -32,6 +32,9 @@ spec:
       - name: ${APPLICATION_NAME}
         image: ${CONTAINER_REGISTRY}/${APPLICATION_NAME}
         imagePullPolicy: Always
+        env:
+        - name: MONGODB_URL
+          value: "mongodb://172.16.98.151:27017"
         ports:
         - containerPort: 80
         volumeMounts:

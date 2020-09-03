@@ -15,7 +15,7 @@ const ObjectID = mongodb.ObjectID;
 
 // Todo: use environment variables for this
 const DB_config = {
-  url: 'mongodb://172.16.98.151:27017/',
+  url: process.env.MONGODB_URL,
   db: 'seikaibu_edge_ai',
   options: {
     useNewUrlParser: true,
