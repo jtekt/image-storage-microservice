@@ -3,7 +3,7 @@ stages:
   - deployment
 
 variables:
-  APPLICATION_NAME: seikaibu-storage
+  APPLICATION_NAME: storage-microservice
 
 containerization:
   stage: containerization

@@ -39,6 +39,7 @@ app.get('/', (req, res) => {
   res.send({
     application_name: pjson.name,
     version: pjson.version,
+    author: pjson.author,
     mongodb_url: process.env.MONGODB_URL,
   })
 })
@@ -54,6 +55,7 @@ app.route('/images')
 app.route('/images/:image_id')
   .get(images_controller.get_single_image)
   .delete(images_controller.delete_image)
+  // TODO: PUT
 
 // Start the web server
 http_server.listen(port, () => {
