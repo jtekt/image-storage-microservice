@@ -8,20 +8,14 @@ const dotenv = require('dotenv')
 dotenv.config()
 
 const io = require('../main').io
-const uploads_directory_path = require('../config.js').uploads_directory_path
 
-const MongoClient = mongodb.MongoClient;
-const ObjectID = mongodb.ObjectID;
+const config = require('../config.js')
+const uploads_directory_path = config.uploads_directory_path
 
-const DB_config = {
-  url: process.env.MONGODB_URL || 'mongodb://mongodb:27017',
-  db: 'seikaibu_edge_ai', // TODO: Generalize this
-  collection: 'test',
-  options: {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  },
-}
+const MongoClient = mongodb.MongoClient
+const ObjectID = mongodb.ObjectID
+const DB_config = config.db
+
 
 
 exports.image_upload = (req, res) => {
@@ -97,7 +91,7 @@ exports.image_upload = (req, res) => {
 
         // Insert into the DB
         db.db(DB_config.db)
-        .collection(DB_config.collection)
+        .collection(req.params.collection)
         .insertOne(new_document, (err, result) => {
 
           // Important: close connection to DB
@@ -137,7 +131,7 @@ exports.get_all_images = (req, res) => {
     let limit = req.query.limit || 0
 
     db.db(DB_config.db)
-    .collection(DB_config.collection)
+    .collection(req.params.collection)
     .find({})
     .sort({time: -1}) // sort by timestamp
     .limit(limit)
@@ -158,33 +152,7 @@ exports.get_all_images = (req, res) => {
   })
 }
 
-exports.drop_collection = (req, res) => {
 
-  MongoClient.connect(DB_config.url,DB_config.options, (err, db) => {
-    // Handle DB connection errors
-    if (err) {
-      console.log(err)
-      res.status(500).send(err)
-      return
-    }
-
-    db.db(DB_config.db)
-    .collection(DB_config.collection)
-    .drop( (err, delOK) => {
-      // Close the connection to the DB
-      db.close()
-
-      // Handle errors
-      if (err) {
-        console.log(err)
-        res.status(500).send(err)
-        return
-      }
-      if (delOK) res.send('Collection deleted')
-
-    })
-  })
-}
 
 exports.get_single_image = (req, res) => {
 
@@ -194,6 +162,16 @@ exports.get_single_image = (req, res) => {
 
   if(!image_id) return res.status(400).send(`ID not specified`)
 
+  let query = undefined
+  
+  try {
+    query = { _id: ObjectID(image_id)}
+  } catch (e) {
+    console.log('Invalid ID requested')
+    res.status(400).send('Invalid ID')
+    return
+  }
+
   MongoClient.connect(DB_config.url,DB_config.options, (err, db) => {
     // Handle DB connection errors
     if (err) {
@@ -202,10 +180,10 @@ exports.get_single_image = (req, res) => {
       return
     }
 
-    let query = { _id: ObjectID(image_id)}
+
 
     db.db(DB_config.db)
-    .collection(DB_config.collection)
+    .collection(req.params.collection)
     .findOne(query,(err, result) => {
 
       // Close the connection to the DB
@@ -241,7 +219,7 @@ exports.delete_image = (req, res) => {
     let query = { _id: ObjectID(image_id)};
 
     db.db(DB_config.db)
-    .collection(DB_config.collection)
+    .collection(req.params.collection)
     .deleteOne(query,(err, result) => {
 
       // Close the connection to the DB

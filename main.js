@@ -45,14 +45,17 @@ app.get('/', (req, res) => {
 })
 
 const images_controller = require('./controllers/images.js')
+const collections_controller = require('./controllers/collections.js')
 
+app.route('/collections')
+  .get(collections_controller.get_collections)
 
-app.route('/images')
+app.route('/:collection')
   .post(images_controller.image_upload)
   .get(images_controller.get_all_images)
-  .delete(images_controller.drop_collection)
+  .delete(collections_controller.drop_collection)
 
-app.route('/images/:image_id')
+app.route('/:collection/:image_id')
   .get(images_controller.get_single_image)
   .delete(images_controller.delete_image)
   // TODO: PUT
