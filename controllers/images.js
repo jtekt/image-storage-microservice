@@ -54,6 +54,7 @@ exports.image_upload = (req, res) => {
     let file_name = original_file.name
 
     // construct the destination
+    // uploads are placed in a folder called "images" and then separated by collection
     let destination_path = path.join(
       uploads_directory_path,
       'images',
