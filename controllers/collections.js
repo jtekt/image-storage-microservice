@@ -60,7 +60,11 @@ exports.drop_collection = (req, res) => {
         res.status(500).send(err)
         return
       }
-      if (delOK) res.send('Collection deleted')
+      
+      if (delOK) {
+        console.log(`Collection ${req.params.collection} dropped`)
+        res.send(`Collection ${req.params.collection} dropped`)
+      }
 
     })
   })
