@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: ${APPLICATION_NAME}
+  name: storage
 spec:
   storageClassName: manual
   accessModes:
@@ -13,42 +13,44 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ${APPLICATION_NAME}
+  name: storage
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ${APPLICATION_NAME}
+      app: storage
   template:
     metadata:
       labels:
-        app: ${APPLICATION_NAME}
+        app: storage
     spec:
       volumes:
-      - name: ${APPLICATION_NAME}
+      - name: storage
         persistentVolumeClaim:
-          claimName: ${APPLICATION_NAME}
+          claimName: storage
       containers:
-      - name: ${APPLICATION_NAME}
-        image: ${CONTAINER_REGISTRY}/${APPLICATION_NAME}
+      - name: storage
+        image: 172.16.98.151:5000/storage
         imagePullPolicy: Always
         env:
-        # - name: MONGODB_URL
-          # value: "mongodb://172.16.98.151:27017"
+        - name: MONGODB_URL
+          value: "mongodb://172.16.98.151:27017"
+        - name: MONGODB_DB
+          value: seikaibu_edge_ai
         ports:
         - containerPort: 80
         volumeMounts:
         - mountPath: "/usr/share/pv"
-          name: ${APPLICATION_NAME}
+          name: storage
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: ${APPLICATION_NAME}
+  name: storage
 spec:
   ports:
   - port: 80
     nodePort: 31221
   selector:
-    app: ${APPLICATION_NAME}
+    app: storage
   type: NodePort

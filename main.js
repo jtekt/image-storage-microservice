@@ -41,6 +41,7 @@ app.get('/', (req, res) => {
     version: pjson.version,
     author: pjson.author,
     mongodb_url: process.env.MONGODB_URL,
+    mongodb_db: process.env.MONGODB_DB,
   })
 })
 
@@ -50,12 +51,12 @@ const collections_controller = require('./controllers/collections.js')
 app.route('/collections')
   .get(collections_controller.get_collections)
 
-app.route('/:collection')
+app.route('/collections/:collection')
   .post(images_controller.image_upload)
   .get(images_controller.get_all_images)
   .delete(collections_controller.drop_collection)
 
-app.route('/:collection/:image_id')
+app.route('/collections/:collection/:image_id')
   .get(images_controller.get_single_image)
   .delete(images_controller.delete_image)
   // TODO: PUT

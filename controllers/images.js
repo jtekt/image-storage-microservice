@@ -52,7 +52,14 @@ exports.image_upload = (req, res) => {
 
     let original_path = original_file.path
     let file_name = original_file.name
-    let destination_path = path.join(uploads_directory_path, file_name)
+
+    // Todo: put uploads into a dedicated directory?
+
+
+    // separating files by collection
+    let destination_directory = path.join(uploads_directory_path, req.params.collection)
+
+    let destination_path = path.join(destination_directory, file_name)
 
     // using promises for asynchronousity
     mv(original_path, destination_path, {mkdirp: true}, (err) => {
@@ -77,16 +84,9 @@ exports.image_upload = (req, res) => {
           image: file_name,
         }
 
-        // Save image info if available
-        if('image_info' in fields) new_document.image_info = fields.image_info
-
-        // if an AI prediction is available, save it
-        if('AI_prediction' in fields) {
-          new_document.AI = {
-            prediction: fields.AI_prediction,
-            version: fields.AI_version,
-            inference_time: fields.AI_inference_time,
-          }
+        // Add properties if passed via the POST request
+        for (var key in fields) {
+          new_document[key] = fields[key]
         }
 
         // Insert into the DB
@@ -104,7 +104,7 @@ exports.image_upload = (req, res) => {
             return
           }
 
-          console.log("Document inserted")
+          console.log(`[MongoDB] Image ${file_name} inserted in collection ${req.params.collection}`)
 
           // Respond to the client
           res.send("OK")
@@ -163,7 +163,7 @@ exports.get_single_image = (req, res) => {
   if(!image_id) return res.status(400).send(`ID not specified`)
 
   let query = undefined
-  
+
   try {
     query = { _id: ObjectID(image_id)}
   } catch (e) {
