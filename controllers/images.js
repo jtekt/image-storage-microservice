@@ -53,13 +53,12 @@ exports.image_upload = (req, res) => {
     let original_path = original_file.path
     let file_name = original_file.name
 
-    // Todo: put uploads into a dedicated directory?
-
-
-    // separating files by collection
-    let destination_directory = path.join(uploads_directory_path, req.params.collection)
-
-    let destination_path = path.join(destination_directory, file_name)
+    // construct the destination
+    let destination_path = path.join(
+      uploads_directory_path,
+      'images',
+      req.params.collection,
+      file_name)
 
     // using promises for asynchronousity
     mv(original_path, destination_path, {mkdirp: true}, (err) => {
