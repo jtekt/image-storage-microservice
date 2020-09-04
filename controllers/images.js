@@ -163,10 +163,10 @@ exports.get_single_image = (req, res) => {
   if(!image_id) return res.status(400).send(`ID not specified`)
 
   let query = undefined
-
   try {
     query = { _id: ObjectID(image_id)}
-  } catch (e) {
+  }
+  catch (e) {
     console.log('Invalid ID requested')
     res.status(400).send('Invalid ID')
     return
@@ -179,8 +179,6 @@ exports.get_single_image = (req, res) => {
       res.status(500).send(err)
       return
     }
-
-
 
     db.db(DB_config.db)
     .collection(req.params.collection)
@@ -208,6 +206,16 @@ exports.delete_image = (req, res) => {
 
   if(!image_id) return res.status(400).send(`ID not specified`)
 
+  let query = undefined
+  try {
+    query = { _id: ObjectID(image_id)}
+  }
+  catch (e) {
+    console.log('Invalid ID requested')
+    res.status(400).send('Invalid ID')
+    return
+  }
+
   MongoClient.connect(DB_config.url,DB_config.options, (err, db) => {
     // Handle DB connection errors
     if (err) {
@@ -216,11 +224,59 @@ exports.delete_image = (req, res) => {
       return
     }
 
-    let query = { _id: ObjectID(image_id)};
-
     db.db(DB_config.db)
     .collection(req.params.collection)
     .deleteOne(query,(err, result) => {
+
+      // Close the connection to the DB
+      db.close()
+
+      // Handle errors
+      if (err) {
+        console.log(err)
+        res.status(500).send(err)
+        return
+      }
+      res.send(result)
+
+    });
+  })
+}
+
+exports.update_image = (req, res) => {
+
+  let image_id = req.params.image_id
+    || req.query.image_id
+    || req.query.id
+
+  if(!image_id) return res.status(400).send(`ID not specified`)
+
+  let query = undefined
+  try {
+    query = { _id: ObjectID(image_id)}
+  }
+  catch (e) {
+    console.log('Invalid ID requested')
+    res.status(400).send('Invalid ID')
+    return
+  }
+
+  delete req.body._id
+  let new_image_properties = {$set: req.body}
+
+
+  MongoClient.connect(DB_config.url,DB_config.options, (err, db) => {
+    // Handle DB connection errors
+    if (err) {
+      console.log(err)
+      res.status(500).send(err)
+      return
+    }
+
+
+    db.db(DB_config.db)
+    .collection(req.params.collection)
+    .updateOne(query, new_image_properties, (err, result) => {
 
       // Close the connection to the DB
       db.close()
