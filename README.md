@@ -7,8 +7,11 @@ Data related to the image, including its URL, is stored in a MongoDB collection.
 
 | Route | Method | Query / Body | Description |
 | --- | --- | --- | --- |
-| /images | POST | multipart/form-data | Image upload |
-| /images | GET | - | Get all documents from the collection |
-| /images | DELETE | - | Drop the collection |
-| /images/{image ID} | GET | - | Get an image from the collection |
-| /images/{image ID} | DELETE | - | Delete an image from the collection |
+| /collections | GET | - | Get a list of all available collections |
+| /collections/COLLECTION_NAME | POST | multipart/form-data | Upload an image to the collection called "COLLECTION_NAME" |
+| /collections/COLLECTION_NAME | GET | - | Get all documents from the collection called "COLLECTION_NAME" |
+| /collections/COLLECTION_NAME | DELETE | - | Drop the collection called "COLLECTION_NAME" |
+| /collections/COLLECTION_NAME/IMAGE_ID | GET | - | Get the image with the ID "IMAGE_ID" from the collection called "COLLECTION_NAME" |
+| /collections/COLLECTION_NAME/IMAGE_ID | DELETE | - | Delete the image with the ID "IMAGE_ID" from the collection called "COLLECTION_NAME" |
+| /collections/COLLECTION_NAME/IMAGE_ID | PUT | properties | Replace the properties of  the image with the ID "IMAGE_ID" from the collection called "COLLECTION_NAME" |
+| /collections/COLLECTION_NAME/IMAGE_ID | PATCH | properties | Update the properties of the image with the ID "IMAGE_ID" from the collection called "COLLECTION_NAME" |

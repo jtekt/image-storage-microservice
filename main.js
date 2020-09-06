@@ -59,8 +59,8 @@ app.route('/collections/:collection')
 app.route('/collections/:collection/:image_id')
   .get(images_controller.get_single_image)
   .delete(images_controller.delete_image)
-  .put(images_controller.update_image)
-  .patch(images_controller.update_image)
+  .put(images_controller.replace_image)
+  .patch(images_controller.patch_image)
 
 // Start the web server
 http_server.listen(port, () => {

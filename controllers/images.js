@@ -243,7 +243,7 @@ exports.delete_image = (req, res) => {
   })
 }
 
-exports.update_image = (req, res) => {
+exports.patch_image = (req, res) => {
 
   let image_id = req.params.image_id
     || req.query.image_id
@@ -287,6 +287,61 @@ exports.update_image = (req, res) => {
         res.status(500).send(err)
         return
       }
+
+      console.log(`Image updated`)
+      res.send(result)
+
+    })
+  })
+}
+
+exports.replace_image = (req, res) => {
+
+  let image_id = req.params.image_id
+    || req.query.image_id
+    || req.query.id
+
+  if(!image_id) return res.status(400).send(`ID not specified`)
+
+  let query = undefined
+  try {
+    query = { _id: ObjectID(image_id)}
+  }
+  catch (e) {
+    console.log('Invalid ID requested')
+    res.status(400).send('Invalid ID')
+    return
+  }
+
+  delete req.body._id
+
+  let new_image_properties = req.body
+
+
+  MongoClient.connect(DB_config.url,DB_config.options, (err, db) => {
+    // Handle DB connection errors
+    if (err) {
+      console.log(err)
+      res.status(500).send(err)
+      return
+    }
+
+
+    db.db(DB_config.db)
+    .collection(req.params.collection)
+    .replaceOne(query, new_image_properties, (err, result) => {
+
+      // Close the connection to the DB
+      db.close()
+
+      // Handle errors
+      if (err) {
+        console.log(err)
+        res.status(500).send(err)
+        return
+      }
+
+      console.log(`Image replaced`)
       res.send(result)
 
     });
