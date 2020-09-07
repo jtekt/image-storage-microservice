@@ -110,7 +110,7 @@ exports.image_upload = (req, res) => {
           res.send("OK")
 
           // Broadcast result with socket.io
-          io.sockets.emit(fields.image_type, new_document)
+          io.sockets.emit(req.params.collection, new_document)
 
         })
       })
