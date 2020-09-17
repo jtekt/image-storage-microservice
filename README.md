@@ -15,3 +15,10 @@ Data related to the image, including its URL, is stored in a MongoDB collection.
 | /collections/COLLECTION_NAME/IMAGE_ID | DELETE | - | Delete the image with the ID "IMAGE_ID" from the collection called "COLLECTION_NAME" |
 | /collections/COLLECTION_NAME/IMAGE_ID | PUT | properties | Replace the properties of  the image with the ID "IMAGE_ID" from the collection called "COLLECTION_NAME" |
 | /collections/COLLECTION_NAME/IMAGE_ID | PATCH | properties | Update the properties of the image with the ID "IMAGE_ID" from the collection called "COLLECTION_NAME" |
+
+## Environment variables
+
+
+| Variable | Description |
+| --- | --- |
+| MONGODB_URL | The URL of the MongoDB database to be used by the service |
