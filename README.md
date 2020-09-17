@@ -22,3 +22,12 @@ Data related to the image, including its URL, is stored in a MongoDB collection.
 | Variable | Description |
 | --- | --- |
 | MONGODB_URL | The URL of the MongoDB database to be used by the service |
+| MONGODB_DB | OPTIONAL The name of the database to be used by the service |
+
+## Deployment
+
+### Docker
+
+```
+docker run -e MONGODB_URL=http://your-db-url 172.16.98.151:5000/storage
+```
