@@ -11,7 +11,7 @@ COPY . .
 RUN npm install
 
 # Expose port
-EXPOSE 8435
+EXPOSE 80
 
 # Run the app
 CMD [ "node", "main.js" ]
