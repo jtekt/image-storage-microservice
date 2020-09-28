@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: storage
+  name: image-storage
 spec:
   storageClassName: manual
   accessModes:
@@ -13,24 +13,24 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: storage
+  name: image-storage
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: storage
+      app: image-storage
   template:
     metadata:
       labels:
-        app: storage
+        app: image-storage
     spec:
       volumes:
-      - name: storage
+      - name: image-storage
         persistentVolumeClaim:
-          claimName: storage
+          claimName: image-storage
       containers:
-      - name: storage
-        image: 172.16.98.151:5000/storage
+      - name: image-storage
+        image: 172.16.98.151:5000/image-storage
         imagePullPolicy: Always
         env:
         - name: MONGODB_URL
@@ -41,16 +41,16 @@ spec:
         - containerPort: 80
         volumeMounts:
         - mountPath: "/usr/share/pv"
-          name: storage
+          name: image-storage
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: storage
+  name: image-storage
 spec:
   ports:
   - port: 80
     nodePort: 31221
   selector:
-    app: storage
+    app: image-storage
   type: NodePort
