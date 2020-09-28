@@ -1,18 +1,27 @@
 stages:
-  - containerization
+  - containerization-x86
+  - containerization-aarch64
   - deployment
 
 variables:
-  APPLICATION_NAME: storage
+  APPLICATION_NAME: image-storage
 
-containerization:
-  stage: containerization
+containerization-x86:
+  stage: containerization-x86
+  tags:
+    - "x86"
   script:
     # Build and push container image (CONTAINER_REIGSTRY obtained from GitLab)
     - docker build -t ${CONTAINER_REGISTRY}/${APPLICATION_NAME} .
     - docker push ${CONTAINER_REGISTRY}/${APPLICATION_NAME}
-    # Cleanup
-    - docker image rm ${CONTAINER_REGISTRY}/${APPLICATION_NAME}
+
+containerization-aarch64:
+  stage: containerization-aarch64
+  tags:
+    - "aarch64"
+  script:
+    - docker build -t ${CONTAINER_REGISTRY}/${APPLICATION_NAME}-aarch64 .
+    - docker push ${CONTAINER_REGISTRY}/${APPLICATION_NAME}-aarch64
 
 deployment:
   stage: deployment
