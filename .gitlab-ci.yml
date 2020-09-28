@@ -20,7 +20,11 @@ containerization-aarch64:
   tags:
     - "aarch64"
   script:
-    - docker build -t ${CONTAINER_REGISTRY}/${APPLICATION_NAME}-aarch64 .
+    - >
+      docker build
+      --build-arg HTTP_PROXY=http://172.16.98.151:8118
+      --build-arg HTTPS_PROXY=http://172.16.98.151:8118
+      -t ${CONTAINER_REGISTRY}/${APPLICATION_NAME}-aarch64 .
     - docker push ${CONTAINER_REGISTRY}/${APPLICATION_NAME}-aarch64
 
 deployment:
