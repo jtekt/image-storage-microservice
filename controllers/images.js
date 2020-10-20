@@ -3,29 +3,28 @@ const mv = require('mv')
 const formidable = require('formidable')
 const path = require('path')
 const dotenv = require('dotenv')
+const config = require('../config.js')
 
 // Parse environment variables
 dotenv.config()
 
-const io = require('../main').io
-
-const config = require('../config.js')
 const uploads_directory_path = config.uploads_directory_path
 
 const MongoClient = mongodb.MongoClient
 const ObjectID = mongodb.ObjectID
-const DB_config = config.db
-
+const DB_config = config.mongodb
 
 
 exports.image_upload = (req, res) => {
 
+  // retrieve collection name from query
+  const collection = req.params.collection
+
   // using formidable to parse the content of the multipart/form-data
-  // TODO: use multer
   let form = new formidable.IncomingForm()
 
   // Async used so as to use await inside
-  form.parse(req, async (err, fields, files) => {
+  form.parse(req, (err, fields, files) => {
 
     // Handle form parsing errors
     if (err) {
@@ -50,19 +49,20 @@ exports.image_upload = (req, res) => {
       return
     }
 
-    let original_path = original_file.path
-    let file_name = original_file.name
+    const original_path = original_file.path
+    const file_name = original_file.name
 
     // construct the destination
     // uploads are placed in a folder called "images" and then separated by collection
-    let destination_path = path.join(
+    const destination_path = path.join(
       uploads_directory_path,
       'images',
-      req.params.collection,
+      collection,
       file_name)
 
-    // using promises for asynchronousity
+    // Move file in appropriate folder
     mv(original_path, destination_path, {mkdirp: true}, (err) => {
+
       // Handling errors while moving file
       if (err) {
         console.log(err)
@@ -71,6 +71,7 @@ exports.image_upload = (req, res) => {
 
 
       MongoClient.connect(DB_config.url,DB_config.options, (err, db) => {
+
         // Handle DB connection errors
         if (err) {
           console.log(err)
@@ -91,7 +92,7 @@ exports.image_upload = (req, res) => {
 
         // Insert into the DB
         db.db(DB_config.db)
-        .collection(req.params.collection)
+        .collection(collection)
         .insertOne(new_document, (err, result) => {
 
           // Important: close connection to DB
@@ -104,14 +105,14 @@ exports.image_upload = (req, res) => {
             return
           }
 
-          console.log(`[MongoDB] Image ${file_name} inserted in collection ${req.params.collection}`)
+          console.log(`[MongoDB] Image ${file_name} inserted in collection ${collection}`)
 
           // Respond to the client
-          res.send("OK")
+          res.send(result)
 
           // Broadcast result with socket.io
           io.sockets.emit('upload', {
-            collection: req.params.collection,
+            collection: collection,
             document: new_document
           })
 
@@ -131,11 +132,13 @@ exports.get_all_images = (req, res) => {
       return
     }
 
-    let limit = req.query.limit || 0
+    const limit = req.query.limit || 0
+    const filter = req.query.filter || {}
+    const collection = req.params.collection
 
     db.db(DB_config.db)
-    .collection(req.params.collection)
-    .find({})
+    .collection(collection)
+    .find(filter)
     .sort({time: -1}) // sort by timestamp
     .limit(limit)
     .toArray( (err, result) => {
@@ -151,6 +154,8 @@ exports.get_all_images = (req, res) => {
       }
 
       res.send(result)
+
+      console.log(`[MongoDB] Images of ${collection} queried`)
     })
   })
 }

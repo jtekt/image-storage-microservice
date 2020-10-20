@@ -1,14 +1,13 @@
 const mongodb = require('mongodb')
 const dotenv = require('dotenv')
+const config = require('../config.js')
 
 // Parse environment variables
 dotenv.config()
 
-const config = require('../config.js')
 
 const MongoClient = mongodb.MongoClient
-const ObjectID = mongodb.ObjectID
-const DB_config = config.db
+const DB_config = config.mongodb
 
 exports.get_collections = (req, res) => {
 
@@ -32,7 +31,10 @@ exports.get_collections = (req, res) => {
         res.status(500).send(err)
         return
       }
+
       res.send(collections)
+
+      console.log(`[MongoDB] Queried list of collections`)
     })
 
   })
@@ -60,7 +62,7 @@ exports.drop_collection = (req, res) => {
         res.status(500).send(err)
         return
       }
-      
+
       if (delOK) {
         console.log(`Collection ${req.params.collection} dropped`)
         res.send(`Collection ${req.params.collection} dropped`)

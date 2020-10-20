@@ -2,34 +2,31 @@ const express = require('express')
 const path = require('path')
 const bodyParser = require('body-parser')
 const cors = require('cors')
+const dotenv = require('dotenv')
 const http = require('http')
 const socketio = require('socket.io')
-const dotenv = require('dotenv')
+
 const pjson = require('./package.json')
+
+const config = require('./config.js')
+const images_controller = require('./controllers/images.js')
+const collections_controller = require('./controllers/collections.js')
 
 // Parse environment variables
 dotenv.config()
 
-
-// Setting timezone
-process.env.TZ = 'Asia/Tokyo'
-
-// Application port, defaults to 80
-const port = process.env.APP_PORT || 80
-
-// Servers
+// Instanciate objects
 const app = express()
 const http_server = http.Server(app)
 const io = socketio(http_server)
 
-// Make socket io available to other files
-exports.io = io
+global.io = io
 
 // provide express with the ability to read json request bodies
 app.use(bodyParser.json())
 
 // serve static content from uploads directory
-app.use(express.static(require('./config.js').uploads_directory_path))
+app.use(express.static(config.uploads_directory_path))
 
 // Authorize requests from different origins
 app.use(cors())
@@ -37,16 +34,13 @@ app.use(cors())
 // Home route
 app.get('/', (req, res) => {
   res.send({
-    application_name: pjson.name,
+    application_name: 'Image storage API',
     version: pjson.version,
     author: pjson.author,
-    mongodb_url: process.env.MONGODB_URL,
-    mongodb_db: process.env.MONGODB_DB,
+    mongodb_url: config.mongodb.url,
+    mongodb_db: config.mongodb.db,
   })
 })
-
-const images_controller = require('./controllers/images.js')
-const collections_controller = require('./controllers/collections.js')
 
 app.route('/collections')
   .get(collections_controller.get_collections)
@@ -62,9 +56,9 @@ app.route('/collections/:collection/:image_id')
   .put(images_controller.replace_image)
   .patch(images_controller.patch_image)
 
-// Start the web server
-http_server.listen(port, () => {
-  console.log(`[Express] Storage microservice running on port ${port}`)
+
+http_server.listen(config.app_port, () => {
+  console.log(`[HTTP] Server listening on port ${config.app_port}`)
 })
 
 // Handle Websockets
