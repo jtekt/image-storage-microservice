@@ -1,7 +1,6 @@
 stages:
   - containerization-x86
   - containerization-aarch64
-  - deployment
 
 variables:
   APPLICATION_NAME: image-storage
@@ -25,13 +24,3 @@ containerization-aarch64:
       --build-arg HTTPS_PROXY=http://172.16.98.151:8118
       -t ${CONTAINER_REGISTRY}/${APPLICATION_NAME}-aarch64 .
     - docker push ${CONTAINER_REGISTRY}/${APPLICATION_NAME}-aarch64
-
-deployment:
-  stage: deployment
-  script:
-    - kubectl rollout restart deployment/${APPLICATION_NAME}
-  environment:
-    name: staging
-    kubernetes:
-      # namespace Obtained from GitLab
-      namespace: ${KUBERNETES_NAMESPACE}
