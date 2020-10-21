@@ -5,6 +5,7 @@ stages:
 variables:
   APPLICATION_NAME: image-storage
 
+# Building application for X86 plattforms
 containerization-x86:
   stage: containerization-x86
   tags:
@@ -13,6 +14,7 @@ containerization-x86:
     - docker build -t ${CONTAINER_REGISTRY}/${APPLICATION_NAME} .
     - docker push ${CONTAINER_REGISTRY}/${APPLICATION_NAME}
 
+# Building application for ARM (64bit) plattforms
 containerization-aarch64:
   stage: containerization-aarch64
   tags:
