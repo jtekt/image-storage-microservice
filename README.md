@@ -26,7 +26,13 @@ Data related to the image, including its URL, is stored in a MongoDB collection.
 
 ## Websockets
 
-This application exposes a websocket server on port 80 which emits image information upon upload under the topic 'upload'
+This application exposes a socketio websocket server and emits the following messages
+
+
+| Event | Content |
+| --- | --- |
+| upload | image information upon upload |
+
 
 ## Deployment
 
