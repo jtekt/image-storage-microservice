@@ -6,7 +6,7 @@ dotenv.config()
 // Setting timezone
 process.env.TZ = 'Asia/Tokyo'
 
-exports.uploads_directory_path = "/usr/share/pv"
+exports.uploads_directory_path = process.env.UPLOAD_DIRECTORY || "/usr/share/pv"
 
 exports.mongodb = {
   url : process.env.MONGODB_URL || 'mongodb://mongodb:27017',

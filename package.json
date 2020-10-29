@@ -1,6 +1,6 @@
 {
   "name": "storage_microservice",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "",
   "main": "main.js",
   "scripts": {
@@ -12,6 +12,7 @@
   "dependencies": {
     "axios": "^0.19.2",
     "cors": "^2.8.5",
+    "del": "^6.0.0",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "formidable": "^1.2.2",
