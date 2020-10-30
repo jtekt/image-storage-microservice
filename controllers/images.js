@@ -95,7 +95,14 @@ exports.image_upload = (req, res) => {
           console.log(`Found JSON properties in fields`)
           try {
             // Add parsed properties using spread operator
-            new_document = {...new_document, ...JSON.parse(json_properties)}
+            let parsed_properties = JSON.parse(json_properties)
+
+            // Deal with ID
+            if (parsed_properties._id) {
+              parsed_properties._id = ObjectID(parsed_properties._id)
+            }
+
+            new_document = {...new_document, ...parsed_properties}
           } catch (e) {
             console.log(`Cannot parse supposedly JSON properties`)
             res.status(400).send(`Could not parse JSON`)
@@ -107,6 +114,7 @@ exports.image_upload = (req, res) => {
           // Using spread operator
           new_document = {...new_document, ...fields}
         }
+
 
         // Insert into the DB
         db.db(DB_config.db)
