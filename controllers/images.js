@@ -80,14 +80,32 @@ exports.image_upload = (req, res) => {
         }
 
         // Basic document consists of a timestamp and the image nam
+        // Note: Both can be overwritten with properties provided in the body
         let new_document = {
           time: new Date(),
           image: file_name,
         }
 
-        // Add properties if passed via the POST request
-        for (var key in fields) {
-          new_document[key] = fields[key]
+        // Check if proerties passed as JSON
+        let json_properties = fields.json
+          || fields.json_properties
+          || fields.proerties_json
+
+        if (json_properties) {
+          console.log(`Found JSON properties in fields`)
+          try {
+            // Add parsed properties using spread operator
+            new_document = {...new_document, ...JSON.parse(json_properties)}
+          } catch (e) {
+            console.log(`Cannot parse supposedly JSON properties`)
+            res.status(400).send(`Could not parse JSON`)
+            return
+          }
+        }
+        else {
+          //otherwise just insert properties as is
+          // Using spread operator
+          new_document = {...new_document, ...fields}
         }
 
         // Insert into the DB
@@ -245,6 +263,8 @@ exports.delete_image = (req, res) => {
         res.status(500).send(err)
         return
       }
+
+      console.log(`Image ${image_id} deleted`)
       res.send(result)
 
     });
