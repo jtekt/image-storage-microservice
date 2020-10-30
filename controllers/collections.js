@@ -71,7 +71,7 @@ exports.drop_collection = (req, res) => {
 
       del(folder_to_remove)
       .then(() => {
-        console.log(`Collection ${collection} dropped`)
+        console.log(`[MongoDB] Collection ${collection} dropped`)
         res.send(`Collection ${collection} dropped`)
       })
       .catch(() => {
