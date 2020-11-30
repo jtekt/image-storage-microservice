@@ -67,6 +67,8 @@ exports.drop_collection = (req, res) => {
         return
       }
 
+      /*
+
       const folder_to_remove = path.join(uploads_directory_path,'images',collection)
 
       del(folder_to_remove)
@@ -78,6 +80,11 @@ exports.drop_collection = (req, res) => {
         console.log(`Failed to delete folder ${folder_to_remove}`)
         res.status(500).send(`Failed to delete folder ${folder_to_remove}`)
       })
+
+      */
+
+      res.send(`Collection ${collection} dropped`)
+
 
 
 

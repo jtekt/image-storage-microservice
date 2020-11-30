@@ -27,7 +27,7 @@ app.use(bodyParser.json())
 
 // serve static content from uploads directory
 app.use(express.static(config.uploads_directory_path))
-
+// Could use  app.use('/images', express.static(config.uploads_directory_path))
 // Authorize requests from different origins
 app.use(cors())
 
