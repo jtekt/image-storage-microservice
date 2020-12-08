@@ -309,10 +309,12 @@ exports.patch_image = (req, res) => {
       return
     }
 
+    const options = {returnOriginal: false}
+
 
     db.db(DB_config.db)
     .collection(req.params.collection)
-    .updateOne(query, new_image_properties, (err, result) => {
+    .findOneAndUpdate(query, new_image_properties,options, (err, result) => {
 
       // Close the connection to the DB
       db.close()
