@@ -56,7 +56,6 @@ app.route('/collections/:collection/:image_id')
   .put(images_controller.replace_image)
   .patch(images_controller.patch_image)
 
-
 http_server.listen(config.app_port, () => {
   console.log(`[HTTP] Server listening on port ${config.app_port}`)
 })

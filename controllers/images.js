@@ -134,7 +134,7 @@ exports.image_upload = (req, res) => {
           console.log(`[MongoDB] Image ${file_name} inserted in collection ${collection}`)
 
           // Respond to the client
-          res.send(result)
+          res.send(result.ops[0])
 
           // Broadcast result with socket.io
           io.sockets.emit('upload', {
