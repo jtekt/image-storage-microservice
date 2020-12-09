@@ -327,7 +327,7 @@ exports.patch_image = (req, res) => {
       }
 
       console.log(`Image updated`)
-      res.send(result)
+      res.send(result.value)
 
     })
   })
