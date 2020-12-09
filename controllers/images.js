@@ -329,6 +329,12 @@ exports.patch_image = (req, res) => {
       console.log(`Image updated`)
       res.send(result.value)
 
+      // websockets modification
+      io.sockets.emit('update', {
+        collection: req.params.collection,
+        document: result.value
+      })
+
     })
   })
 }
