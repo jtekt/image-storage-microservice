@@ -57,7 +57,7 @@ app.route('/collections/:collection/:image_id')
   .patch(images_controller.patch_image)
 
 http_server.listen(config.app_port, () => {
-  console.log(`[HTTP] Server listening on port ${config.app_port}`)
+  console.log(`[Express] Image storage service listening on port ${config.app_port}`)
 })
 
 // Handle Websockets
