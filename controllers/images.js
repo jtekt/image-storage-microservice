@@ -158,15 +158,20 @@ exports.get_all_images = (req, res) => {
       return
     }
 
-    const limit = req.query.limit || 0
+    const limit = req.query.limit
+      || req.query.batch_size
+      || 0
     const filter = req.query.filter || {}
+    const sort = req.query.sort || {time: -1}
     const collection = req.params.collection
+    const start_index = req.query.start_index || 0
 
     db.db(DB_config.db)
     .collection(collection)
     .find(filter)
-    .sort({time: -1}) // sort by timestamp
-    .limit(limit)
+    .skip(Number(start_index))
+    .limit(Number(limit))
+    .sort(sort) // sort by timestamp
     .toArray( (err, result) => {
 
       // Close the connection to the DB

@@ -20,6 +20,7 @@ const app = express()
 const http_server = http.Server(app)
 const io = socketio(http_server)
 
+// Make the websocket library available to the whole app
 global.io = io
 
 // provide express with the ability to read json request bodies
