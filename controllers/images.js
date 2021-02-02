@@ -150,6 +150,12 @@ exports.image_upload = (req, res) => {
 
 exports.get_all_images = (req, res) => {
 
+  const collection = req.params.collection
+
+  if(!collection) {
+    return res.status(400).send(`Collection not specified`)
+  }
+
   MongoClient.connect(DB_config.url,DB_config.options, (err, db) => {
     // Handle DB connection errors
     if (err) {
@@ -158,12 +164,13 @@ exports.get_all_images = (req, res) => {
       return
     }
 
+
+
     const limit = req.query.limit
       || req.query.batch_size
       || 0
     const filter = req.query.filter || {}
     const sort = req.query.sort || {time: -1}
-    const collection = req.params.collection
     const start_index = req.query.start_index || 0
 
     db.db(DB_config.db)

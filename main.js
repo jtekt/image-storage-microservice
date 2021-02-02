@@ -6,6 +6,7 @@ const dotenv = require('dotenv')
 const http = require('http')
 const socketio = require('socket.io')
 
+
 const pjson = require('./package.json')
 
 const config = require('./config.js')
@@ -50,6 +51,12 @@ app.route('/collections/:collection')
   .post(images_controller.image_upload)
   .get(images_controller.get_all_images)
   .delete(collections_controller.drop_collection)
+
+app.route('/collections/:collection/count')
+  .get(collections_controller.get_collection_count)
+  
+app.route('/collections/:collection/export')
+  .get(collections_controller.export_collection_zip)
 
 app.route('/collections/:collection/:image_id')
   .get(images_controller.get_single_image)
