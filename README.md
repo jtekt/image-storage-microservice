@@ -9,13 +9,15 @@ Data related to the image, including its URL, is stored in a MongoDB collection.
 | --- | --- | --- | --- |
 | / | GET | - | Get the application info |
 | /collections | GET | - | Get a list of all available collections |
-| /collections/COLLECTION_NAME | GET | limit (number , optional) | Get all documents from the collection called "COLLECTION_NAME", the number of items to be retrieved can be set using the "limit" query parameter |
-| /collections/COLLECTION_NAME | POST | multipart/form-data | Upload an image to the collection called "COLLECTION_NAME" |
+| /collections/COLLECTION_NAME | GET | - | Get information about the collection identified by COLLECTION_NAME |
 | /collections/COLLECTION_NAME | DELETE | - | Drop the collection called "COLLECTION_NAME" |
-| /collections/COLLECTION_NAME/IMAGE_ID | GET | - | Get the image with the ID "IMAGE_ID" from the collection called "COLLECTION_NAME" |
-| /collections/COLLECTION_NAME/IMAGE_ID | DELETE | - | Delete the image with the ID "IMAGE_ID" from the collection called "COLLECTION_NAME" |
-| /collections/COLLECTION_NAME/IMAGE_ID | PUT | properties | Replace the properties of  the image with the ID "IMAGE_ID" from the collection called "COLLECTION_NAME" |
-| /collections/COLLECTION_NAME/IMAGE_ID | PATCH | properties | Update the properties of the image with the ID "IMAGE_ID" from the collection called "COLLECTION_NAME" |
+| /collections/COLLECTION_NAME/images | GET | limit (number , optional) | Get all documents from the collection called "COLLECTION_NAME", the number of items to be retrieved can be set using the "limit" query parameter |
+| /collections/COLLECTION_NAME/images | POST | multipart/form-data | Upload an image to the collection called "COLLECTION_NAME" |
+| /collections/COLLECTION_NAME/images/IMAGE_ID | GET | - | Get the data related to the image with the ID "IMAGE_ID" from the collection called "COLLECTION_NAME" |
+| /collections/COLLECTION_NAME/images/IMAGE_ID | DELETE | - | Delete the entry with the ID "IMAGE_ID" from the collection called "COLLECTION_NAME" |
+| /collections/COLLECTION_NAME/images/IMAGE_ID | PUT | properties | Replace the properties of  the entry with the ID "IMAGE_ID" from the collection called "COLLECTION_NAME" |
+| /collections/COLLECTION_NAME/images/IMAGE_ID | PATCH | properties | Update the properties of the entry with the ID "IMAGE_ID" from the collection called "COLLECTION_NAME" |
+| /collections/COLLECTION_NAME/images/IMAGE_ID/image | GET | - | Get the image file of the corresponding entry |
 
 ## Environment variables
 
@@ -32,6 +34,7 @@ This application exposes a socketio websocket server and emits the following mes
 | Event | Content |
 | --- | --- |
 | upload | image information upon upload |
+| update | image information upon update |
 
 
 ## Deployment

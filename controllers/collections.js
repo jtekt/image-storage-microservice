@@ -9,6 +9,7 @@ const path = require('path')
 const fs = require('fs')
 const XLSX = require('xlsx')
 var AdmZip = require('adm-zip');
+// COULD USE express-zip INSTEAD
 
 // Parse environment variables
 dotenv.config()
@@ -40,7 +41,8 @@ exports.get_collections = (req, res) => {
         return
       }
 
-      res.send(collections)
+      //res.send(collections)
+      res.send(collections.map(collection => { return collection.name }))
 
       console.log(`[MongoDB] Queried list of collections`)
     })
@@ -48,9 +50,9 @@ exports.get_collections = (req, res) => {
   })
 }
 
-exports.get_collection_count = (req, res) => {
-  const collection = req.params.collection
+exports.get_collection_info = (req, res) => {
 
+  const collection = req.params.collection
   if(!collection) {
     return res.status(400).send(`Collection not specified`)
   }
@@ -61,11 +63,17 @@ exports.get_collection_count = (req, res) => {
     .collection(collection)
     .countDocuments()
   })
-  .then(result => { res.send({documents: result}) })
+  .then(result => {
+    res.send({
+      name: collection,
+      documents: result,
+    })
+  })
   .catch(error => {
     res.status(500).send('Error while counting documents')
   })
 }
+
 
 exports.drop_collection = (req, res) => {
 
