@@ -168,12 +168,14 @@ exports.get_all_images = (req, res) => {
     const start_index = req.query.start_index || 0
 
     let filter = {}
-
-    try {
-      filter = JSON.parse(req.query.filter)
-    } catch (e) {
-      console.log(`Failed to parse filter`)
+    if(req.query.filter) {
+      try {
+        filter = JSON.parse(req.query.filter)
+      } catch (e) {
+        console.log(`[Express] Failed to parse filter`)
+      }
     }
+
 
     return db.db(DB_config.db)
     .collection(collection)
