@@ -21,37 +21,27 @@ dotenv.config()
 const uploads_directory_path = config.uploads_directory_path
 const MongoClient = mongodb.MongoClient
 const DB_config = config.mongodb
+const ObjectID = mongodb.ObjectID
 
 exports.get_collections = (req, res) => {
 
-  MongoClient.connect(DB_config.url,DB_config.options, (err, db) => {
-    // Handle DB connection errors
-    if (err) {
-      console.log(err)
-      res.status(500).send(err)
-      return
-    }
-
-    db.db(DB_config.db)
+  MongoClient.connect(DB_config.url,DB_config.options)
+  .then(db => {
+    return db.db(DB_config.db)
     .listCollections()
-    .toArray( (err, collections) => {
-      // Close the connection to the DB
-      db.close()
-
-      // Handle errors
-      if (err) {
-        console.log(err)
-        res.status(500).send(err)
-        return
-      }
-
-      //res.send(collections)
-      res.send(collections.map(collection => { return collection.name }))
-
-      console.log(`[MongoDB] Queried list of collections`)
-    })
-
+    .toArray()
   })
+  .then(collections => {
+    //res.send(collections)
+    res.send(collections.map(collection => { return collection.name }))
+
+    console.log(`[MongoDB] Queried list of collections`)
+  })
+  .catch(error => {
+    console.log(error)
+    res.status(500).send('Error while counting documents')
+  })
+
 }
 
 exports.get_collection_info = (req, res) => {
@@ -74,10 +64,19 @@ exports.get_collection_info = (req, res) => {
     })
   })
   .catch(error => {
+    console.log(error)
     res.status(500).send('Error while counting documents')
   })
 }
 
+function delete_images_folder(folder_to_remove){
+  return new Promise((resolve, reject) => {
+    rimraf(folder_to_remove, (error) => {
+      if(error) reject(error)
+      resolve()
+    })
+  })
+}
 
 exports.drop_collection = (req, res) => {
 
@@ -87,43 +86,23 @@ exports.drop_collection = (req, res) => {
     return res.status(400).send(`Collection not specified`)
   }
 
-  MongoClient.connect(DB_config.url,DB_config.options, (err, db) => {
-    // Handle DB connection errors
-    if (err) {
-      console.log(err)
-      res.status(500).send(err)
-      return
-    }
-
-    db.db(DB_config.db)
+  MongoClient.connect(DB_config.url,DB_config.options)
+  .then(db => {
+    return db.db(DB_config.db)
     .collection(collection)
-    .drop( (err, result) => {
-      // Close the connection to the DB
-      db.close()
-
-      // Handle errors
-      if (err) {
-        console.log(err)
-        res.status(500).send(err)
-        return
-      }
-
-
-      const folder_to_remove = path.join(uploads_directory_path,'images',collection)
-
-      rimraf(folder_to_remove, (error) => {
-        if(error) {
-          console.log(error)
-          res.status(500).send(`Failed to delete folder ${folder_to_remove}`)
-          return
-        }
-
-        res.send(`Collection ${collection} dropped`)
-
-
-      })
-
-    })
+    .drop()
+  })
+  .then( () => {
+    const folder_to_remove = path.join(uploads_directory_path,'images',collection)
+    return delete_images_folder(folder_to_remove)
+  })
+  .then(() => {
+    console.log(`[MongoDB] Collection ${collection} dropped`)
+    res.send(`Collection ${collection} dropped`)
+  })
+  .catch(error => {
+    console.log(error)
+    res.status(500).send('Error while counting documents')
   })
 }
 
@@ -260,8 +239,11 @@ exports.export_collection_zip = (req, res) => {
 
 }
 
-async function download_single_image(item, collection,origin_service_url) {
-  const url = `${origin_service_url}/collections/${collection}/images/${item._id}/image`
+async function download_single_image(parameters) {
+
+  const {item, remote_collection, origin_url} = parameters
+
+  const url = `${origin_url}/collections/${remote_collection}/images/${item._id}/image`
   const options = {
     url,
     method: 'GET',
@@ -270,7 +252,9 @@ async function download_single_image(item, collection,origin_service_url) {
   return axios(options)
 }
 
-function save_file(response, destination_path){
+function save_file(parameters){
+
+  const {response, destination_path} = parameters
 
   const writer = fs.createWriteStream(destination_path)
 
@@ -283,27 +267,41 @@ function save_file(response, destination_path){
 }
 
 
-function promise_chain(list, item_index, collection, origin_service_url, destination_folder_path){
+function promise_chain(parameters){
+
+  const  {
+    list,
+    item_index,
+    remote_collection,
+    local_collection,
+    origin_url,
+    destination_folder_path
+  } = parameters
+
 
   const item = list[item_index]
 
   io.sockets.emit('import_progress', {
-    origin: origin_service_url,
+    origin: origin_url,
     progress: item_index/list.length,
-    collection: collection,
+    remote_collection,
+    local_collection,
   })
 
   return new Promise((resolve, reject) => {
 
     if(item_index < list.length) {
-      download_single_image(item, collection,origin_service_url)
+      download_single_image({item, remote_collection, origin_url})
       .then(response => {
         const destination_path = path.join(destination_folder_path, item.image)
-        return save_file(response, destination_path)
+        return save_file({response, destination_path})
       })
       .then(() => {
 
-        return promise_chain(list, item_index+1, collection, origin_service_url, destination_folder_path)
+        let next_parameters = parameters
+        next_parameters.item_index = parameters.item_index +1
+
+        return promise_chain(next_parameters)
       })
       .catch(error => reject)
     }
@@ -313,22 +311,35 @@ function promise_chain(list, item_index, collection, origin_service_url, destina
 
 }
 
-function download_all_images(list, collection, origin_service_url){
+function download_all_images(options){
 
+  const {
+    list,
+    remote_collection,
+    local_collection,
+    origin_url
+  } = options
 
   const destination_folder_path = path.join(
     uploads_directory_path,
     'images',
-    collection)
+    local_collection)
 
   // Create directory if it does not exist
   if (!fs.existsSync(destination_folder_path)){
     fs.mkdirSync(destination_folder_path)
   }
 
-  let item_index = 0
+  const parameters = {
+    item_index: 0,
+    list,
+    remote_collection,
+    local_collection,
+    origin_url,
+    destination_folder_path
+  }
 
-  promise_chain(list, item_index, collection, origin_service_url, destination_folder_path)
+  promise_chain(parameters)
   .then(() => {
 
   })
@@ -342,35 +353,53 @@ function download_all_images(list, collection, origin_service_url){
 
 exports.import_collection = (req, res) => {
 
-  const collection = req.query.collection
-  if(!collection)   return res.status(400).send(`Collection not specified`)
+  const remote_collection = req.query.remote_collection
+  if(!remote_collection)   return res.status(400).send(`Remote collection not specified`)
 
-  const origin_service_url = req.query.origin
-  if(!origin_service_url)   return res.status(400).send(`Origin not specified`)
+  const local_collection = req.query.local_collection || remote_collection
 
-  console.log(`Importing collection ${collection} from ${origin_service_url}...`)
+  const origin_url = req.query.origin
+  if(!origin_url)   return res.status(400).send(`Origin not specified`)
 
-  const url = `${origin_service_url}/collections/${collection}/images`
+  console.log(`[MongoDB] Importing collection ${remote_collection} from ${origin_url} into local collection ${local_collection}`)
+
+  const list_url = `${origin_url}/collections/${remote_collection}/images`
 
   let list = []
-  axios.get(url)
+  axios.get(list_url)
   .then(response => {
-    list = response.data
+    list = response.data.map(entry => {
+      entry._id = ObjectID(entry._id)
+      return entry
+    })
 
     return MongoClient.connect(DB_config.url,DB_config.options)
   })
 
   .then( db => {
-    const options = {}
-    return db.db(DB_config.db)
-    .collection(collection)
-    .insertMany(list, options)
+    let bulk = db.db(DB_config.db)
+      .collection(local_collection)
+      .initializeUnorderedBulkOp()
+
+    list.forEach((item) => {
+      bulk.find({_id: item._id}).upsert().updateOne({$set: item})
+    })
+
+    return bulk.execute()
+
+
+
   })
   .then(result => {
-    console.log(`[MongoDB] Imported ${list.length} in collection ${collection}`)
+    console.log(`[MongoDB] Imported ${list.length} in collection ${local_collection}`)
     res.send({items: list.length})
 
-    download_all_images(list, collection, origin_service_url)
+    download_all_images({
+      list,
+      remote_collection,
+      local_collection,
+      origin_url,
+    })
   })
 
   .catch(error => {
