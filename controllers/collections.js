@@ -8,8 +8,12 @@ const path = require('path')
 // exports
 const fs = require('fs')
 const XLSX = require('xlsx')
-var AdmZip = require('adm-zip');
+const AdmZip = require('adm-zip')
 // COULD USE express-zip INSTEAD
+
+// Import
+const axios = require('axios')
+
 
 // Parse environment variables
 dotenv.config()
@@ -204,75 +208,173 @@ exports.export_collection_zip = (req, res) => {
 
   const folder_to_zip = path.join(uploads_directory_path,'images',collection)
 
-  MongoClient.connect(DB_config.url,DB_config.options, (err, db) => {
-    // Handle DB connection errors
-    if (err) {
-      console.log(err)
-      res.status(500).send(`Error while connecting to database`)
-      return
-    }
+  MongoClient.connect(DB_config.url,DB_config.options)
+  .then(db => {
 
-    db.db(DB_config.db)
+    return db.db(DB_config.db)
     .collection(collection)
     .find({})
     .sort({time: -1}) // sort by timestamp
-    .toArray( (err, result) => {
+    .toArray()
+  })
+  .then(result => {
 
-      // Close the connection to the DB
-      db.close()
+    const excel_filename = `database_export.xlsx`
+    generate_excel(result, excel_filename)
 
-      // Handle errors
-      if (err) {
-        console.log(err)
-        res.status(500).send(err)
-        return
+    const dir_content = fs.readdir(folder_to_zip, (error, files) => {
+      if(error) {
+        console.log(error)
+        return res.status(500).send('Error listing content')
       }
 
-      const excel_filename = `database_export.xlsx`
-      generate_excel(result, excel_filename)
+      let zip = new AdmZip()
 
-      const dir_content = fs.readdir(folder_to_zip, (error, files) => {
-        if(error) {
-          console.log(error)
-          return res.status(500).send('Error listing content')
-        }
+      // add local file
+      files.forEach((file) => { zip.addLocalFile(path.join(folder_to_zip,file)) })
 
-        let zip = new AdmZip()
+      // Add excel export
+      zip.addLocalFile(excel_filename)
 
-        // add local file
-        files.forEach((file) => { zip.addLocalFile(path.join(folder_to_zip,file)) })
+      // get everything as a buffer
+      const zipFileContents = zip.toBuffer();
+      const zip_filename = `export.zip`;
+      res.setHeader( "Content-Type", "application/zip" )
+      res.setHeader( "Content-Disposition", `attachment; filename=${zip_filename}` )
+      res.send(zipFileContents)
 
-        // Add excel export
-        zip.addLocalFile(excel_filename)
+      console.log(`[MongoDB] Images of ${collection} exported`)
 
-        // get everything as a buffer
-        const zipFileContents = zip.toBuffer();
-        const zip_filename = `export.zip`;
-        res.setHeader( "Content-Type", "application/zip" )
-        res.setHeader( "Content-Disposition", `attachment; filename=${zip_filename}` )
-        res.send(zipFileContents)
-
-        console.log(`[MongoDB] Images of ${collection} exported`)
-
-        // Delete the excel file once done
-        rimraf(excel_filename, (error) => {
-          if(error) { console.log(error) }
-        })
-
+      // Delete the excel file once done
+      rimraf(excel_filename, (error) => {
+        if(error) { console.log(error) }
       })
 
-
-
     })
+
+  })
+  .catch(error => {
+    console.log(error)
+    res.status(500).send(error)
+  })
+
+}
+
+async function download_single_image(item, collection,origin_service_url) {
+  const url = `${origin_service_url}/collections/${collection}/images/${item._id}/image`
+  const options = {
+    url,
+    method: 'GET',
+    responseType: 'stream',
+  }
+  return axios(options)
+}
+
+function save_file(response, destination_path){
+
+  const writer = fs.createWriteStream(destination_path)
+
+  response.data.pipe(writer)
+
+  return new Promise((resolve, reject) => {
+    writer.on('finish', resolve)
+    writer.on('error', reject)
+  })
+}
+
+
+function promise_chain(list, item_index, collection, origin_service_url, destination_folder_path){
+
+  const item = list[item_index]
+
+  io.sockets.emit('import_progress', {
+    origin: origin_service_url,
+    progress: item_index/list.length,
+    collection: collection,
+  })
+
+  return new Promise((resolve, reject) => {
+
+    if(item_index < list.length) {
+      download_single_image(item, collection,origin_service_url)
+      .then(response => {
+        const destination_path = path.join(destination_folder_path, item.image)
+        return save_file(response, destination_path)
+      })
+      .then(() => {
+
+        return promise_chain(list, item_index+1, collection, origin_service_url, destination_folder_path)
+      })
+      .catch(error => reject)
+    }
+
+    else return resolve()
+  })
+
+}
+
+function download_all_images(list, collection, origin_service_url){
+
+
+  const destination_folder_path = path.join(
+    uploads_directory_path,
+    'images',
+    collection)
+
+  // Create directory if it does not exist
+  if (!fs.existsSync(destination_folder_path)){
+    fs.mkdirSync(destination_folder_path)
+  }
+
+  let item_index = 0
+
+  promise_chain(list, item_index, collection, origin_service_url, destination_folder_path)
+  .then(() => {
+
+  })
+  .catch(error => {
+    console.log(error)
   })
 
 
 
+}
 
+exports.import_collection = (req, res) => {
 
+  const collection = req.query.collection
+  if(!collection)   return res.status(400).send(`Collection not specified`)
 
+  const origin_service_url = req.query.origin
+  if(!origin_service_url)   return res.status(400).send(`Origin not specified`)
 
-  //fs.readdir(path, callbackFunction)
+  console.log(`Importing collection ${collection} from ${origin_service_url}...`)
 
+  const url = `${origin_service_url}/collections/${collection}/images`
 
+  let list = []
+  axios.get(url)
+  .then(response => {
+    list = response.data
+
+    return MongoClient.connect(DB_config.url,DB_config.options)
+  })
+
+  .then( db => {
+    const options = {}
+    return db.db(DB_config.db)
+    .collection(collection)
+    .insertMany(list, options)
+  })
+  .then(result => {
+    console.log(`[MongoDB] Imported ${list.length} in collection ${collection}`)
+    res.send({items: list.length})
+
+    download_all_images(list, collection, origin_service_url)
+  })
+
+  .catch(error => {
+    console.log(error)
+    res.status(500).send(error)
+  })
 }

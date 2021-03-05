@@ -132,12 +132,7 @@ exports.image_upload = (req, res) => {
   .then(result => {
     console.log(`[MongoDB] Image ${file_name} inserted in collection ${collection}`)
 
-    let new_document = result.ops[0]
-
-    new_document = {
-      ...new_document,
-      image_url: `http://${req.headers.host}/collections/${collection}/images/${new_document._id}/image`,
-    }
+    const new_document = result.ops[0]
 
     // Respond to the client
     res.send(new_document)
@@ -179,7 +174,7 @@ exports.get_all_images = (req, res) => {
     } catch (e) {
       console.log(`Failed to parse filter`)
     }
-    
+
     return db.db(DB_config.db)
     .collection(collection)
     .find(filter)
@@ -189,14 +184,6 @@ exports.get_all_images = (req, res) => {
     .toArray()
   })
   .then(result => {
-
-    result = result.map(entry => {
-      return {
-        ...entry,
-        image_url: `http://${req.headers.host}/collections/${collection}/images/${entry._id}/image`
-      }
-    })
-
     res.send(result)
     console.log(`[MongoDB] Images of ${collection} queried`)
   })
@@ -234,13 +221,6 @@ exports.get_single_image = (req, res) => {
     .findOne(query)
   })
   .then(result => {
-
-    // Add URL
-    result = {
-      ...result,
-      image_url: `http://${req.headers.host}/collections/${collection}/images/${result._id}/image`
-    }
-
     res.send(result)
     console.log(`[MongoDB] Document ${image_id} of collection ${collection} queried`)
   })
@@ -315,15 +295,9 @@ exports.patch_image = (req, res) => {
   })
   .then(result => {
 
-    let document = result.value
-    const image_url = `http://${req.headers.host}/collections/${collection}/images/${document._id}/image`
-    document = {
-      ...document,
-      image_url,
-    }
-
+    const document = result.value
     console.log(`Image ${image_id} of collection ${collection} updated`)
-    res.send(result.value)
+    res.send(document)
 
     // websockets modification
     io.sockets.emit('update', {
@@ -363,7 +337,7 @@ exports.replace_image = (req, res) => {
   MongoClient.connect(DB_config.url,DB_config.options)
   .then(db => {
     return db.db(DB_config.db)
-    .collection(req.params.collection)
+    .collection(collection)
     .replaceOne(query, new_image_properties)
   })
   .then(result => {
@@ -386,8 +360,6 @@ exports.serve_image_file = (req,res) => {
   const collection = req.params.collection
   if(!collection) return res.status(400).send(`Collection not defined`)
 
-  console.log(image_id)
-
   let query = undefined
   try {
     query = { _id: ObjectID(image_id)}
@@ -405,6 +377,7 @@ exports.serve_image_file = (req,res) => {
     .findOne(query)
   })
   .then(result => {
+    console.log(`[Express] serving image ${image_id} of collection ${collection}`)
     const image_path = path.join(
       uploads_directory_path,
       'images',
