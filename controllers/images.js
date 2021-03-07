@@ -162,10 +162,13 @@ exports.get_all_images = (req, res) => {
 
     const limit = req.query.limit
       || req.query.batch_size
+      || req.query.count
       || 0
 
     const sort = req.query.sort || {time: -1}
-    const start_index = req.query.start_index || 0
+    const start_index = req.query.start_index
+      || req.query.index
+      || 0
 
     let filter = {}
     if(req.query.filter) {
