@@ -128,53 +128,39 @@ exports.export_collection_excel = (req, res) => {
     return res.status(400).send(`Collection not specified`)
   }
 
-  MongoClient.connect(DB_config.url,DB_config.options, (err, db) => {
-    // Handle DB connection errors
-    if (err) {
-      console.log(err)
-      res.status(500).send(err)
-      return
-    }
-
-
-
-    db.db(DB_config.db)
+  MongoClient.connect(DB_config.url,DB_config.options)
+  .then(db => {
+    return db.db(DB_config.db)
     .collection(collection)
     .find({})
     .sort({time: -1}) // sort by timestamp
-    .toArray( (err, result) => {
-
-      // Close the connection to the DB
-      db.close()
-
-      // Handle errors
-      if (err) {
-        console.log(err)
-        res.status(500).send(err)
-        return
-      }
-
-      const filename = `export.xlsx`
-      generate_excel(result, filename)
-
-      const stream = fs.createReadStream(filename);         // create read stream
-
-      res.setHeader( "Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" )
-      res.setHeader( "Content-Disposition", `attachment; filename=${filename}` )
-
-      stream.pipe(res)
-      res.end()
-
-      rimraf(filename, (error) => {
-        if(error) {
-          console.log(error)
-        }
-      })
-
-
-      console.log(`[MongoDB] Images of ${collection} exported`)
-    })
+    .toArray()
   })
+  .then(result => {
+    const filename = `export.xlsx`
+    generate_excel(result, filename)
+
+    const stream = fs.createReadStream(filename);         // create read stream
+
+    res.setHeader( "Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" )
+    res.setHeader( "Content-Disposition", `attachment; filename=${filename}` )
+
+    stream.pipe(res)
+    res.end()
+
+    rimraf(filename, (error) => {
+      if(error) {
+        console.log(error)
+      }
+    })
+
+    console.log(`[MongoDB] Images of ${collection} exported`)
+  })
+  .catch(error => {
+    console.log(error)
+    res.status(500).send('Error while exporting documents')
+  })
+
 }
 
 exports.export_collection_zip = (req, res) => {
@@ -202,10 +188,8 @@ exports.export_collection_zip = (req, res) => {
     generate_excel(result, excel_filename)
 
     const dir_content = fs.readdir(folder_to_zip, (error, files) => {
-      if(error) {
-        console.log(error)
-        return res.status(500).send('Error listing content')
-      }
+
+      if(error) throw Error('Could not list content of directory')
 
       let zip = new AdmZip()
 
@@ -341,7 +325,7 @@ function download_all_images(options){
 
   promise_chain(parameters)
   .then(() => {
-
+    console.log(`[Import] Downloaded all images of ${remote_collection}`)
   })
   .catch(error => {
     console.log(error)
@@ -386,8 +370,6 @@ exports.import_collection = (req, res) => {
     })
 
     return bulk.execute()
-
-
 
   })
   .then(result => {

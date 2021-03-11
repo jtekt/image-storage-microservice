@@ -47,7 +47,7 @@ exports.image_upload = (req, res) => {
 
   // retrieve collection name from query
   const collection = req.params.collection
-  if(!collection)   return res.status(400).send(`Collection not specified`)
+  if(!collection) return res.status(400).send(`Collection not specified`)
 
   // needs to be global
   let file_name = undefined
@@ -64,11 +64,7 @@ exports.image_upload = (req, res) => {
     // Read the form files
     const original_file = files['image']
 
-    if(!original_file) {
-      console.log("Request does not contain an image")
-      res.status(400).send(`Request does not contain an image`)
-      return
-    }
+    if(!original_file) throw Error('Request does not contain an image')
 
     const original_path = original_file.path
     file_name = original_file.name
@@ -111,10 +107,9 @@ exports.image_upload = (req, res) => {
         }
 
         new_document = {...new_document, ...parsed_properties}
-      } catch (e) {
-        console.log(`Cannot parse supposedly JSON properties`)
-        res.status(400).send(`Could not parse JSON`)
-        return
+      }
+      catch (e) {
+        throw Error('Could not parse JSON')
       }
     }
     else {
@@ -139,7 +134,7 @@ exports.image_upload = (req, res) => {
 
     // Broadcast result with socket.io
     io.sockets.emit('upload', {
-      collection: collection,
+      collection,
       document: new_document
     })
   })
@@ -155,7 +150,7 @@ exports.get_all_images = (req, res) => {
 
   // Check for collection here to save a DB query if not necessary
   const collection = req.params.collection
-  if(!collection)   return res.status(400).send(`Collection not specified`)
+  if(!collection) return res.status(400).send(`Collection not specified`)
 
   MongoClient.connect(DB_config.url,DB_config.options)
   .then(db => {
@@ -207,16 +202,14 @@ exports.get_single_image = (req, res) => {
   if(!image_id) return res.status(400).send(`ID not specified`)
 
   const collection = req.params.collection
-  if(!collection)   return res.status(400).send(`Collection not specified`)
+  if(!collection) return res.status(400).send(`Collection not specified`)
 
   let query = undefined
   try {
     query = { _id: ObjectID(image_id)}
   }
   catch (e) {
-    console.log('Invalid ID requested')
-    res.status(400).send('Invalid ID')
-    return
+    return res.status(400).send(`Invalid ID`)
   }
 
   MongoClient.connect(DB_config.url,DB_config.options)
@@ -248,9 +241,7 @@ exports.delete_image = (req, res) => {
     query = { _id: ObjectID(image_id)}
   }
   catch (e) {
-    console.log('Invalid ID requested')
-    res.status(400).send('Invalid ID')
-    return
+    return res.status(400).send(`Invalid ID`)
   }
 
   MongoClient.connect(DB_config.url,DB_config.options)
@@ -282,9 +273,7 @@ exports.patch_image = (req, res) => {
     query = { _id: ObjectID(image_id)}
   }
   catch (e) {
-    console.log('Invalid ID requested')
-    res.status(400).send('Invalid ID')
-    return
+    return res.status(400).send(`Invalid ID`)
   }
 
   delete req.body._id
@@ -329,9 +318,7 @@ exports.replace_image = (req, res) => {
     query = { _id: ObjectID(image_id)}
   }
   catch (e) {
-    console.log('Invalid ID requested')
-    res.status(400).send('Invalid ID')
-    return
+    return res.status(400).send(`Invalid ID`)
   }
 
   delete req.body._id
@@ -370,9 +357,7 @@ exports.serve_image_file = (req,res) => {
     query = { _id: ObjectID(image_id)}
   }
   catch (e) {
-    console.log('Invalid ID requested')
-    res.status(400).send('Invalid ID')
-    return
+    return res.status(400).send(`Invalid ID`)
   }
 
   MongoClient.connect(DB_config.url,DB_config.options)
