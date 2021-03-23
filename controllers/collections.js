@@ -297,6 +297,7 @@ function promise_chain(parameters){
 
 function download_all_images(options){
 
+  // Destructuring parameter
   const {
     list,
     remote_collection,
@@ -304,12 +305,16 @@ function download_all_images(options){
     origin_url
   } = options
 
-  const destination_folder_path = path.join(
-    uploads_directory_path,
-    'images',
-    local_collection)
+  const images_directory_path = path.join( uploads_directory_path, 'images')
 
-  // Create directory if it does not exist
+  // Create image directory if it doesn't exist
+  if (!fs.existsSync(images_directory_path)){
+    fs.mkdirSync(images_directory_path)
+  }
+
+  const destination_folder_path = path.join(images_directory_path, local_collection)
+
+  // Create destination directory if it does not exist
   if (!fs.existsSync(destination_folder_path)){
     fs.mkdirSync(destination_folder_path)
   }
