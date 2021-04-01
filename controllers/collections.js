@@ -4,6 +4,7 @@ const rimraf = require('rimraf')
 const dotenv = require('dotenv')
 const config = require('../config.js')
 const path = require('path')
+const url = require('url')
 
 // exports
 const fs = require('fs')
@@ -13,7 +14,6 @@ const AdmZip = require('adm-zip')
 
 // Import
 const axios = require('axios')
-
 
 // Parse environment variables
 dotenv.config()
@@ -231,7 +231,7 @@ async function download_single_image(parameters) {
   const options = {
     url,
     method: 'GET',
-    responseType: 'stream',
+    responseType: 'stream', // This is important
   }
   return axios(options)
 }
@@ -347,8 +347,16 @@ exports.import_collection = (req, res) => {
 
   const local_collection = req.query.local_collection || remote_collection
 
-  const origin_url = req.query.origin
+  let origin_url = req.query.origin
   if(!origin_url)   return res.status(400).send(`Origin not specified`)
+
+  // Sanitizing URL
+  try {
+    origin_url = new URL(origin_url).origin
+  } catch (e) {
+    console.log(e)
+    return res.status(400).send(`Origin URL invalid`)
+  }
 
   console.log(`[MongoDB] Importing collection ${remote_collection} from ${origin_url} into local collection ${local_collection}`)
 
@@ -357,8 +365,10 @@ exports.import_collection = (req, res) => {
   let list = []
   axios.get(list_url)
   .then(response => {
+    // converting ID and date into proper format
     list = response.data.map(entry => {
       entry._id = ObjectID(entry._id)
+      entry.time = new Date(entry.time)
       return entry
     })
 
