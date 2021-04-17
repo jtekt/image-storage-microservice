@@ -109,8 +109,10 @@ exports.drop_collection = (req, res) => {
 const generate_excel = (data, filename) => {
 
   // convert ID from ObjectID to String
-  data = data.map((item) => {
-    item._id = item._id.toString()
+  data = data.map( (item) => {
+    for (var key in item) {
+      item[key] = item[key].toString()
+    }
     return item
   })
 
