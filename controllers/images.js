@@ -54,6 +54,7 @@ exports.image_upload = (req, res) => {
   let fields = undefined
   let files = undefined
 
+  let connection = undefined
 
   parse_form(req)
   .then((parsed_form) => {
@@ -84,6 +85,8 @@ exports.image_upload = (req, res) => {
     return MongoClient.connect(DB_config.url,DB_config.options)
   })
   .then( db => {
+
+    connection = db
 
     let new_document = {
       time: new Date(),
@@ -123,7 +126,6 @@ exports.image_upload = (req, res) => {
     .insertOne(new_document)
 
   })
-
   .then(result => {
     console.log(`[MongoDB] Image ${file_name} inserted in collection ${collection}`)
 
@@ -138,11 +140,11 @@ exports.image_upload = (req, res) => {
       document: new_document
     })
   })
-
   .catch(error => {
     console.log(error)
     res.status(500).send(error)
   })
+  .finally(() => { connection.close() })
 
 }
 
@@ -152,8 +154,12 @@ exports.get_all_images = (req, res) => {
   const collection = req.params.collection
   if(!collection) return res.status(400).send(`Collection not specified`)
 
+  let connection = undefined
+
   MongoClient.connect(DB_config.url,DB_config.options)
   .then(db => {
+
+    connection = db
 
     const limit = req.query.limit
       || req.query.batch_size
@@ -191,6 +197,7 @@ exports.get_all_images = (req, res) => {
     console.log(error)
     res.status(500).send(error)
   })
+  .finally(() => { connection.close() })
 
 }
 
@@ -212,8 +219,11 @@ exports.get_single_image = (req, res) => {
     return res.status(400).send(`Invalid ID`)
   }
 
+  let connection = undefined
+
   MongoClient.connect(DB_config.url,DB_config.options)
   .then(db => {
+    connection = db
     return db.db(DB_config.db)
     .collection(collection)
     .findOne(query)
@@ -226,6 +236,7 @@ exports.get_single_image = (req, res) => {
     console.log(error)
     res.status(500).send(error)
   })
+  .finally(() => { connection.close() })
 }
 
 exports.delete_image = (req, res) => {
@@ -244,8 +255,11 @@ exports.delete_image = (req, res) => {
     return res.status(400).send(`Invalid ID`)
   }
 
+  let connection = undefined
+
   MongoClient.connect(DB_config.url,DB_config.options)
   .then(db => {
+    connection = db
     return db.db(DB_config.db)
     .collection(req.params.collection)
     .deleteOne(query)
@@ -258,6 +272,7 @@ exports.delete_image = (req, res) => {
     console.log(error)
     res.status(500).send(error)
   })
+  .finally(() => { connection.close() })
 }
 
 exports.patch_image = (req, res) => {
@@ -279,9 +294,12 @@ exports.patch_image = (req, res) => {
   delete req.body._id
   let new_image_properties = {$set: req.body}
 
+  let connection = undefined
+
 
   MongoClient.connect(DB_config.url,DB_config.options)
   .then(db => {
+    connection = db
     const options = {returnOriginal: false}
     return db.db(DB_config.db)
     .collection(collection)
@@ -303,6 +321,7 @@ exports.patch_image = (req, res) => {
     console.log(error)
     res.status(500).send(error)
   })
+  .finally(() => { connection.close() })
 }
 
 exports.replace_image = (req, res) => {
@@ -325,9 +344,12 @@ exports.replace_image = (req, res) => {
 
   let new_image_properties = req.body
 
+  let connection = undefined
+
 
   MongoClient.connect(DB_config.url,DB_config.options)
   .then(db => {
+    connection = db
     return db.db(DB_config.db)
     .collection(collection)
     .replaceOne(query, new_image_properties)
@@ -340,6 +362,7 @@ exports.replace_image = (req, res) => {
     console.log(error)
     res.status(500).send(error)
   })
+  .finally(() => { connection.close() })
 
 }
 
@@ -360,8 +383,11 @@ exports.serve_image_file = (req,res) => {
     return res.status(400).send(`Invalid ID`)
   }
 
+  let connection = undefined
+
   MongoClient.connect(DB_config.url,DB_config.options)
   .then(db => {
+    connection = db
     return db.db(DB_config.db)
     .collection(collection)
     .findOne(query)
@@ -380,5 +406,6 @@ exports.serve_image_file = (req,res) => {
     res.status(500).send(error)
     console.log(error)
   })
+  .finally(() => { connection.close() })
 
 }
