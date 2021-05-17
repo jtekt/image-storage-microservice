@@ -1,5 +1,6 @@
 const mongodb = require('mongodb')
 
+const db_url = process.env.MONGODB_URL || 'mongodb://mongo'
 const db_name = process.env.MONGODB_DB || 'image_storage'
 
 const MongoClient = mongodb.MongoClient
@@ -12,12 +13,13 @@ const mongodb_options = {
 let db
 
 
-MongoClient.connect(process.env.MONGODB_URL,mongodb_options)
+MongoClient.connect(db_url,mongodb_options)
 .then(client => {
   console.log(`[MongoDB] connected`)
   db = client.db(db_name)
 })
 .catch(error => {console.log(error)})
 
-exports.db_name = db_name
+exports.name = db_name
+exports.url = db_url
 exports.getDb = () => db

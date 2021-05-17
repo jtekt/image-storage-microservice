@@ -7,6 +7,7 @@ const http = require('http')
 const socketio = require('socket.io')
 const pjson = require('./package.json')
 const config = require('./config.js')
+const db = require('./db.js')
 
 console.log(`Image storage service v${pjson.version}`)
 
@@ -39,34 +40,13 @@ app.get('/', (req, res) => {
     application_name: 'Image storage API',
     version: pjson.version,
     author: pjson.author,
-    mongodb_url: config.mongodb.url,
-    mongodb_db: config.mongodb.db,
+    mongodb_url: db.url,
+    mongodb_db: db.url,
   })
 })
 
 app.use('/collections', require('./routes/collections.js'))
 
-/*
-app.route('/collections')
-  .get(collections_controller.get_collections) // OK
-
-app.route('/collections/:collection')
-  .post(images_controller.image_upload) // OK
-  .get(images_controller.get_all_images) // OK
-  .delete(collections_controller.drop_collection) // OK
-
-app.route('/collections/:collection/count')
-  .get(collections_controller.get_collection_count) // OK
-
-app.route('/collections/:collection/export')
-  .get(collections_controller.export_collection_zip) // OK
-
-app.route('/collections/:collection/:image_id')
-  .get(images_controller.get_single_image) // OK
-  .delete(images_controller.delete_image) // OK
-  .put(images_controller.replace_image) // OK
-  .patch(images_controller.patch_image) // OK
-*/
 
 http_server.listen(config.app_port, () => {
   console.log(`[Express] Server listening on port ${config.app_port}`)
