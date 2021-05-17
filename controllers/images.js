@@ -1,4 +1,6 @@
-const mongodb = require('mongodb')
+const ObjectID = require('mongodb').ObjectID
+const { getDb } = require('../db.js')
+
 const mv = require('mv')
 const formidable = require('formidable')
 const path = require('path')
@@ -9,11 +11,6 @@ const config = require('../config.js')
 dotenv.config()
 
 const uploads_directory_path = config.uploads_directory_path
-
-const MongoClient = mongodb.MongoClient
-const ObjectID = mongodb.ObjectID
-const DB_config = config.mongodb
-
 
 
 function parse_form(req) {
@@ -54,7 +51,6 @@ exports.image_upload = (req, res) => {
   let fields = undefined
   let files = undefined
 
-  let connection = undefined
 
   parse_form(req)
   .then((parsed_form) => {
@@ -82,11 +78,6 @@ exports.image_upload = (req, res) => {
 
   })
   .then( () => {
-    return MongoClient.connect(DB_config.url,DB_config.options)
-  })
-  .then( db => {
-
-    connection = db
 
     let new_document = {
       time: new Date(),
@@ -121,7 +112,7 @@ exports.image_upload = (req, res) => {
       new_document = {...new_document, ...fields}
     }
 
-    return db.db(DB_config.db)
+    return getDb()
     .collection(collection)
     .insertOne(new_document)
 
@@ -144,7 +135,6 @@ exports.image_upload = (req, res) => {
     console.log(error)
     res.status(500).send(error)
   })
-  .finally(() => { connection.close() })
 
 }
 
@@ -154,41 +144,33 @@ exports.get_all_images = (req, res) => {
   const collection = req.params.collection
   if(!collection) return res.status(400).send(`Collection not specified`)
 
-  let connection = undefined
+  const limit = req.query.limit
+    || req.query.batch_size
+    || req.query.count
+    || 0
 
-  MongoClient.connect(DB_config.url,DB_config.options)
-  .then(db => {
+  const sort = req.query.sort || {time: -1}
+  const start_index = req.query.start_index
+    || req.query.index
+    || 0
 
-    connection = db
-
-    const limit = req.query.limit
-      || req.query.batch_size
-      || req.query.count
-      || 0
-
-    const sort = req.query.sort || {time: -1}
-    const start_index = req.query.start_index
-      || req.query.index
-      || 0
-
-    let filter = {}
-    if(req.query.filter) {
-      try {
-        filter = JSON.parse(req.query.filter)
-      } catch (e) {
-        console.log(`[Express] Failed to parse filter`)
-      }
+  let filter = {}
+  if(req.query.filter) {
+    try {
+      filter = JSON.parse(req.query.filter)
+    } catch (e) {
+      console.log(`[Express] Failed to parse filter`)
     }
+  }
 
 
-    return db.db(DB_config.db)
-    .collection(collection)
-    .find(filter)
-    .skip(Number(start_index))
-    .limit(Number(limit))
-    .sort(sort) // sort by timestamp
-    .toArray()
-  })
+  getDb()
+  .collection(collection)
+  .find(filter)
+  .skip(Number(start_index))
+  .limit(Number(limit))
+  .sort(sort) // sort by timestamp
+  .toArray()
   .then(result => {
     res.send(result)
     console.log(`[MongoDB] Images of ${collection} queried`)
@@ -197,7 +179,6 @@ exports.get_all_images = (req, res) => {
     console.log(error)
     res.status(500).send(error)
   })
-  .finally(() => { connection.close() })
 
 }
 
@@ -219,15 +200,9 @@ exports.get_single_image = (req, res) => {
     return res.status(400).send(`Invalid ID`)
   }
 
-  let connection = undefined
-
-  MongoClient.connect(DB_config.url,DB_config.options)
-  .then(db => {
-    connection = db
-    return db.db(DB_config.db)
-    .collection(collection)
-    .findOne(query)
-  })
+  getDb()
+  .collection(collection)
+  .findOne(query)
   .then(result => {
     res.send(result)
     console.log(`[MongoDB] Document ${image_id} of collection ${collection} queried`)
@@ -236,7 +211,6 @@ exports.get_single_image = (req, res) => {
     console.log(error)
     res.status(500).send(error)
   })
-  .finally(() => { connection.close() })
 }
 
 exports.delete_image = (req, res) => {
@@ -255,15 +229,9 @@ exports.delete_image = (req, res) => {
     return res.status(400).send(`Invalid ID`)
   }
 
-  let connection = undefined
-
-  MongoClient.connect(DB_config.url,DB_config.options)
-  .then(db => {
-    connection = db
-    return db.db(DB_config.db)
-    .collection(req.params.collection)
-    .deleteOne(query)
-  })
+  getDb()
+  .collection(req.params.collection)
+  .deleteOne(query)
   .then(result => {
     res.send(result)
     console.log(`Document ${image_id} of ${collection} deleted`)
@@ -272,7 +240,6 @@ exports.delete_image = (req, res) => {
     console.log(error)
     res.status(500).send(error)
   })
-  .finally(() => { connection.close() })
 }
 
 exports.patch_image = (req, res) => {
@@ -294,21 +261,15 @@ exports.patch_image = (req, res) => {
   delete req.body._id
   let new_image_properties = {$set: req.body}
 
-  let connection = undefined
-
-
-  MongoClient.connect(DB_config.url,DB_config.options)
-  .then(db => {
-    connection = db
-    const options = {returnOriginal: false}
-    return db.db(DB_config.db)
-    .collection(collection)
-    .findOneAndUpdate(query, new_image_properties, options)
-  })
+  const options = {returnOriginal: false}
+  
+  getDb()
+  .collection(collection)
+  .findOneAndUpdate(query, new_image_properties, options)
   .then(result => {
 
     const document = result.value
-    console.log(`Image ${image_id} of collection ${collection} updated`)
+    console.log(`[MongoDB] Image ${image_id} of collection ${collection} updated`)
     res.send(document)
 
     // websockets modification
@@ -321,7 +282,6 @@ exports.patch_image = (req, res) => {
     console.log(error)
     res.status(500).send(error)
   })
-  .finally(() => { connection.close() })
 }
 
 exports.replace_image = (req, res) => {
@@ -344,16 +304,9 @@ exports.replace_image = (req, res) => {
 
   let new_image_properties = req.body
 
-  let connection = undefined
-
-
-  MongoClient.connect(DB_config.url,DB_config.options)
-  .then(db => {
-    connection = db
-    return db.db(DB_config.db)
-    .collection(collection)
-    .replaceOne(query, new_image_properties)
-  })
+  getDb()
+  .collection(collection)
+  .replaceOne(query, new_image_properties)
   .then(result => {
     console.log(`Image ${image_id} of collection ${collection} replaced`)
     res.send(result.value)
@@ -362,7 +315,6 @@ exports.replace_image = (req, res) => {
     console.log(error)
     res.status(500).send(error)
   })
-  .finally(() => { connection.close() })
 
 }
 
@@ -383,15 +335,9 @@ exports.serve_image_file = (req,res) => {
     return res.status(400).send(`Invalid ID`)
   }
 
-  let connection = undefined
-
-  MongoClient.connect(DB_config.url,DB_config.options)
-  .then(db => {
-    connection = db
-    return db.db(DB_config.db)
-    .collection(collection)
-    .findOne(query)
-  })
+  getDb()
+  .collection(collection)
+  .findOne(query)
   .then(result => {
     console.log(`[Express] serving image ${image_id} of collection ${collection}`)
     const image_path = path.join(
@@ -406,6 +352,5 @@ exports.serve_image_file = (req,res) => {
     res.status(500).send(error)
     console.log(error)
   })
-  .finally(() => { connection.close() })
 
 }

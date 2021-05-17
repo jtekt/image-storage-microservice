@@ -8,6 +8,7 @@ process.env.TZ = 'Asia/Tokyo'
 
 exports.uploads_directory_path = process.env.UPLOAD_DIRECTORY || "/usr/share/pv"
 
+// Get rid of this when done
 exports.mongodb = {
   url : process.env.MONGODB_URL || 'mongodb://mongodb:27017',
   db : process.env.MONGODB_DB || 'image_storage',
@@ -16,5 +17,6 @@ exports.mongodb = {
     useUnifiedTopology: true,
   }
 }
+
 
 exports.app_port = process.env.APP_PORT || 80

@@ -1,4 +1,6 @@
-const mongodb = require('mongodb')
+const ObjectID = require('mongodb').ObjectID
+const { getDb } = require('../db.js')
+
 //const del = require('del')
 const rimraf = require('rimraf')
 const dotenv = require('dotenv')
@@ -19,19 +21,12 @@ const axios = require('axios')
 dotenv.config()
 
 const uploads_directory_path = config.uploads_directory_path
-const MongoClient = mongodb.MongoClient
-const DB_config = config.mongodb
-const ObjectID = mongodb.ObjectID
 
 exports.get_collections = (req, res) => {
-  let connection = undefined
-  MongoClient.connect(DB_config.url,DB_config.options)
-  .then(db => {
-    connection = db
-    return db.db(DB_config.db)
-    .listCollections()
-    .toArray()
-  })
+
+  getDb()
+  .listCollections()
+  .toArray()
   .then(collections => {
     //res.send(collections)
     res.send(collections.map(collection => { return collection.name }))
@@ -42,7 +37,6 @@ exports.get_collections = (req, res) => {
     console.log(error)
     res.status(500).send('Error while counting documents')
   })
-  .finally(() => { connection.close() })
 
 }
 
@@ -53,14 +47,9 @@ exports.get_collection_info = (req, res) => {
     return res.status(400).send(`Collection not specified`)
   }
 
-  let connection = undefined
-  MongoClient.connect(DB_config.url,DB_config.options)
-  .then(db => {
-    connection = db
-    return db.db(DB_config.db)
-    .collection(collection)
-    .countDocuments()
-  })
+  getDb()
+  .collection(collection)
+  .countDocuments()
   .then(result => {
     res.send({
       name: collection,
@@ -71,7 +60,6 @@ exports.get_collection_info = (req, res) => {
     console.log(error)
     res.status(500).send('Error while counting documents')
   })
-  .finally(() => { connection.close() })
 }
 
 function delete_images_folder(folder_to_remove){
@@ -90,14 +78,10 @@ exports.drop_collection = (req, res) => {
   if(!collection) {
     return res.status(400).send(`Collection not specified`)
   }
-  let connection = undefined
-  MongoClient.connect(DB_config.url,DB_config.options)
-  .then(db => {
-    connection = db
-    return db.db(DB_config.db)
-    .collection(collection)
-    .drop()
-  })
+
+  getDb()
+  .collection(collection)
+  .drop()
   .then( () => {
     const folder_to_remove = path.join(uploads_directory_path,'images',collection)
     return delete_images_folder(folder_to_remove)
@@ -110,7 +94,6 @@ exports.drop_collection = (req, res) => {
     console.log(error)
     res.status(500).send('Error while counting documents')
   })
-  .finally(() => { connection.close() })
 }
 
 const generate_excel = (data, filename) => {
@@ -133,19 +116,13 @@ exports.export_collection_excel = (req, res) => {
 
   const collection = req.params.collection
 
-  if(!collection) {
-    return res.status(400).send(`Collection not specified`)
-  }
-  let connection = undefined
-  MongoClient.connect(DB_config.url,DB_config.options)
-  .then(db => {
-    connection = db
-    return db.db(DB_config.db)
-    .collection(collection)
-    .find({})
-    .sort({time: -1}) // sort by timestamp
-    .toArray()
-  })
+  if(!collection) return res.status(400).send(`Collection not specified`)
+
+  getDb()
+  .collection(collection)
+  .find({})
+  .sort({time: -1}) // sort by timestamp
+  .toArray()
   .then(result => {
     const filename = `export.xlsx`
     generate_excel(result, filename)
@@ -170,7 +147,6 @@ exports.export_collection_excel = (req, res) => {
     console.log(error)
     res.status(500).send('Error while exporting documents')
   })
-  .finally(() => { connection.close() })
 
 }
 
@@ -178,21 +154,15 @@ exports.export_collection_zip = (req, res) => {
 
   const collection = req.params.collection
 
-  if(!collection) {
-    return res.status(400).send(`Collection not specified`)
-  }
+  if(!collection) return res.status(400).send(`Collection not specified`)
 
   const folder_to_zip = path.join(uploads_directory_path,'images',collection)
-  let connection = undefined
-  MongoClient.connect(DB_config.url,DB_config.options)
-  .then(db => {
-    connection = db
-    return db.db(DB_config.db)
-    .collection(collection)
-    .find({})
-    .sort({time: -1}) // sort by timestamp
-    .toArray()
-  })
+
+  getDb()
+  .collection(collection)
+  .find({})
+  .sort({time: -1}) // sort by timestamp
+  .toArray()
   .then(result => {
 
     const excel_filename = `database_export.xlsx`
@@ -231,7 +201,6 @@ exports.export_collection_zip = (req, res) => {
     console.log(error)
     res.status(500).send(error)
   })
-  .finally(() => { connection.close() })
 
 }
 
@@ -375,7 +344,7 @@ exports.import_collection = (req, res) => {
   const list_url = `${origin_url}/collections/${remote_collection}/images`
 
   let list = []
-  let connection = undefined
+
   axios.get(list_url)
   .then(response => {
     // converting ID and date into proper format
@@ -385,11 +354,7 @@ exports.import_collection = (req, res) => {
       return entry
     })
 
-    return MongoClient.connect(DB_config.url,DB_config.options)
-  })
-  .then( db => {
-    connection = db
-    let bulk = db.db(DB_config.db)
+    let bulk = getDb()
       .collection(local_collection)
       .initializeUnorderedBulkOp()
 
@@ -411,10 +376,8 @@ exports.import_collection = (req, res) => {
       origin_url,
     })
   })
-
   .catch(error => {
     console.log(error)
     res.status(500).send(error)
   })
-  .finally(() => { connection.close() })
 }
