@@ -40,8 +40,12 @@ app.get('/', (req, res) => {
     application_name: 'Image storage API',
     version: pjson.version,
     author: pjson.author,
-    mongodb_url: db.url,
-    mongodb_db: db.url,
+    mongodb: {
+      url: db.url,
+      db: db.url,
+      connected: !!db.getDb(),
+    }
+
   })
 })
 
