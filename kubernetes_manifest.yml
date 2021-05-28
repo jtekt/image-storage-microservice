@@ -3,7 +3,6 @@ kind: PersistentVolumeClaim
 metadata:
   name: image-storage
 spec:
-  storageClassName: manual
   accessModes:
     - ReadWriteOnce
   resources:
@@ -36,7 +35,7 @@ spec:
         - name: MONGODB_URL
           value: "mongodb://172.16.98.151:27017"
         - name: MONGODB_DB
-          value: seikaibu_edge_ai
+          value: image_storage_service
         ports:
         - containerPort: 80
         volumeMounts:

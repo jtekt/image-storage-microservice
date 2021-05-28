@@ -1,7 +1,5 @@
 const ObjectID = require('mongodb').ObjectID
 const { getDb } = require('../db.js')
-
-//const del = require('del')
 const rimraf = require('rimraf')
 const dotenv = require('dotenv')
 const config = require('../config.js')

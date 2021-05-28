@@ -1,6 +1,6 @@
 const ObjectID = require('mongodb').ObjectID
 const { getDb } = require('../db.js')
-
+const rimraf = require('rimraf')
 const mv = require('mv')
 const formidable = require('formidable')
 const path = require('path')
@@ -36,6 +36,15 @@ function move_file(original_path, destination_path){
        resolve()
      })
    })
+}
+
+function delete_file(file_path){
+  return new Promise((resolve, reject) => {
+    rimraf(file_path, (error) => {
+      if(error) reject(error)
+      resolve()
+    })
+  })
 }
 
 
@@ -230,11 +239,26 @@ exports.delete_image = (req, res) => {
   }
 
   getDb()
-  .collection(req.params.collection)
-  .deleteOne(query)
+  .collection(collection)
+  .findOne(query)
+  .then(result => {
+
+    const image_path = path.join(
+      uploads_directory_path,
+      'images',
+      collection,
+      result.image)
+
+    return delete_file(image_path)
+  })
+  .then( () => {
+    return getDb()
+    .collection(collection)
+    .deleteOne(query)
+  })
   .then(result => {
     res.send(result)
-    console.log(`Document ${image_id} of ${collection} deleted`)
+    console.log(`[MongoDB] Document ${image_id} of ${collection} deleted`)
   })
   .catch(error => {
     console.log(error)
@@ -262,14 +286,14 @@ exports.patch_image = (req, res) => {
   let new_image_properties = {$set: req.body}
 
   const options = {returnOriginal: false}
-  
+
   getDb()
   .collection(collection)
   .findOneAndUpdate(query, new_image_properties, options)
   .then(result => {
 
     const document = result.value
-    console.log(`[MongoDB] Image ${image_id} of collection ${collection} updated`)
+    console.log(`[MongoDB] Document ${image_id} of collection ${collection} updated`)
     res.send(document)
 
     // websockets modification
@@ -339,7 +363,6 @@ exports.serve_image_file = (req,res) => {
   .collection(collection)
   .findOne(query)
   .then(result => {
-    console.log(`[Express] serving image ${image_id} of collection ${collection}`)
     const image_path = path.join(
       uploads_directory_path,
       'images',
@@ -347,6 +370,7 @@ exports.serve_image_file = (req,res) => {
       result.image)
 
     res.sendFile(image_path)
+    //console.log(`[Express] serving image ${image_id} of collection ${collection}`)
   })
   .catch((error) => {
     res.status(500).send(error)

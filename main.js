@@ -25,12 +25,6 @@ global.io = io
 // provide express with the ability to read json request bodies
 app.use(bodyParser.json())
 
-// serve static content from uploads directory
-// NOTE: No longer needed since serving images from controller now
-// Could use  app.use('/images', express.static(config.uploads_directory_path))
-app.use(express.static(config.uploads_directory_path))
-
-
 // Authorize requests from different origins
 app.use(cors())
 
