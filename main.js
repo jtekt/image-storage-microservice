@@ -14,6 +14,9 @@ console.log(`Image storage service v${pjson.version}`)
 // Parse environment variables
 dotenv.config()
 
+// Setting the timezone
+process.env.TZ = 'Asia/Tokyo'
+
 // Instanciate objects
 const app = express()
 const http_server = http.Server(app)
@@ -46,8 +49,10 @@ app.get('/', (req, res) => {
 app.use('/collections', require('./routes/collections.js'))
 
 
-http_server.listen(config.app_port, () => {
-  console.log(`[Express] Server listening on port ${config.app_port}`)
+const APP_PORT = process.env.APP_PORT || 80
+
+http_server.listen(APP_PORT, () => {
+  console.log(`[Express] Server listening on port ${APP_PORT}`)
 })
 
 // Handle Websockets
