@@ -39,7 +39,7 @@ app.get('/', (req, res) => {
     author: pjson.author,
     mongodb: {
       url: db.url,
-      db: db.url,
+      db: db.name,
       connected: !!db.getDb(),
     }
 
