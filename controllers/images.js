@@ -12,16 +12,6 @@ dotenv.config()
 
 const uploads_directory_path = config.uploads_directory_path
 
-
-function filter_date_reviver(key, value){
-  if(key === 'time') {
-    for (let nested_key in value) {
-      value[nested_key] = new Date(value[nested_key])
-    }
-  }
-  return value
-}
-
 function parse_form(req) {
   return new Promise ( (resolve, reject) => {
 
@@ -177,9 +167,16 @@ exports.get_all_images = (req, res) => {
   let filter = {}
   if(req.query.filter) {
     try {
-      filter = JSON.parse(req.query.filter, filter_date_reviver)
+      filter = JSON.parse(req.query.filter)
     } catch (e) {
       console.log(`[Express] Failed to parse filter`)
+    }
+  }
+
+  // Convert time filter to date {FLIMSY}
+  if(filter.time) {
+    for (let key in filter.time) {
+      filter.time[key] = new Date(filter.time[key])
     }
   }
 
