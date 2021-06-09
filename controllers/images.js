@@ -13,6 +13,15 @@ dotenv.config()
 const uploads_directory_path = config.uploads_directory_path
 
 
+function filter_date_reviver(key, value){
+  if(key === 'time') {
+    for (let nested_key in value) {
+      value[nested_key] = new Date(value[nested_key])
+    }
+  }
+  return value
+}
+
 function parse_form(req) {
   return new Promise ( (resolve, reject) => {
 
@@ -147,6 +156,8 @@ exports.image_upload = (req, res) => {
 
 }
 
+
+
 exports.get_all_images = (req, res) => {
 
   // Check for collection here to save a DB query if not necessary
@@ -166,7 +177,7 @@ exports.get_all_images = (req, res) => {
   let filter = {}
   if(req.query.filter) {
     try {
-      filter = JSON.parse(req.query.filter)
+      filter = JSON.parse(req.query.filter, filter_date_reviver)
     } catch (e) {
       console.log(`[Express] Failed to parse filter`)
     }
@@ -326,7 +337,7 @@ exports.replace_image = (req, res) => {
 
   delete req.body._id
 
-  let new_image_properties = req.body
+  const new_image_properties = req.body
 
   getDb()
   .collection(collection)
@@ -370,7 +381,6 @@ exports.serve_image_file = (req,res) => {
       result.image)
 
     res.sendFile(image_path)
-    //console.log(`[Express] serving image ${image_id} of collection ${collection}`)
   })
   .catch((error) => {
     res.status(500).send(error)
