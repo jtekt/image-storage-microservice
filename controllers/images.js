@@ -159,10 +159,18 @@ exports.get_all_images = (req, res) => {
     || req.query.count
     || 0
 
-  const sort = req.query.sort || {time: -1}
   const start_index = req.query.start_index
     || req.query.index
     || 0
+
+  let sort = {time: -1}
+  if(req.query.sort) {
+    try {
+      sort = JSON.parse(req.query.sort)
+    } catch (e) {
+      console.log(`[Express] Failed to parse sort`)
+    }
+  }
 
   let filter = {}
   if(req.query.filter) {
