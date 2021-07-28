@@ -172,6 +172,8 @@ exports.get_all_images = (req, res) => {
     }
   }
 
+  console.log(sort)
+
   let filter = {}
   if(req.query.filter) {
     try {

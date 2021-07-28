@@ -1,6 +1,6 @@
 {
   "name": "storage_microservice",
-  "version": "2.5.6",
+  "version": "2.5.8",
   "description": "",
   "main": "main.js",
   "scripts": {

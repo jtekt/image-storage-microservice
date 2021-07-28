@@ -40,9 +40,8 @@ app.get('/', (req, res) => {
     mongodb: {
       url: db.url,
       db: db.name,
-      connected: !!db.getDb(),
+      initially_connected: !!db.getDb(),
     }
-
   })
 })
 
@@ -59,6 +58,8 @@ http_server.listen(APP_PORT, () => {
 io.sockets.on('connection', (socket) => {
   // Deals with Websocket connections
   console.log('[WS] User connected')
+
+  socket.emit('test','test')
 
   socket.on('disconnect', () => {
     console.log('[WS] user disconnected');
