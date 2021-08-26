@@ -95,7 +95,7 @@ exports.image_upload = (req, res) => {
     // Check if proerties passed as JSON
     let json_properties = fields.json
       || fields.json_properties
-      || fields.proerties_json
+      || fields.properties_json
 
     if (json_properties) {
       console.log(`Found JSON properties in fields`)
