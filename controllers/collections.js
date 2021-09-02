@@ -1,64 +1,37 @@
 const ObjectID = require('mongodb').ObjectID
-const { getDb } = require('../db.js')
 const rimraf = require('rimraf')
 const dotenv = require('dotenv')
 const config = require('../config.js')
 const path = require('path')
 const url = require('url')
+const { getDb } = require('../db.js')
+const axios = require('axios') // USed for imports
 
-// exports
+// Modules used for export
 const fs = require('fs')
 const XLSX = require('xlsx')
 const AdmZip = require('adm-zip')
 // COULD USE express-zip INSTEAD
 
-// Import
-const axios = require('axios')
 
 // Parse environment variables
 dotenv.config()
 
 const uploads_directory_path = config.uploads_directory_path
 
-exports.get_collections = (req, res) => {
-
-  getDb()
-  .listCollections()
-  .toArray()
-  .then(collections => {
-    //res.send(collections)
-    res.send(collections.map(collection => { return collection.name }))
-
-    console.log(`[MongoDB] Queried list of collections`)
-  })
-  .catch(error => {
-    console.log(error)
-    res.status(500).send('Error while counting documents')
-  })
-
+function error_handling(res, error) {
+  const status_code = error.code || 500
+  const message = error.message || error
+  console.log(message)
+  if(!res._headerSent) res.status(status_code).send(message)
 }
 
-exports.get_collection_info = (req, res) => {
-
-  const collection = req.params.collection
-  if(!collection) {
-    return res.status(400).send(`Collection not specified`)
-  }
-
-  getDb()
-  .collection(collection)
-  .countDocuments()
-  .then(result => {
-    res.send({
-      name: collection,
-      documents: result,
-    })
-  })
-  .catch(error => {
-    console.log(error)
-    res.status(500).send('Error while counting documents')
-  })
+function get_collection_from_request(req){
+    const collection = req.params.collection
+    if(!collection) throw {code: 400, message: 'Collection not specified'}
+    return collection
 }
+
 
 function delete_images_folder(folder_to_remove){
   return new Promise((resolve, reject) => {
@@ -69,137 +42,18 @@ function delete_images_folder(folder_to_remove){
   })
 }
 
-exports.drop_collection = (req, res) => {
-
-  const collection = req.params.collection
-
-  if(!collection) {
-    return res.status(400).send(`Collection not specified`)
-  }
-
-  getDb()
-  .collection(collection)
-  .drop()
-  .then( () => {
-    const folder_to_remove = path.join(uploads_directory_path,'images',collection)
-    return delete_images_folder(folder_to_remove)
-  })
-  .then(() => {
-    console.log(`[MongoDB] Collection ${collection} dropped`)
-    res.send(`Collection ${collection} dropped`)
-  })
-  .catch(error => {
-    console.log(error)
-    res.status(500).send('Error while counting documents')
-  })
-}
-
 const generate_excel = (data, filename) => {
 
-  // convert ID from ObjectID to String
+  // convert any object into String
   data = data.map( (item) => {
-    for (var key in item) {
-      item[key] = item[key].toString()
-    }
+    for (let key in item) { item[key] = item[key].toString() }
     return item
   })
 
-  let workbook = XLSX.utils.book_new()
+  const workbook = XLSX.utils.book_new()
   const worksheet = XLSX.utils.json_to_sheet(data)
   XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1")
   XLSX.writeFile(workbook, filename)
-}
-
-exports.export_collection_excel = (req, res) => {
-
-  const collection = req.params.collection
-
-  if(!collection) return res.status(400).send(`Collection not specified`)
-
-  getDb()
-  .collection(collection)
-  .find({})
-  .sort({time: -1}) // sort by timestamp
-  .toArray()
-  .then(result => {
-    const filename = `export.xlsx`
-    generate_excel(result, filename)
-
-    const stream = fs.createReadStream(filename);         // create read stream
-
-    res.setHeader( "Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" )
-    res.setHeader( "Content-Disposition", `attachment; filename=${filename}` )
-
-    stream.pipe(res)
-    res.end()
-
-    rimraf(filename, (error) => {
-      if(error) {
-        console.log(error)
-      }
-    })
-
-    console.log(`[MongoDB] Images of ${collection} exported`)
-  })
-  .catch(error => {
-    console.log(error)
-    res.status(500).send('Error while exporting documents')
-  })
-
-}
-
-exports.export_collection_zip = (req, res) => {
-
-  const collection = req.params.collection
-
-  if(!collection) return res.status(400).send(`Collection not specified`)
-
-  const folder_to_zip = path.join(uploads_directory_path,'images',collection)
-
-  getDb()
-  .collection(collection)
-  .find({})
-  .sort({time: -1}) // sort by timestamp
-  .toArray()
-  .then(result => {
-
-    const excel_filename = `database_export.xlsx`
-    generate_excel(result, excel_filename)
-
-    const dir_content = fs.readdir(folder_to_zip, (error, files) => {
-
-      if(error) throw Error('Could not list content of directory')
-
-      let zip = new AdmZip()
-
-      // add local file
-      files.forEach((file) => { zip.addLocalFile(path.join(folder_to_zip,file)) })
-
-      // Add excel export
-      zip.addLocalFile(excel_filename)
-
-      // get everything as a buffer
-      const zipFileContents = zip.toBuffer();
-      const zip_filename = `export.zip`;
-      res.setHeader( "Content-Type", "application/zip" )
-      res.setHeader( "Content-Disposition", `attachment; filename=${zip_filename}` )
-      res.send(zipFileContents)
-
-      console.log(`[MongoDB] Images of ${collection} exported`)
-
-      // Delete the excel file once done
-      rimraf(excel_filename, (error) => {
-        if(error) { console.log(error) }
-      })
-
-    })
-
-  })
-  .catch(error => {
-    console.log(error)
-    res.status(500).send(error)
-  })
-
 }
 
 async function download_single_image(parameters) {
@@ -315,9 +169,116 @@ function download_all_images(options){
     console.log(error)
   })
 
+}
 
+
+exports.get_collections = async (req, res) => {
+
+  // Todo: respond with more info than just name
+
+  try {
+    const collections = await getDb()
+      .listCollections()
+      .toArray()
+
+    res.send(collections.map(collection => { return collection.name }))
+    console.log(`[MongoDB] Queried list of collections`)
+  }
+  catch (error) { error_handling(res, error) }
 
 }
+
+exports.get_collection_info = async (req, res) => {
+
+  try {
+    const collection = get_collection_from_request(req)
+
+    const document_count = await getDb()
+      .collection(collection)
+      .countDocuments()
+
+      res.send({ name: collection, documents: document_count })
+      console.log(`[MongoDB] Queried info for collection ${collection}`)
+  }
+  catch (error) { error_handling(res, error) }
+
+}
+
+
+
+exports.drop_collection = async (req, res) => {
+
+  try {
+    const collection = get_collection_from_request(req)
+    await getDb()
+      .collection(collection)
+      .drop()
+    const folder_to_remove = path.join(uploads_directory_path,'images',collection)
+    await delete_images_folder(folder_to_remove)
+
+    console.log(`[MongoDB] Collection ${collection} dropped`)
+    res.send(`Collection ${collection} dropped`)
+
+  }
+  catch (error) { error_handling(res, error) }
+
+}
+
+exports.export_collection_zip = (req, res) => {
+
+  const collection = req.params.collection
+
+  if(!collection) return res.status(400).send(`Collection not specified`)
+
+  const folder_to_zip = path.join(uploads_directory_path,'images',collection)
+
+  getDb()
+  .collection(collection)
+  .find({})
+  .sort({time: -1}) // sort by timestamp
+  .toArray()
+  .then(result => {
+
+    const excel_filename = `database_export.xlsx`
+    generate_excel(result, excel_filename)
+
+    const dir_content = fs.readdir(folder_to_zip, (error, files) => {
+
+      if(error) throw Error('Could not list content of directory')
+
+      let zip = new AdmZip()
+
+      // add local file
+      files.forEach((file) => { zip.addLocalFile(path.join(folder_to_zip,file)) })
+
+      // Add excel export
+      zip.addLocalFile(excel_filename)
+
+      // get everything as a buffer
+      const zipFileContents = zip.toBuffer();
+      const zip_filename = `export.zip`;
+      res.setHeader( "Content-Type", "application/zip" )
+      res.setHeader( "Content-Disposition", `attachment; filename=${zip_filename}` )
+      res.send(zipFileContents)
+
+      console.log(`[MongoDB] Images of ${collection} exported`)
+
+      // Delete the excel file once done
+      rimraf(excel_filename, (error) => {
+        if(error) { console.log(error) }
+      })
+
+    })
+
+  })
+  .catch(error => {
+    console.log(error)
+    res.status(500).send(error)
+  })
+
+}
+
+
 
 exports.import_collection = (req, res) => {
 
@@ -344,9 +305,9 @@ exports.import_collection = (req, res) => {
   let list = []
 
   axios.get(list_url)
-  .then(response => {
+  .then( ({data}) => {
     // converting ID and date into proper format
-    list = response.data.map(entry => {
+    list = data.map(entry => {
       entry._id = ObjectID(entry._id)
       entry.time = new Date(entry.time)
       return entry
@@ -356,8 +317,11 @@ exports.import_collection = (req, res) => {
       .collection(local_collection)
       .initializeUnorderedBulkOp()
 
+    // Create list of bulk operations
     list.forEach((item) => {
-      bulk.find({_id: item._id}).upsert().updateOne({$set: item})
+      bulk.find({_id: item._id})
+      .upsert()
+      .updateOne({$set: item})
     })
 
     return bulk.execute()
