@@ -4,6 +4,7 @@ stages:
 
 variables:
   APPLICATION_NAME: image-storage
+  CONTAINER_IMAGE: ${CONTAINER_REGISTRY}/${APPLICATION_NAME}
 
 # Building application for X86 plattforms
 containerization-x86:
@@ -11,8 +12,15 @@ containerization-x86:
   tags:
     - "x86"
   script:
-    - docker build -t ${CONTAINER_REGISTRY}/${APPLICATION_NAME} .
-    - docker push ${CONTAINER_REGISTRY}/${APPLICATION_NAME}
+    - >
+     if [ -z ${DOCKER_HUB_USERNAME} ];
+     then echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin ;
+     else echo "No Docker login" -;
+     fi
+    - docker build -t ${CONTAINER_IMAGE} .
+    - docker push ${CONTAINER_IMAGE}
+    # Cleanup
+    - docker image rm ${CONTAINER_IMAGE}
 
 # Building application for ARM (64bit) plattforms
 containerization-aarch64:
@@ -24,5 +32,5 @@ containerization-aarch64:
       docker build
       --build-arg HTTP_PROXY=http://172.16.98.151:8118
       --build-arg HTTPS_PROXY=http://172.16.98.151:8118
-      -t ${CONTAINER_REGISTRY}/${APPLICATION_NAME}-aarch64 .
-    - docker push ${CONTAINER_REGISTRY}/${APPLICATION_NAME}-aarch64
+      -t ${CONTAINER_IMAGE}-aarch64 .
+    - docker push ${CONTAINER_IMAGE}-aarch64
