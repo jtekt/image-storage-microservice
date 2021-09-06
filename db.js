@@ -1,7 +1,7 @@
 const mongodb = require('mongodb')
 
 const db_url = process.env.MONGODB_URL || 'mongodb://mongo'
-const db_name = process.env.MONGODB_DB || 'image_storage_service'
+const db_name = process.env.MONGODB_DB || 'image_storage'
 
 const MongoClient = mongodb.MongoClient
 
