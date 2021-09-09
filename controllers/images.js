@@ -32,6 +32,7 @@ function move_file(original_path, destination_path){
 
      mv(original_path, destination_path, options, (error) => {
        if (error) return reject(error)
+       console.log('MOVED')
        resolve()
      })
    })
@@ -152,7 +153,7 @@ exports.image_upload = async (req, res) => {
     // Read the form files
     const original_file = files['image']
 
-    if(!original_file) throw Error('Request does not contain an image')
+    if(!original_file) throw { code: 400, message: "Request does not contain an image" }
 
     const original_path = original_file.path
     const file_name = original_file.name
