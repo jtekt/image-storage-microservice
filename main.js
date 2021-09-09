@@ -29,8 +29,8 @@ global.io = io
 
 // Authentication if necessary
 const auth_options = {
+  lax: !process.env.USE_AUTHENTICATION,
   url: process.env.IDENTIFICATION_URL,
-  lax: !process.env.USE_AUTHENTICATION
 }
 
 // provide express with the ability to read json request bodies

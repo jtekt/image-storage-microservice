@@ -21,20 +21,13 @@ Data related to the image, including its URL, is stored in a MongoDB collection.
 
 ## Environment variables
 
-| Variable | Description |
-| --- | --- |
-| MONGODB_URL | The URL of the MongoDB database to be used by the service |
-| MONGODB_DB | OPTIONAL The name of the database to be used by the service |
-
-## Websockets
-
-This application exposes a socketio websocket server and emits the following messages
-
-
-| Event | Content |
-| --- | --- |
-| upload | image information upon upload |
-| update | image information upon update |
+| Variable | required | Description |
+| --- | --- | --- |
+| APP_PORT | false | The port to which the application listens to, defaults to 80 |
+| MONGODB_URL | true | The URL of the MongoDB database to be used by the service |
+| MONGODB_DB | false| The name of the database to be used by the service |
+| USE_AUTHENTICATION | false | Set this variable to any value to enforce authentciation |
+| IDENTIFICATION_URL | false | When using authentication, holds the URL used to identify the user |
 
 
 ## Deployment
@@ -42,5 +35,24 @@ This application exposes a socketio websocket server and emits the following mes
 ### Docker
 
 ```
-docker run -e MONGODB_URL=http://your-db-url 172.16.98.151:5000/storage
+docker run -p 7070:80 -e MONGODB_URL=http://your-db-url 172.16.98.151:5000/image-storage
+```
+
+## Image upload example
+
+```python
+import requests
+
+IMAGE_PATH = './example_image.jpg'
+STORAGE_MS_URL = 'http://172.16.98.151:7070'
+COLLECTION = 'example'
+
+url = f'{STORAGE_MS_URL}/collections/{COLLECTION}/images'
+
+fields = { 'ai_prediction': 'OK' }
+files = { 'image' : open(IMAGE_PATH, "rb") }
+
+response = requests.post(api_url, data=fields, files=files)
+
+print(response.status_code)
 ```
