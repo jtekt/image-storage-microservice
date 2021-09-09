@@ -15,6 +15,11 @@ const uploads_directory_path = config.uploads_directory_path
 function parse_form(req) {
   return new Promise ( (resolve, reject) => {
 
+    const content_type = req.headers['content-type']
+    if(!content_type.includes('multipart/form-data')) {
+      reject({code: 400, message: 'Content-type must bne multipart/form-data'})
+    }
+
     const form = new formidable.IncomingForm()
 
     form.parse(req, (error, fields, files) => {
@@ -32,7 +37,6 @@ function move_file(original_path, destination_path){
 
      mv(original_path, destination_path, options, (error) => {
        if (error) return reject(error)
-       console.log('MOVED')
        resolve()
      })
    })
@@ -147,6 +151,7 @@ function parse_json_properties(fields){
 exports.image_upload = async (req, res) => {
 
   try {
+
     const collection = get_collection_from_request(req)
     const {fields, files} = await parse_form(req)
 
