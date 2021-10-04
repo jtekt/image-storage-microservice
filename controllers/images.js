@@ -54,7 +54,8 @@ function delete_file(file_path){
 
 
 function error_handling(res, error) {
-  const status_code = error.code || 500
+  let status_code = error.code || 500
+  if(status_code === 11000) status_code = 500
   const message = error.message || error
   console.log(message)
   if(!res._headerSent) res.status(status_code).send(message)
@@ -67,17 +68,18 @@ function get_collection_from_request(req){
 }
 
 function get_id_from_request(req){
-    const image_id = req.params.image_id
-      || req.params.id
-      || req.params.document_id
-      || req.params._id
+    let image_id = req.params.image_id
+
     if(!image_id) throw {code: 400, message: 'ID not specified'}
 
 
-    try { ObjectID(image_id) }
-    catch (e) { throw {code: 400, message: 'Invalid ID'} }
+    try { image_id = ObjectID(image_id) }
+    //catch (e) { throw {code: 400, message: 'Invalid ID'} }
+    catch (e) {
+      console.log('Invalid ID')
+    }
 
-    return ObjectID(image_id)
+    return image_id
 }
 
 
@@ -148,6 +150,10 @@ function parse_json_properties(fields){
 
 }
 
+const create_image_index = (collection) => {
+
+}
+
 exports.image_upload = async (req, res) => {
 
   try {
@@ -179,6 +185,11 @@ exports.image_upload = async (req, res) => {
     const json_properties = parse_json_properties(fields)
     if(json_properties) new_document = {...new_document, ...json_properties}
     else new_document = {...new_document, ...fields}
+
+    // Create index so that image becomes unique
+    // await getDb()
+    //   .collection(collection)
+    //   .createIndex({ image: 1 }, { unique: true })
 
     const insertion_result = await getDb()
       .collection(collection)
@@ -234,9 +245,13 @@ exports.get_single_image = async (req, res) => {
     const collection = get_collection_from_request(req)
     const _id = get_id_from_request(req)
 
+    const query = { $or: [ { _id: _id }, { image: _id} ] }
+
     const queried_documment = await getDb()
     .collection(collection)
-    .findOne({_id})
+    .findOne(query)
+
+    if(!queried_documment) throw {code: 404, message: 'Document not found'}
 
     res.send(queried_documment)
     console.log(`[MongoDB] Document ${_id} of collection ${collection} queried`)

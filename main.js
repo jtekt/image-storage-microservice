@@ -54,8 +54,8 @@ app.get('/', (req, res) => {
   })
 })
 
-
-app.use('/collections', auth(auth_options), collections_router)
+const middleware = process.env.USE_AUTHENTICATION ? auth(auth_options) : (res, req, next) => {next()}
+app.use('/collections', middleware, collections_router)
 
 const APP_PORT = process.env.APP_PORT || 80
 
