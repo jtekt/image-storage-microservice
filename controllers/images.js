@@ -244,12 +244,10 @@ exports.get_single_image = async (req, res) => {
   try {
     const collection = get_collection_from_request(req)
     const _id = get_id_from_request(req)
-
-    const query = { $or: [ { _id: _id }, { image: _id} ] }
-
+    
     const queried_documment = await getDb()
     .collection(collection)
-    .findOne(query)
+    .findOne({ _id })
 
     if(!queried_documment) throw {code: 404, message: 'Document not found'}
 
