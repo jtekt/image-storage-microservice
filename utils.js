@@ -1,8 +1,8 @@
 const rimraf = require('rimraf')
 
 exports.error_handling = (error, res) => {
-  console.error(error)
-  const status_code = error.code || 500
+  let status_code = error.code || 500
+  if(status_code > 600) status_code = 500
   const message = error.message || error
   console.log(message)
   if(!res._headerSent) res.status(status_code).send(message)

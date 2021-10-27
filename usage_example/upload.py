@@ -1,4 +1,5 @@
 import requests
+from time import time
 
 IMAGE_PATH = './example_image.jpg'
 STORAGE_SERVCICE_URL = 'http://172.16.98.151:7070'
@@ -13,7 +14,7 @@ fields = {
     }
 
 
-files = { 'image' : open(IMAGE_PATH, "rb") }
+files = { 'image' : (f'{time()}.jpg', open(IMAGE_PATH,'rb').read()) }
 
 
 # Send the image
