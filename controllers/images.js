@@ -1,7 +1,11 @@
 const Image = require('../models/image.js')
 const path = require('path')
 const {uploads_directory} = require('../config.js')
-const {error_handling} = require('../utils.js')
+const {
+  error_handling,
+  remove_file,
+} = require('../utils.js')
+
 
 
 exports.read_images = async (req,res) => {
@@ -40,6 +44,21 @@ exports.read_image = async (req,res) => {
     const image = await Image.findOne({_id})
     res.send(image)
     console.log(`Image ${_id} queried`)
+  }
+  catch (error) {
+    error_handling(error,res)
+  }
+}
+
+exports.delete_image = async (req,res) => {
+  try {
+    const {_id} = req.params
+    const {file} = await Image.findOne({_id})
+    const file_absolute_path = path.join(__dirname, `../${uploads_directory}`,file)
+    await remove_file(file_absolute_path)
+    await Image.findOneAndDelete({_id})
+    res.send({_id})
+    console.log(`Image ${_id} deleted`)
   }
   catch (error) {
     error_handling(error,res)

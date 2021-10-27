@@ -7,6 +7,7 @@ const {
   upload_image,
   read_image,
   read_image_file,
+  delete_image,
 } = require('../controllers/images.js')
 
 const router = Router()
@@ -25,6 +26,7 @@ router.route('/')
 
 router.route('/:_id')
   .get(read_image)
+  .delete(delete_image)
 
 router.route('/:_id/image')
   .get(read_image_file)
