@@ -1,4 +1,4 @@
-const { Schema } = require('mongoose')
+const { Schema, model } = require('mongoose')
 
 const imageSchema = new Schema({
   file: String,
@@ -6,6 +6,6 @@ const imageSchema = new Schema({
   data: Object
 })
 
-const Image = mongoose.model('Image', imageSchema);
+const Image = model('Image', imageSchema);
 
 module.exports = Image
