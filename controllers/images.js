@@ -186,8 +186,8 @@ exports.image_upload = async (req, res) => {
     if(json_properties) new_document = {...new_document, ...json_properties}
     else new_document = {...new_document, ...fields}
 
-    if(new_document._id) throw { code: 400, message: "The _id property cannot be user-defined" }
-
+    if(new_document._id) throw { code: 400, message: "_id cannot be user-defined" }
+    if(new_document.time) throw {code: 400, message: "time cannot be user-defined"}
     // WARNING: Date can be overwritten by user
 
     // Create index so that image becomes unique
@@ -298,15 +298,18 @@ exports.patch_image = async (req, res) => {
     const collection = get_collection_from_request(req)
     const _id = get_id_from_request(req)
 
-    //TODO: Make date an actual date
-    delete req.body._id
-    const new_image_properties = {$set: req.body}
+    const new_properties = req.body
 
+    // Prevent edition of time and _id
+    delete new_properties.time
+    delete new_properties._id
+
+    const action = {$set: new_properties}
     const options = {returnOriginal: false}
 
     const result = await getDb()
       .collection(collection)
-      .findOneAndUpdate({_id}, new_image_properties, options)
+      .findOneAndUpdate({_id}, action, options)
 
     res.send(result.value)
 
@@ -318,29 +321,29 @@ exports.patch_image = async (req, res) => {
 
 }
 
-exports.replace_image = async (req, res) => {
-
-  try {
-    const collection = get_collection_from_request(req)
-    const _id = get_id_from_request(req)
-
-    //TODO: Make date an actual date
-    delete req.body._id
-    const new_image_properties = req.body
-
-    const options = {returnOriginal: false}
-
-    const result = await getDb()
-      .collection(collection)
-      .replaceOne({_id}, new_image_properties)
-
-    res.send(result.value)
-
-    console.log(`[MongoDB] Document ${_id} of ${collection} deleted`)
-  }
-  catch (error) { error_handling(res, error) }
-
-}
+// exports.replace_image = async (req, res) => {
+//
+//   try {
+//     const collection = get_collection_from_request(req)
+//     const _id = get_id_from_request(req)
+//
+//     //TODO: Make date an actual date
+//     delete req.body._id
+//     const new_image_properties = req.body
+//
+//     const options = {returnOriginal: false}
+//
+//     const result = await getDb()
+//       .collection(collection)
+//       .replaceOne({_id}, new_image_properties)
+//
+//     res.send(result.value)
+//
+//     console.log(`[MongoDB] Document ${_id} of ${collection} deleted`)
+//   }
+//   catch (error) { error_handling(res, error) }
+//
+// }
 
 
 exports.serve_image_file = async (req,res) => {
