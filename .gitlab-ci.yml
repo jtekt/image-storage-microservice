@@ -1,0 +1,36 @@
+stages:
+  - containerization-x86
+  - containerization-aarch64
+
+variables:
+  APPLICATION_NAME: image-storage-mongoose
+  CONTAINER_IMAGE: ${CONTAINER_REGISTRY}/${APPLICATION_NAME}
+
+# Building application for X86 plattforms
+containerization-x86:
+  stage: containerization-x86
+  tags:
+    - "x86"
+  script:
+    - >
+     if [ -z ${DOCKER_HUB_USERNAME} ];
+     then echo "No Docker login" -;
+     else echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin ;
+     fi
+    - docker build -t ${CONTAINER_IMAGE} .
+    - docker push ${CONTAINER_IMAGE}
+    # Cleanup
+    - docker image rm ${CONTAINER_IMAGE}
+
+# Building application for ARM (64bit) plattforms
+containerization-aarch64:
+  stage: containerization-aarch64
+  tags:
+    - "aarch64"
+  script:
+    - >
+      docker build
+      --build-arg HTTP_PROXY=http://172.16.98.151:8118
+      --build-arg HTTPS_PROXY=http://172.16.98.151:8118
+      -t ${CONTAINER_IMAGE}-aarch64 .
+    - docker push ${CONTAINER_IMAGE}-aarch64
