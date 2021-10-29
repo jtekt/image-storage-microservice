@@ -65,6 +65,22 @@ exports.delete_image = async (req,res) => {
   }
 }
 
+exports.update_image = async (req,res) => {
+  try {
+    const {_id} = req.params
+    const properties = req.body
+    const image = await Image.findOne({_id})
+    // Unpack properties into data, overwriting fields if necessary
+    image.data = {...image.data,...properties}
+    const updated_image = await image.save()
+    res.send(updated_image)
+    console.log(`Image ${_id} updated`)
+  }
+  catch (error) {
+    error_handling(error,res)
+  }
+}
+
 exports.read_image_file = async (req,res) => {
   try {
     const {_id} = req.params

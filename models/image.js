@@ -7,9 +7,9 @@ const imageSchema = new Schema({
     unique: true,
   },
   time: Date,
-  data: Object
+  data: Object,
 })
 
-const Image = model('Image', imageSchema);
+const Image = model('Image', imageSchema)
 
 module.exports = Image
