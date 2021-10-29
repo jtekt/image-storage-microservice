@@ -3,7 +3,7 @@ const dotenv = require('dotenv')
 
 dotenv.config()
 
-const mongodb_db = process.env.MONGODB_DB ?? 'outfit_manager'
+const mongodb_db = process.env.MONGODB_DB ?? 'image_storage_mongoose'
 const mongodb_url = process.env.MONGODB_URL ?? 'mongodb://mongo'
 
 const mongodb_options = {
