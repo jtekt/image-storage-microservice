@@ -1,6 +1,5 @@
 stages:
-  - containerization-x86
-  - containerization-aarch64
+  - containerization
 
 variables:
   APPLICATION_NAME: image-storage-mongoose
@@ -8,7 +7,7 @@ variables:
 
 # Building application for X86 plattforms
 containerization-x86:
-  stage: containerization-x86
+  stage: containerization
   tags:
     - "x86"
   script:
@@ -21,16 +20,3 @@ containerization-x86:
     - docker push ${CONTAINER_IMAGE}
     # Cleanup
     - docker image rm ${CONTAINER_IMAGE}
-
-# Building application for ARM (64bit) plattforms
-containerization-aarch64:
-  stage: containerization-aarch64
-  tags:
-    - "aarch64"
-  script:
-    - >
-      docker build
-      --build-arg HTTP_PROXY=http://172.16.98.151:8118
-      --build-arg HTTPS_PROXY=http://172.16.98.151:8118
-      -t ${CONTAINER_IMAGE}-aarch64 .
-    - docker push ${CONTAINER_IMAGE}-aarch64
