@@ -186,6 +186,10 @@ exports.image_upload = async (req, res) => {
     if(json_properties) new_document = {...new_document, ...json_properties}
     else new_document = {...new_document, ...fields}
 
+    if(new_document._id) throw { code: 400, message: "The _id property cannot be user-defined" }
+
+    // WARNING: Date can be overwritten by user
+
     // Create index so that image becomes unique
     // await getDb()
     //   .collection(collection)
@@ -244,7 +248,7 @@ exports.get_single_image = async (req, res) => {
   try {
     const collection = get_collection_from_request(req)
     const _id = get_id_from_request(req)
-    
+
     const queried_documment = await getDb()
     .collection(collection)
     .findOne({ _id })

@@ -1,7 +1,7 @@
 {
   "name": "storage_microservice",
   "version": "2.6.6",
-  "description": "",
+  "description": "Receives images via HTTP POST (multipart/form-data) and store it locally. The images are served as static assets using Express. Data related to the image, including its URL, is stored in a MongoDB collection.",
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -27,5 +27,6 @@
     "rimraf": "^3.0.2",
     "socket.io": "^2.4.1",
     "xlsx": "^0.17.1"
-  }
+  },
+  "devDependencies": {}
 }
