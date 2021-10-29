@@ -4,7 +4,7 @@ stages:
 
 variables:
   APPLICATION_NAME: image-storage-mongoose
-  CONTAINER_IMAGE: ${CONTAINER_REGISTRY}/${APPLICATION_NAME}
+  CONTAINER_IMAGE: ${DOCKER_HUB_PASSWORD}/${APPLICATION_NAME}
 
 # Building application for X86 plattforms
 containerization-x86:
