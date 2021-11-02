@@ -224,63 +224,79 @@ exports.drop_collection = async (req, res) => {
 
 }
 
-exports.export_collection_zip = (req, res) => {
 
-  const collection = req.params.collection
+
+const list_files_of_directory = (folder) => new Promise((resolve, reject) => {
+  fs.readdir(folder, (error, files) => {
+    if(error) return reject(error)
+    resolve(files)
+  })
+})
+
+const delete_file = (file_path) => new Promise( (resolve, reject) => {
+  rimraf(file_path, (error) => {
+    if(error) reject(error)
+    resolve()
+  })
+})
+
+exports.export_collection_zip = async (req, res) => {
+
+  const {collection} = req.params
 
   if(!collection) return res.status(400).send(`Collection not specified`)
 
-  const folder_to_zip = path.join(uploads_directory_path,'images',collection)
 
-  getDb()
-  .collection(collection)
-  .find({})
-  .sort({time: -1}) // sort by timestamp
-  .toArray()
-  .then(result => {
 
-    const excel_filename = `database_export.xlsx`
-    generate_excel(result, excel_filename)
+  try {
 
-    const dir_content = fs.readdir(folder_to_zip, (error, files) => {
+    const folder_to_zip = path.join(uploads_directory_path,'images',collection)
+    const excel_filename = `${collection}_export.xlsx`
 
-      if(error) throw Error('Could not list content of directory')
+    const items = await getDb()
+      .collection(collection)
+      .find({})
+      .sort({time: -1}) // sort by timestamp
+      .toArray()
 
-      let zip = new AdmZip()
+    generate_excel(items, excel_filename)
 
-      // add local file
-      files.forEach((file) => { zip.addLocalFile(path.join(folder_to_zip,file)) })
+    const files = await list_files_of_directory(folder_to_zip)
 
-      // Add excel export
-      zip.addLocalFile(excel_filename)
+    const zip = new AdmZip()
 
-      // get everything as a buffer
-      const zipFileContents = zip.toBuffer();
-      const zip_filename = `export.zip`;
-      res.setHeader( "Content-Type", "application/zip" )
-      res.setHeader( "Content-Disposition", `attachment; filename=${zip_filename}` )
-      res.send(zipFileContents)
-
-      console.log(`[MongoDB] Images of ${collection} exported`)
-
-      // Delete the excel file once done
-      rimraf(excel_filename, (error) => {
-        if(error) { console.log(error) }
-      })
-
+    // add every file
+    files.forEach((file) => {
+      zip.addLocalFile(path.join(folder_to_zip,file))
     })
 
-  })
-  .catch(error => {
+    // Add the excel file
+    zip.addLocalFile(excel_filename)
+
+    // get everything as a buffer
+    const zipFileContents = zip.toBuffer()
+    const zip_filename = `${collection}_export.zip`
+
+    await delete_file(excel_filename)
+
+    res.setHeader("Content-Type", "application/zip" )
+    res.setHeader("Content-Disposition", `attachment; filename=${zip_filename}` )
+    res.send(zipFileContents)
+
+    console.log(`[MongoDB] Images of ${collection} exported`)
+
+  }
+  catch (error) {
     console.log(error)
     res.status(500).send(error)
-  })
+  }
+
 
 }
 
 
 
-exports.import_collection = (req, res) => {
+exports.import_collection = async (req, res) => {
 
   const remote_collection = req.query.remote_collection
   if(!remote_collection)   return res.status(400).send(`Remote collection not specified`)
