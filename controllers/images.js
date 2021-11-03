@@ -57,7 +57,7 @@ function error_handling(res, error) {
   let status_code = error.code || 500
   if(status_code === 11000) status_code = 500
   const message = error.message || error
-  console.log(message)
+  console.log(error)
   if(!res._headerSent) res.status(status_code).send(message)
 }
 
@@ -321,42 +321,13 @@ exports.patch_image = async (req, res) => {
 
 }
 
-// exports.replace_image = async (req, res) => {
-//
-//   try {
-//     const collection = get_collection_from_request(req)
-//     const _id = get_id_from_request(req)
-//
-//     //TODO: Make date an actual date
-//     delete req.body._id
-//     const new_image_properties = req.body
-//
-//     const options = {returnOriginal: false}
-//
-//     const result = await getDb()
-//       .collection(collection)
-//       .replaceOne({_id}, new_image_properties)
-//
-//     res.send(result.value)
-//
-//     console.log(`[MongoDB] Document ${_id} of ${collection} deleted`)
-//   }
-//   catch (error) { error_handling(res, error) }
-//
-// }
-
 
 exports.serve_image_file = async (req,res) => {
 
   try {
+
     const collection = get_collection_from_request(req)
     const _id = get_id_from_request(req)
-
-    //TODO: Make date an actual date
-    delete req.body._id
-    const new_image_properties = req.body
-
-    const options = {returnOriginal: false}
 
     const result = await getDb()
       .collection(collection)

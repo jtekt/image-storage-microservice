@@ -1,4 +1,4 @@
-const ObjectID = require('mongodb').ObjectID
+const {ObjectID} = require('mongodb')
 const rimraf = require('rimraf')
 const dotenv = require('dotenv')
 const config = require('../config.js')
@@ -58,24 +58,29 @@ const generate_excel = (data, filename) => {
 
 async function download_single_image(parameters) {
 
-  const {item, remote_collection, origin_url} = parameters
+  const {
+    item,
+    remote_collection,
+    origin_url,
+    headers} = parameters
 
   const url = `${origin_url}/collections/${remote_collection}/images/${item._id}/image`
   const options = {
     url,
     method: 'GET',
     responseType: 'stream', // This is important
+    headers,
   }
   return axios(options)
 }
 
 function save_file(parameters){
 
-  const {response, destination_path} = parameters
+  const {image_data, destination_path} = parameters
 
   const writer = fs.createWriteStream(destination_path)
 
-  response.data.pipe(writer)
+  image_data.pipe(writer)
 
   return new Promise((resolve, reject) => {
     writer.on('finish', resolve)
@@ -92,7 +97,8 @@ function promise_chain(parameters){
     remote_collection,
     local_collection,
     origin_url,
-    destination_folder_path
+    destination_folder_path,
+    headers,
   } = parameters
 
 
@@ -107,23 +113,31 @@ function promise_chain(parameters){
 
   return new Promise((resolve, reject) => {
 
-    if(item_index < list.length) {
-      download_single_image({item, remote_collection, origin_url})
-      .then(response => {
-        const destination_path = path.join(destination_folder_path, item.image)
-        return save_file({response, destination_path})
+    if(item_index >= list.length) return resolve()
+
+    download_single_image({item, remote_collection, origin_url, headers})
+    .then( ({data: image_data}) => {
+      const destination_path = path.join(destination_folder_path, item.image)
+      return save_file({image_data, destination_path})
+    })
+    .catch((error) => {
+      console.log(`Image ${item._id} download failed`)
+      io.sockets.emit('import_error', {
+        origin: origin_url,
+        remote_collection,
+        local_collection,
+        error: `Image ${item._id} download failed`,
       })
-      .then(() => {
+    })
+    .finally(() => {
 
-        let next_parameters = parameters
-        next_parameters.item_index = parameters.item_index +1
+      let next_parameters = parameters
+      next_parameters.item_index = parameters.item_index +1
 
-        return promise_chain(next_parameters)
-      })
-      .catch(error => reject)
-    }
+      return promise_chain(next_parameters)
+    })
 
-    else return resolve()
+
   })
 
 }
@@ -135,7 +149,8 @@ function download_all_images(options){
     list,
     remote_collection,
     local_collection,
-    origin_url
+    origin_url,
+    headers,
   } = options
 
   const images_directory_path = path.join( uploads_directory_path, 'images')
@@ -158,7 +173,8 @@ function download_all_images(options){
     remote_collection,
     local_collection,
     origin_url,
-    destination_folder_path
+    destination_folder_path,
+    headers,
   }
 
   promise_chain(parameters)
@@ -166,10 +182,17 @@ function download_all_images(options){
     console.log(`[Import] Downloaded all images of ${remote_collection}`)
   })
   .catch(error => {
-    console.log(error)
+    io.sockets.emit('import_error', {
+      origin: origin_url,
+      remote_collection,
+      local_collection,
+      error: 'Import failed',
+    })
   })
 
 }
+
+
 
 
 exports.get_collections = async (req, res) => {
@@ -246,8 +269,6 @@ exports.export_collection_zip = async (req, res) => {
 
   if(!collection) return res.status(400).send(`Collection not specified`)
 
-
-
   try {
 
     const folder_to_zip = path.join(uploads_directory_path,'images',collection)
@@ -305,7 +326,6 @@ exports.import_collection = async (req, res) => {
 
   let origin_url = req.query.origin
   if(!origin_url)   return res.status(400).send(`Origin not specified`)
-
   // Sanitizing URL
   try {
     origin_url = new URL(origin_url).origin
@@ -315,36 +335,32 @@ exports.import_collection = async (req, res) => {
   }
 
   console.log(`[MongoDB] Importing collection ${remote_collection} from ${origin_url} into local collection ${local_collection}`)
-
   const list_url = `${origin_url}/collections/${remote_collection}/images`
 
-  let list = []
+  try {
+    const headers = req.headers
+    // Get the collection from the remote collection
+    const {data: list} = await axios.get(list_url, {headers})
+    console.log(`Remote collection contains ${list.length} items`)
 
-  axios.get(list_url)
-  .then( ({data}) => {
-    // converting ID and date into proper format
-    list = data.map(entry => {
-      entry._id = ObjectID(entry._id)
-      entry.time = new Date(entry.time)
-      return entry
-    })
-
-    let bulk = getDb()
+    const bulk = getDb()
       .collection(local_collection)
       .initializeUnorderedBulkOp()
 
-    // Create list of bulk operations
+    // Build the bulk operations
+    // Using update upsert to prevent duplicates
     list.forEach((item) => {
+
+      item._id = ObjectID(item._id)
+
       bulk.find({_id: item._id})
       .upsert()
       .updateOne({$set: item})
     })
 
-    return bulk.execute()
+    await bulk.execute()
+    console.log(`MongoDB collection imported, now transferring images`)
 
-  })
-  .then(result => {
-    console.log(`[MongoDB] Imported ${list.length} in collection ${local_collection}`)
     res.send({items: list.length})
 
     download_all_images({
@@ -352,10 +368,14 @@ exports.import_collection = async (req, res) => {
       remote_collection,
       local_collection,
       origin_url,
+      headers,
     })
-  })
-  .catch(error => {
+
+
+  }
+  catch (error) {
     console.log(error)
     res.status(500).send(error)
-  })
+  }
+
 }
