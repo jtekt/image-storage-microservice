@@ -187,7 +187,7 @@ exports.image_upload = async (req, res) => {
     else new_document = {...new_document, ...fields}
 
     if(new_document._id) throw { code: 400, message: "_id cannot be user-defined" }
-    if(new_document.time) throw {code: 400, message: "time cannot be user-defined"}
+    //if(new_document.time) throw {code: 400, message: "time cannot be user-defined"}
     // WARNING: Date can be overwritten by user
 
     // Create index so that image becomes unique
