@@ -150,10 +150,6 @@ function parse_json_properties(fields){
 
 }
 
-const create_image_index = (collection) => {
-
-}
-
 exports.image_upload = async (req, res) => {
 
   try {
@@ -180,20 +176,18 @@ exports.image_upload = async (req, res) => {
     await move_file(original_path,destination_path)
 
     // Base properties are always going to be date and file name
-    let new_document = { time: new Date(), image: file_name }
+    const base_properties = { time: new Date(), image: file_name }
 
+    // Use JSON properties or fields if no JSON properties
     const json_properties = parse_json_properties(fields)
-    if(json_properties) new_document = {...new_document, ...json_properties}
-    else new_document = {...new_document, ...fields}
+    const user_defined_properties = json_properties || fields
 
-    if(new_document._id) throw { code: 400, message: "_id cannot be user-defined" }
-    //if(new_document.time) throw {code: 400, message: "time cannot be user-defined"}
-    // WARNING: Date can be overwritten by user
+    if (user_defined_properties._id) throw { code: 400, message: "_id cannot be user-defined" }
+    if (user_defined_properties.time) throw { code: 400, message: "time cannot be user-defined" }
 
-    // Create index so that image becomes unique
-    // await getDb()
-    //   .collection(collection)
-    //   .createIndex({ image: 1 }, { unique: true })
+    // Add user defined properties to the base properties
+    const new_document = { ...base_properties, ...user_defined_properties }
+
 
     const insertion_result = await getDb()
       .collection(collection)
