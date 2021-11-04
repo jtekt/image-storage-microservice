@@ -15,8 +15,8 @@ containerization-x86:
   script:
     # Docker hub login
     - >
-    echo "${DOCKER_HUB_PASSWORD}"
-    | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin
+      echo "${DOCKER_HUB_PASSWORD}"
+      | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin
     # Building image
     - docker build -t ${CONTAINER_IMAGE} .
     # Tagging image for Docker Hub
