@@ -5,6 +5,7 @@ stages:
 variables:
   APPLICATION_NAME: image-storage
   CONTAINER_IMAGE: ${CONTAINER_REGISTRY}/${APPLICATION_NAME}
+  CONTAINER_IMAGE_DOCKER_HUB: ${DOCKER_HUB_USERNAME}/${APPLICATION_NAME}
 
 # Building application for X86 plattforms
 containerization-x86:
@@ -12,15 +13,22 @@ containerization-x86:
   tags:
     - "x86"
   script:
+    # Docker hub login
     - >
      if [ -z ${DOCKER_HUB_USERNAME} ];
      then echo "No Docker login" -;
      else echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin ;
      fi
+    # Building image
     - docker build -t ${CONTAINER_IMAGE} .
+    # Tagging image for Docker Hub
+    - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE_DOCKER_HUB}
+    # Pushing images
     - docker push ${CONTAINER_IMAGE}
+    - docker push ${CONTAINER_IMAGE_DOCKER_HUB}
     # Cleanup
     - docker image rm ${CONTAINER_IMAGE}
+    - docker image rm ${CONTAINER_IMAGE_DOCKER_HUB}
 
 # Building application for ARM (64bit) plattforms
 containerization-aarch64:
