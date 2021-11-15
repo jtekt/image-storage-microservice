@@ -1,22 +1,26 @@
-const express = require('express')
+const {Router} = require('express')
 const collections_controller = require('../controllers/collections.js')
 const images_router = require('./images.js')
+const import_router = require('./import.js')
+const export_router = require('./export.js')
 
-const router = express.Router()
+const router = Router()
 
 router.route('/')
   .get(collections_controller.get_collections)
 
-router.route('/import')
-  .get(collections_controller.import_collection)
+// router.route('/import')
+//   .get(collections_controller.import_collection)
 
 router.route('/:collection')
-.get(collections_controller.get_collection_info)
+  .get(collections_controller.get_collection_info)
   .delete(collections_controller.drop_collection)
 
-router.route('/:collection/export')
-  .get(collections_controller.export_collection_zip)
+// router.route('/:collection/export')
+//   .get(collections_controller.export_collection_zip)
 
+router.use('/:collection/import', import_router)
+router.use('/:collection/export', export_router)
 
 router.use('/:collection/images', images_router)
 router.use('/:collection/documents', images_router) // alias
