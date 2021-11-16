@@ -4,8 +4,11 @@ stages:
 
 variables:
   APPLICATION_NAME: image-storage
+  CONTAINER_TAG: ${CI_COMMIT_SHORT_SHA}
   CONTAINER_IMAGE: ${CONTAINER_REGISTRY}/${APPLICATION_NAME}
+  CONTAINER_IMAGE_TAGGED: ${CONTAINER_IMAGE}:${CONTAINER_TAG}
   CONTAINER_IMAGE_DOCKER_HUB: ${DOCKER_HUB_USERNAME}/${APPLICATION_NAME}
+  CONTAINER_IMAGE_DOCKER_HUB_TAGGED: ${CONTAINER_IMAGE_DOCKER_HUB}:${CONTAINER_TAG}
 
 # Building application for X86 plattforms
 containerization-x86:
@@ -20,13 +23,19 @@ containerization-x86:
     # Building image
     - docker build -t ${CONTAINER_IMAGE} .
     # Tagging image for Docker Hub
+    - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE_TAGGED}
     - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE_DOCKER_HUB}
+    - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE_DOCKER_HUB_TAGGED}
     # Pushing images
     - docker push ${CONTAINER_IMAGE}
+    - docker push ${CONTAINER_IMAGE_TAGGED}
     - docker push ${CONTAINER_IMAGE_DOCKER_HUB}
+    - docker push ${CONTAINER_IMAGE_DOCKER_HUB_TAGGED}
     # Cleanup
     - docker image rm ${CONTAINER_IMAGE}
+    - docker image rm ${CONTAINER_IMAGE_TAGGED}
     - docker image rm ${CONTAINER_IMAGE_DOCKER_HUB}
+    - docker image rm ${CONTAINER_IMAGE_DOCKER_HUB_TAGGED}
 
 # Building application for ARM (64bit) plattforms
 containerization-aarch64:
