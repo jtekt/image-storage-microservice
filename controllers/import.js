@@ -62,7 +62,7 @@ exports.import_collection = async (req, res) => {
 
     zip.extractAllTo(unzip_directory, true)
 
-    const json_file_path = path.join(unzip_directory, `export.json`)
+    const json_file_path = path.join(unzip_directory, mongodb_export_file_name)
     const data = require(json_file_path)
 
     await mongodb_data_import({data,collection})
