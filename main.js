@@ -2,14 +2,13 @@ const express = require('express')
 const path = require('path')
 const cors = require('cors')
 const dotenv = require('dotenv')
-const http = require('http')
-const pjson = require('./package.json')
-const config = require('./config.js')
+const {version, author} = require('./package.json')
+const {uploads_directory_path} = require('./config.js')
 const db = require('./db.js')
 const collections_router = require('./routes/collections.js')
 const auth = require('@moreillon/express_identification_middleware')
 
-console.log(`Image storage service v${pjson.version}`)
+console.log(`Image storage service v${version}`)
 
 // Parse environment variables
 dotenv.config()
@@ -35,15 +34,17 @@ app.use(cors())
 // Home route
 app.get('/', (req, res) => {
   res.send({
-    application_name: 'Image storage API',
-    version: pjson.version,
-    author: pjson.author,
+    application_name: 'Image storage microservice',
+    version,
+    author,
     mongodb: {
       url: db.url,
       db: db.name,
       initially_connected: !!db.getDb(),
     },
     auth: auth_options,
+    uploads_directory_path,
+
   })
 })
 
