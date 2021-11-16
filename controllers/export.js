@@ -1,10 +1,13 @@
 const fs = require('fs')
 const XLSX = require('xlsx')
 const AdmZip = require('adm-zip')
-const {uploads_directory_path} = require('../config.js')
 const rimraf = require('rimraf')
 const path = require('path')
 const { getDb } = require('../db.js')
+const {
+  uploads_directory_path,
+  mongodb_export_file_name
+} = require('../config.js')
 
 const generate_excel = (data, path) => {
   // convert any object into String
@@ -45,8 +48,8 @@ exports.export_collection = async (req, res) => {
     if(!collection) throw {code: 400, message: 'collection not specified'}
 
     const folder_to_zip = path.join(uploads_directory_path,'images',collection)
-    const json_file_path = path.join(folder_to_zip, 'export.json')
-    const excel_file_path = path.join(folder_to_zip, 'export.xlsx')
+    const json_file_path = path.join(folder_to_zip, mongodb_export_file_name)
+    const excel_file_path = path.join(folder_to_zip, `mongodb_data.xlsx`)
 
 
     const items = await getDb()
