@@ -11,6 +11,8 @@ An image storage microservice built using Mongoose.
 | /images/:ID  | DELETE | Delete image with given ID |
 | /images/:ID  | PATCH | Update data of image with given ID |
 | /images/:ID/image  | GET | Get image file of the image with ID |
+| /export  | GET | Export the current content as a .zip archive |
+| /import  | POST | Upload an exported .zip archive |
 
 ## Environment variables
 | Variable  | Description |
