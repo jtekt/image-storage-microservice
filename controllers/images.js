@@ -201,9 +201,6 @@ exports.image_upload = async (req, res) => {
     // Respond to the client
     res.send(inserted_document)
 
-    // Broadcast result with socket.io
-    io.sockets.emit('upload', { collection, document: new_document })
-
   }
   catch (error) { error_handling(res, error) }
 
@@ -306,8 +303,6 @@ exports.patch_image = async (req, res) => {
       .findOneAndUpdate({_id}, action, options)
 
     res.send(result.value)
-
-    io.sockets.emit('update', { collection, document: result.value })
 
     console.log(`[MongoDB] Document ${_id} of ${collection} deleted`)
   }
