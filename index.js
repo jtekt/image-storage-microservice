@@ -4,8 +4,11 @@ const bodyParser = require('body-parser')
 const cors = require('cors')
 const dotenv = require('dotenv')
 const {author, name: application_name, version} = require('./package.json')
+const {uploads_directory} = require('./config.js')
 const db = require('./db.js')
 const images_router = require('./routes/images.js')
+const import_router = require('./routes/import.js')
+const export_router = require('./routes/export.js')
 
 
 dotenv.config()
@@ -27,9 +30,12 @@ app.get('/', (req, res) => {
       db: db.db,
       connected: db.get_connected(),
     },
+    uploads_directory
   })
 })
 
+app.use('/import', import_router)
+app.use('/export', export_router)
 app.use('/images', images_router)
 
 

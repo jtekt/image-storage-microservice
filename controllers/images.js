@@ -11,6 +11,8 @@ const {
 exports.read_images = async (req,res) => {
 
   try {
+    // TODO: add filters
+    // TODO: batching
     const images = await Image.find({})
     res.send(images)
     console.log(`Images queried`)
@@ -24,12 +26,13 @@ exports.read_images = async (req,res) => {
 exports.upload_image = async (req,res) => {
   try {
     // WARNING: Body becomes data so no way to pass time
+
     const file = req.file.originalname
     const data = req.body
     const time = new Date()
-    const new_image = new Image({file,time,data})
-    const saved_image = await new_image.save()
-    res.send(saved_image)
+
+    const new_image = Image.create({file,time,data})
+    res.send(new_image)
     console.log(`Image ${file} uploaded and saved`)
   }
   catch (error) {
@@ -41,7 +44,11 @@ exports.upload_image = async (req,res) => {
 exports.read_image = async (req,res) => {
   try {
     const {_id} = req.params
+
     const image = await Image.findOne({_id})
+
+    if(!image) throw {code: 404, message: `Image ${_id} not found`}
+    
     res.send(image)
     console.log(`Image ${_id} queried`)
   }
@@ -54,9 +61,11 @@ exports.delete_image = async (req,res) => {
   try {
     const {_id} = req.params
     const {file} = await Image.findOne({_id})
+
     const file_absolute_path = path.join(__dirname, `../${uploads_directory}`,file)
     await remove_file(file_absolute_path)
     await Image.findOneAndDelete({_id})
+
     res.send({_id})
     console.log(`Image ${_id} deleted`)
   }
@@ -67,12 +76,15 @@ exports.delete_image = async (req,res) => {
 
 exports.update_image = async (req,res) => {
   try {
+
     const {_id} = req.params
     const properties = req.body
+
     const image = await Image.findOne({_id})
     // Unpack properties into data, overwriting fields if necessary
     image.data = {...image.data,...properties}
     const updated_image = await image.save()
+
     res.send(updated_image)
     console.log(`Image ${_id} updated`)
   }
