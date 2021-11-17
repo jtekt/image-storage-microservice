@@ -11,7 +11,7 @@ const {
 
 const generate_excel = (data, path) => {
   // convert any object into String
-  data_formatted = data.map( (item) => {
+  const data_formatted = data.map( (item) => {
     for (let key in item) { item[key] = item[key].toString() }
     return item
   })
