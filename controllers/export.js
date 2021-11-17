@@ -11,18 +11,19 @@ const {
 
 const generate_excel = (data, path) => {
   // convert any object into String
-  data = data.map( (item) => {
+  data_formatted = data.map( (item) => {
     for (let key in item) { item[key] = item[key].toString() }
     return item
   })
 
   const workbook = XLSX.utils.book_new()
-  const worksheet = XLSX.utils.json_to_sheet(data)
+  const worksheet = XLSX.utils.json_to_sheet(data_formatted)
   XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1")
   XLSX.writeFile(workbook, path)
 }
 
 const generate_json = (data, path) => {
+  console.log(data)
   fs.writeFileSync(path, JSON.stringify(data))
 }
 
@@ -58,8 +59,8 @@ exports.export_collection = async (req, res) => {
       .sort({time: -1}) // sort by timestamp
       .toArray()
 
-    generate_excel(items, excel_file_path)
     generate_json(items, json_file_path)
+    generate_excel(items, excel_file_path)
 
     const files = await list_files_of_directory(folder_to_zip)
 

@@ -22,7 +22,7 @@ containerization-x86:
       | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin
     # Building image
     - docker build -t ${CONTAINER_IMAGE} .
-    # Tagging image for Docker Hub
+    # Tagging image
     - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE_TAGGED}
     - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE_DOCKER_HUB}
     - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE_DOCKER_HUB_TAGGED}
