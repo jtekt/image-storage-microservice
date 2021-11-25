@@ -14,6 +14,7 @@ exports.read_images = async (req,res) => {
     // TODO: add filters
     // TODO: batching
     const images = await Image.find({})
+      .sort({time: -1})
     res.send(images)
     console.log(`Images queried`)
   }
@@ -48,7 +49,7 @@ exports.read_image = async (req,res) => {
     const image = await Image.findOne({_id})
 
     if(!image) throw {code: 404, message: `Image ${_id} not found`}
-    
+
     res.send(image)
     console.log(`Image ${_id} queried`)
   }

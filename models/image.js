@@ -3,7 +3,7 @@ const { Schema, model } = require('mongoose')
 const imageSchema = new Schema({
   file: {
     type: String,
-    require: true,
+    required: true,
     unique: true,
   },
   time: Date,
