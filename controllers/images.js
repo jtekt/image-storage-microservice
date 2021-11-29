@@ -32,7 +32,7 @@ exports.upload_image = async (req,res) => {
     const data = req.body
     const time = new Date()
 
-    const new_image = Image.create({file,time,data})
+    const new_image = await Image.create({file,time,data})
     res.send(new_image)
     console.log(`Image ${file} uploaded and saved`)
   }
