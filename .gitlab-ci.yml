@@ -9,7 +9,7 @@ variables:
 containerization-x86:
   stage: containerization
   tags:
-    - "x86"
+    - dind
   script:
     - >
      if [ -z ${DOCKER_HUB_USERNAME} ];
