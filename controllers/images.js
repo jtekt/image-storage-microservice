@@ -27,7 +27,7 @@ exports.read_images = async (req,res) => {
 exports.upload_image = async (req,res) => {
   try {
     // WARNING: Body becomes data so no way to pass time
-
+    if(!req.file) throw {code: 400, message: 'File not provided'}
     const file = req.file.originalname
     const data = req.body
     const time = new Date()

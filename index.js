@@ -39,10 +39,10 @@ app.use('/export', export_router)
 app.use('/images', images_router)
 
 
-
-
-
 // Start server
 app.listen(app_port, () => {
   console.log(`Image storage (Mongoose version) v${version} listening on port ${app_port}`);
 })
+
+// Export for testing
+exports.app = app

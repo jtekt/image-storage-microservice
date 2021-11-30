@@ -1,0 +1,42 @@
+const request = require("supertest")
+const {expect} = require("chai")
+const {app} = require("../index.js")
+
+
+describe("/images", () => {
+
+  beforeEach( async () => {
+    // Silencing console
+    console.log = () => {}
+  })
+
+
+  describe("GET /", () => {
+    it("Should return all images", async () => {
+      const {status} = await request(app)
+        .get("/images")
+
+      expect(status).to.equal(200)
+    })
+  })
+
+  describe("POST /", () => {
+    it("Should Not allow posting images without an image field", async () => {
+      const {status} = await request(app)
+        .post("/images")
+
+      expect(status).to.not.equal(200)
+    })
+
+    it("Should allow posting an image", async () => {
+      const {status} = await request(app)
+        .post("/images")
+        .attach('image', 'test/example.jpg')
+
+      expect(status).to.equal(200)
+    })
+
+  })
+
+
+})
