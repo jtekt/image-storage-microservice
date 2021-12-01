@@ -36,18 +36,19 @@ test:
     - x86
   before_script:
     # Creating network for TDD
+    # Cannot use env vars in grep??
     - >
-      if [ -z "$(docker network ls | grep 'tdd')" ];
+      if [ -z "$(docker network ls | grep ${TEST_NETWORK})" ];
       then docker network create ${TEST_NETWORK};
       else echo "Network ${TEST_NETWORK} already existed";
       fi
-    # - echo "Deploying test database"
-    # - >
-    #   docker run --rm -d
-    #   --name ${TEST_DB}
-    #   --network ${TEST_NETWORK}
-    #   --hostname ${TEST_DB}
-    #   mongo
+    - echo "Deploying test database"
+    - >
+      docker run --rm -d
+      --name ${TEST_DB}
+      --network ${TEST_NETWORK}
+      --hostname ${TEST_DB}
+      mongo
     - echo "Database is up"
   script:
     # Run test
