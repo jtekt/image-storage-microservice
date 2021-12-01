@@ -1,3 +1,7 @@
+image:
+  name: docker:19.03.12
+
+
 stages:
   # - build
   - test
