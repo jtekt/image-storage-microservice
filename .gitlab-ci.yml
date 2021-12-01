@@ -12,6 +12,11 @@ variables:
   CONTAINER_IMAGE_DOCKER_HUB: ${DOCKER_HUB_USERNAME}/${APPLICATION_NAME}
   TEST_NETWORK: tdd
   TEST_DB: tdd-db
+  DOCKER_HOST: tcp://localhost:2375/
+
+
+
+
 
 # build-x86:
 #   stage: build
