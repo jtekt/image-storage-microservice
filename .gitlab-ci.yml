@@ -36,13 +36,11 @@ test:
     - x86
   before_script:
     # Creating network for TDD
-    # - echo "Creating network if does not exist"
-    - docker network ls | grep ${TEST_NETWORK}
-    # - >
-    #   if [ -z "$(docker network ls | grep '${TEST_NETWORK}')" ];
-    #   then docker network create ${TEST_NETWORK};
-    #   else echo "Network ${TEST_NETWORK} already existed";
-    #   fi
+    - >
+      if [ -z "$(docker network ls | grep '${TEST_NETWORK}')" ];
+      then docker network create ${TEST_NETWORK};
+      else echo "Network ${TEST_NETWORK} already existed";
+      fi
     # - echo "Deploying test database"
     # - >
     #   docker run --rm -d
