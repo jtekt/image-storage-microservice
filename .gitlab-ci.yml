@@ -2,6 +2,9 @@ stages:
   - build
   - test
 
+services:
+  - docker:19.03.12-dind
+
 variables:
   APPLICATION_NAME: image-storage-mongoose
   CONTAINER_IMAGE: ${CONTAINER_REGISTRY}/${APPLICATION_NAME}
@@ -17,7 +20,7 @@ build-x86:
   only:
     - master
   tags:
-    - x86
+    - dind
   script:
     # - >
     #  if [ -z ${DOCKER_HUB_USERNAME} ];
@@ -36,7 +39,7 @@ test:
   only:
     - master
   tags:
-    - x86
+    - dind
   before_script:
     # Creating network for TDD
     - >
@@ -51,14 +54,17 @@ test:
       --network ${TEST_NETWORK}
       --hostname ${TEST_DB}
       mongo
+
   script:
     # Run test
     - >
-      docker run --rm
+      docker run
+      --rm
       --name tdd-app
       --network ${TEST_NETWORK}
       -e MONGODB_URL=mongodb://${TEST_DB}
-      ${CONTAINER_IMAGE_TEST} npm run test
+      ${CONTAINER_IMAGE_TEST}
+      npm run test
     # Tag
     - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE}
     - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE_TAGGED}
@@ -68,6 +74,7 @@ test:
     # Cleanup
     - docker image rm ${CONTAINER_IMAGE}
     - docker image rm ${CONTAINER_IMAGE_TAGGED}
+
   after_script:
     # Remove database and network
     - docker container stop ${TEST_DB}
