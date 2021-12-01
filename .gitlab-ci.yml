@@ -1,10 +1,13 @@
-image: docker:20.10.11-dind
-
+image:
+    name: docker:stable
 
 
 stages:
   # - build
   - test
+
+services:
+   - name: docker:dind
 
 variables:
   APPLICATION_NAME: image-storage-mongoose
@@ -12,8 +15,6 @@ variables:
   CONTAINER_IMAGE_DOCKER_HUB: ${DOCKER_HUB_USERNAME}/${APPLICATION_NAME}
   TEST_NETWORK: tdd
   TEST_DB: tdd-db
-  DOCKER_DRIVER: overlay2
-  DOCKER_TLS_CERTDIR: ""
 
 
 
