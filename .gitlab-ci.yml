@@ -2,8 +2,7 @@ stages:
   - build
   - test
 
-services:
-  - docker:19.03.12-dind
+
 
 variables:
   APPLICATION_NAME: image-storage-mongoose
@@ -14,6 +13,9 @@ variables:
   TEST_NETWORK: tdd
   TEST_DB: tdd-db
 
+services:
+  - docker:19.03.12-dind
+    command: ["--insecure-registry=${CONTAINER_REGISTRY}"]
 
 build-x86:
   stage: build
