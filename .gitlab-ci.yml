@@ -37,7 +37,7 @@ test:
   before_script:
     # Creating network for TDD
     - echo "Creating network if does not exist"
-    - echo docker network ls
+    - docker network ls | grep '${TEST_NETWORK}'
     # DOES NOT SEEM TO WORK
     - >
       if [ -z "$(docker network ls | grep '${TEST_NETWORK}')" ];
