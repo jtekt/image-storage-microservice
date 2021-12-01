@@ -5,6 +5,8 @@ stages:
 variables:
   APPLICATION_NAME: image-storage-mongoose
   CONTAINER_IMAGE: ${CONTAINER_REGISTRY}/${APPLICATION_NAME}
+  CONTAINER_IMAGE_TEST: ${CONTAINER_IMAGE}:test
+  CONTAINER_IMAGE_TAGGED: ${CONTAINER_IMAGE}:${CI_COMMIT_SHORT_SHA}
   CONTAINER_IMAGE_DOCKER_HUB: ${DOCKER_HUB_USERNAME}/${APPLICATION_NAME}
   TEST_NETWORK: tdd
   TEST_DB: tdd-db
@@ -22,10 +24,10 @@ build-x86:
     #  then echo "No Docker login" -;
     #  else echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin ;
     #  fi
-    - docker build -t ${CONTAINER_IMAGE} .
-    - docker push ${CONTAINER_IMAGE}
+    - docker build -t ${CONTAINER_IMAGE_TEST} .
+    - docker push ${CONTAINER_IMAGE_TEST}
     # Cleanup
-    - docker image rm ${CONTAINER_IMAGE}
+    - docker image rm ${CONTAINER_IMAGE_TEST}
 
 
 # Building application for X86 plattforms
@@ -56,7 +58,13 @@ test:
       --name tdd-app
       --network ${TEST_NETWORK}
       -e MONGODB_URL=mongodb://${TEST_DB}
-      ${CONTAINER_IMAGE} npm run test
+      ${CONTAINER_IMAGE_TEST} npm run test
+    # Tag
+    - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE_TAGGED}
+    - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE}
+    # Push
+    - docker push ${CONTAINER_IMAGE_TAGGED}
+    - docker push ${CONTAINER_IMAGE}
   after_script:
     # Remove database and network
     - docker container stop ${TEST_DB}
