@@ -15,7 +15,7 @@ variables:
 
 services:
   - name: docker:19.03.12-dind
-    command: ["--insecure-registry=$CONTAINER_REGISTRY"]
+    command: ["--insecure-registry=172.16.98.151:5000"]
 
 build-x86:
   stage: build
@@ -79,9 +79,9 @@ test:
 
   after_script:
     # Remove database and network
-    - docker container stop ${TEST_DB}
-    - >
-      if [ -n "$(docker network ls | grep ${TEST_NETWORK})" ];
-      then docker network rm ${TEST_NETWORK};
-      else echo "Network ${TEST_NETWORK} did not exist";
-      fi
+    # - docker container stop ${TEST_DB}
+    # - >
+    #   if [ -n "$(docker network ls | grep ${TEST_NETWORK})" ];
+    #   then docker network rm ${TEST_NETWORK};
+    #   else echo "Network ${TEST_NETWORK} did not exist";
+    #   fi
