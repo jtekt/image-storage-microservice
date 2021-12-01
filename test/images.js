@@ -21,13 +21,7 @@ describe("/images", () => {
   })
 
   describe("POST /", () => {
-    it("Should Not allow posting images without an image field", async () => {
-      const {status} = await request(app)
-        .post("/images")
-
-      expect(status).to.not.equal(200)
-    })
-
+    
     it("Should allow posting an image", async () => {
       const {status} = await request(app)
         .post("/images")
@@ -35,6 +29,15 @@ describe("/images", () => {
 
       expect(status).to.equal(200)
     })
+
+    it("Should Not allow posting images without an image field", async () => {
+      const {status} = await request(app)
+        .post("/images")
+
+      expect(status).to.not.equal(200)
+    })
+
+    
 
   })
 
