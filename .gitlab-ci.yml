@@ -1,5 +1,5 @@
 stages:
-  # - build
+  - build
   - test
 
 variables:
@@ -9,22 +9,22 @@ variables:
   TEST_NETWORK: tdd
   TEST_DB: tdd-db
 
-# build-x86:
-#   stage: build
-#   only:
-#     - master
-#   tags:
-#     - x86
-#   script:
-#     # - >
-#     #  if [ -z ${DOCKER_HUB_USERNAME} ];
-#     #  then echo "No Docker login" -;
-#     #  else echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin ;
-#     #  fi
-#     - docker build -t ${CONTAINER_IMAGE} .
-#     - docker push ${CONTAINER_IMAGE}
-#     # Cleanup
-#     - docker image rm ${CONTAINER_IMAGE}
+build-x86:
+  stage: build
+  only:
+    - master
+  tags:
+    - x86
+  script:
+    # - >
+    #  if [ -z ${DOCKER_HUB_USERNAME} ];
+    #  then echo "No Docker login" -;
+    #  else echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin ;
+    #  fi
+    - docker build -t ${CONTAINER_IMAGE} .
+    - docker push ${CONTAINER_IMAGE}
+    # Cleanup
+    - docker image rm ${CONTAINER_IMAGE}
 
 
 # Building application for X86 plattforms
@@ -36,20 +36,18 @@ test:
     - x86
   before_script:
     # Creating network for TDD
-    # Cannot use env vars in grep??
     - >
       if [ -z "$(docker network ls | grep ${TEST_NETWORK})" ];
       then docker network create ${TEST_NETWORK};
       else echo "Network ${TEST_NETWORK} already existed";
       fi
-    - echo "Deploying test database ${TEST_DB}"
+    # Creating DB container in network
     - >
       docker run --rm -d
       --name ${TEST_DB}
       --network ${TEST_NETWORK}
       --hostname ${TEST_DB}
       mongo
-    - echo "Database is up"
   script:
     # Run test
     - >
@@ -60,10 +58,7 @@ test:
       ${CONTAINER_IMAGE} npm run test
   after_script:
     # Remove database and network
-    - echo "Stopping test database ${TEST_DB}"
     - docker container stop ${TEST_DB}
-    - echo "Stopped test database ${TEST_DB}"
-    - echo Removing network ${TEST_NETWORK} if it exists
     - >
       if [ -n "$(docker network ls | grep ${TEST_NETWORK})" ];
       then docker network rm ${TEST_NETWORK};
