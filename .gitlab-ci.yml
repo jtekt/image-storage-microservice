@@ -1,13 +1,6 @@
-image:
-    name: docker:stable
-
-
 stages:
   # - build
   - test
-
-services:
-   - name: docker:dind
 
 variables:
   APPLICATION_NAME: image-storage-mongoose
@@ -17,26 +10,22 @@ variables:
   TEST_DB: tdd-db
 
 
-
-
-
-
-# build-x86:
-#   stage: build
-#   only:
-#     - master
-#   tags:
-#     - x86
-#   script:
-#     # - >
-#     #  if [ -z ${DOCKER_HUB_USERNAME} ];
-#     #  then echo "No Docker login" -;
-#     #  else echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin ;
-#     #  fi
-#     - docker build -t ${CONTAINER_IMAGE} .
-#     - docker push ${CONTAINER_IMAGE}
-#     # Cleanup
-#     - docker image rm ${CONTAINER_IMAGE}
+build-x86:
+  stage: build
+  only:
+    - master
+  tags:
+    - x86
+  script:
+    # - >
+    #  if [ -z ${DOCKER_HUB_USERNAME} ];
+    #  then echo "No Docker login" -;
+    #  else echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin ;
+    #  fi
+    - docker build -t ${CONTAINER_IMAGE} .
+    - docker push ${CONTAINER_IMAGE}
+    # Cleanup
+    - docker image rm ${CONTAINER_IMAGE}
 
 
 # Building application for X86 plattforms
@@ -45,7 +34,7 @@ test:
   only:
     - master
   tags:
-    - dind_test
+    - x86
   before_script:
     # Creating network for TDD
     - >
