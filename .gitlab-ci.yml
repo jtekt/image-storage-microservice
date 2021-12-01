@@ -14,7 +14,7 @@ variables:
   TEST_DB: tdd-db
 
 services:
-  - docker:19.03.12-dind
+  - name: docker:19.03.12-dind
     command: ["--insecure-registry=${CONTAINER_REGISTRY}"]
 
 build-x86:
