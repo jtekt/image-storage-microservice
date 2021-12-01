@@ -15,7 +15,7 @@ variables:
 
 services:
   - name: docker:19.03.12-dind
-    command: ["--insecure-registry=${CONTAINER_REGISTRY}"]
+    command: ["--insecure-registry=172.16.98.151:5000"]
 
 build-x86:
   stage: build
