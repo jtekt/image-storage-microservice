@@ -1,6 +1,5 @@
 image:
-  name: docker:stable
-
+  name: docker:19.03.0-dind
 
 stages:
   # - build
