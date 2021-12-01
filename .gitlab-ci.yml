@@ -1,5 +1,5 @@
 stages:
-  - build
+  # - build
   - test
 
 variables:
@@ -9,22 +9,22 @@ variables:
   TEST_NETWORK: tdd
   TEST_DB: tdd-db
 
-build-x86:
-  stage: build
-  only:
-    - master
-  tags:
-    - x86
-  script:
-    # - >
-    #  if [ -z ${DOCKER_HUB_USERNAME} ];
-    #  then echo "No Docker login" -;
-    #  else echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin ;
-    #  fi
-    - docker build -t ${CONTAINER_IMAGE} .
-    - docker push ${CONTAINER_IMAGE}
-    # Cleanup
-    - docker image rm ${CONTAINER_IMAGE}
+# build-x86:
+#   stage: build
+#   only:
+#     - master
+#   tags:
+#     - x86
+#   script:
+#     # - >
+#     #  if [ -z ${DOCKER_HUB_USERNAME} ];
+#     #  then echo "No Docker login" -;
+#     #  else echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin ;
+#     #  fi
+#     - docker build -t ${CONTAINER_IMAGE} .
+#     - docker push ${CONTAINER_IMAGE}
+#     # Cleanup
+#     - docker image rm ${CONTAINER_IMAGE}
 
 
 # Building application for X86 plattforms
@@ -33,7 +33,7 @@ test:
   only:
     - master
   tags:
-    - x86
+    - dind_test
   before_script:
     # Creating network for TDD
     - >
