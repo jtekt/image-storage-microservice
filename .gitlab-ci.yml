@@ -59,13 +59,15 @@ test:
       --network ${TEST_NETWORK}
       -e MONGODB_URL=mongodb://${TEST_DB}
       ${CONTAINER_IMAGE_TEST} npm run test
-    # Pusb latest
+    # Tag
     - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE}
+    - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE_TAGGED}
+    # Push
     - docker push ${CONTAINER_IMAGE}
-    # Push tagged
-    - echo ${CONTAINER_IMAGE_TAGGED}
-    - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE_TAGGED}
     - docker push ${CONTAINER_IMAGE_TAGGED}
+    # Cleanup
+    - docker image rm ${CONTAINER_IMAGE}
+    - docker image rm ${CONTAINER_IMAGE_TAGGED}
   after_script:
     # Remove database and network
     - docker container stop ${TEST_DB}
