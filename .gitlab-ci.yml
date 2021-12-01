@@ -1,5 +1,5 @@
 image:
-  name: docker:stable
+  name: docker:dind
 
 
 stages:
