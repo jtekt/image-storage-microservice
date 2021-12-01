@@ -42,7 +42,7 @@ test:
       then docker network create ${TEST_NETWORK};
       else echo "Network ${TEST_NETWORK} already existed";
       fi
-    - echo "Deploying test database"
+    - echo "Deploying test database ${TEST_DB}"
     - >
       docker run --rm -d
       --name ${TEST_DB}
@@ -60,12 +60,12 @@ test:
       ${CONTAINER_IMAGE} npm run test
   after_script:
     # Remove database and network
-    - echo "Stopping test database"
+    - echo "Stopping test database ${TEST_DB}"
     - docker container stop ${TEST_DB}
-    - echo "Stopped test database"
-    - echo Removing network if it exists
+    - echo "Stopped test database ${TEST_DB}"
+    - echo Removing network ${TEST_NETWORK} if it exists
     - >
-      if [ -n "$(docker network ls | grep '${TEST_NETWORK}')" ];
+      if [ -n "$(docker network ls | grep ${TEST_NETWORK})" ];
       then docker network rm ${TEST_NETWORK};
       else echo "Network ${TEST_NETWORK} did not exist";
       fi
