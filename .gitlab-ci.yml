@@ -37,17 +37,23 @@ test:
   before_script:
     # Creating network for TDD
     - echo "Creating network if does not exist"
+    # DOES NOT SEEM TO WORK
     - if [ -z "$(docker network ls | grep '${TEST_NETWORK}')" ]; then docker network create ${TEST_NETWORK}; fi
     - echo "Deploying test database"
     - docker run --rm -d --name ${TEST_DB} --network ${TEST_NETWORK} --hostname ${TEST_DB} mongo
     - echo "Database is up"
   script:
     # Run test
-    - docker run --rm --name tdd-app --network ${TEST_NETWORK} ${CONTAINER_IMAGE} npm run test
+    - >
+      docker run --rm
+      --name tdd-app
+      --network ${TEST_NETWORK}
+      -e MONGODB_URL=mongodb://${TEST_DB}
+      ${CONTAINER_IMAGE} npm run test
   after_script:
     # Remove database and network
     - echo "Stopping test database"
     - docker container stop ${TEST_DB}
     - echo "Stopped test database"
-    - echo Removing network if exist
+    - echo Removing network if it exists
     - if [ -n "$(docker network ls | grep '${TEST_NETWORK}')" ]; then docker network rm ${TEST_NETWORK}; fi
