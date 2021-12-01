@@ -63,6 +63,7 @@ test:
     - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE}
     - docker push ${CONTAINER_IMAGE}
     # Push tagged
+    - echo ${CONTAINER_IMAGE_TAGGED}
     - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE_TAGGED}
     - docker push ${CONTAINER_IMAGE_TAGGED}
   after_script:
