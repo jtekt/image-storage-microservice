@@ -1,5 +1,5 @@
 image:
-  name: docker:19.03.12
+  name: docker:stable
 
 
 stages:
