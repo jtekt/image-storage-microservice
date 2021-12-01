@@ -36,6 +36,7 @@ test:
   before_script:
     - echo "Deploying test database"
     # What is the h flag?
+    - docker network create ${TEST_NETWORK}
     - docker run --rm -d --name tdd-db --network ${TEST_NETWORK} --hostname tdd-db mongo
     - echo "Database is up"
   script:
