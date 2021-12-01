@@ -15,6 +15,8 @@ dotenv.config()
 
 const app_port = process.env.APP_PORT ?? 80
 
+db.connect()
+
 // Express configuration
 const app = express()
 app.use(bodyParser.json())
