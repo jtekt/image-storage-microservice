@@ -38,7 +38,12 @@ test:
     # Creating network for TDD
     - echo "Creating network if does not exist"
     # DOES NOT SEEM TO WORK
-    - if [ -z "$(docker network ls | grep '${TEST_NETWORK}')" ]; then docker network create ${TEST_NETWORK}; fi
+    - >
+      if [ -z "$(docker network ls | grep '${TEST_NETWORK}')" ];
+      then docker network create ${TEST_NETWORK};
+      else echo "Network ${TEST_NETWORK} already existed";
+      fi
+
     - echo "Deploying test database"
     - docker run --rm -d --name ${TEST_DB} --network ${TEST_NETWORK} --hostname ${TEST_DB} mongo
     - echo "Database is up"
@@ -56,4 +61,8 @@ test:
     - docker container stop ${TEST_DB}
     - echo "Stopped test database"
     - echo Removing network if it exists
-    - if [ -n "$(docker network ls | grep '${TEST_NETWORK}')" ]; then docker network rm ${TEST_NETWORK}; fi
+    - >
+      if [ -n "$(docker network ls | grep '${TEST_NETWORK}')" ];
+      then docker network rm ${TEST_NETWORK};
+      else echo "Network ${TEST_NETWORK} did not exist";
+      fi
