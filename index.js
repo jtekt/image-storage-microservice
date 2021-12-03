@@ -11,8 +11,6 @@ const import_router = require('./routes/import.js')
 const export_router = require('./routes/export.js')
 
 
-console.log(uuuu)
-
 dotenv.config()
 
 const app_port = process.env.APP_PORT ?? 80
