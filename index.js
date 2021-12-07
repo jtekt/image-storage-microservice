@@ -3,6 +3,8 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const cors = require('cors')
 const dotenv = require('dotenv')
+const auth = require('@moreillon/express_identification_middleware')
+const group_auth = require('@moreillon/express_group_based_authorization_middleware')
 const {author, name: application_name, version} = require('./package.json')
 const {uploads_directory} = require('./config.js')
 const db = require('./db.js')
@@ -13,7 +15,13 @@ const export_router = require('./routes/export.js')
 
 dotenv.config()
 
-const app_port = process.env.APP_PORT ?? 80
+
+const {
+  APP_PORT = 80,
+  AUTHENTICATION_URL,
+  AUTHORIZED_GROUPS,
+  GROUP_AUTHORIZATION_URL
+}= process.env
 
 db.connect()
 
@@ -32,9 +40,25 @@ app.get('/', (req, res) => {
       db: db.db,
       connected: db.get_connected(),
     },
-    uploads_directory
+    uploads_directory,
+    auth:{
+      authentication_url: AUTHENTICATION_URL,
+      group_authorization_url: GROUP_AUTHORIZATION_URL,
+      authorized_groups: AUTHORIZED_GROUPS
+    }
   })
 })
+
+if(AUTHENTICATION_URL) app.use(auth({url: AUTHENTICATION_URL}))
+if(AUTHORIZED_GROUPS && GROUP_AUTHORIZATION_URL) {
+  console.log(`Enabling group-based authorization`)
+  const group_auth_options = {
+    url: GROUP_AUTHORIZATION_URL,
+    groups: AUTHORIZED_GROUPS.split(',')
+  }
+  app.use(group_auth(group_auth_options))
+}
+
 
 app.use('/import', import_router)
 app.use('/export', export_router)
@@ -42,8 +66,8 @@ app.use('/images', images_router)
 
 
 // Start server
-app.listen(app_port, () => {
-  console.log(`Image storage (Mongoose version) v${version} listening on port ${app_port}`);
+app.listen(APP_PORT, () => {
+  console.log(`Image storage (Mongoose version) v${version} listening on port ${APP_PORT}`);
 })
 
 // Export for testing
