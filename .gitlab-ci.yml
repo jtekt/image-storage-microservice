@@ -1,5 +1,7 @@
 stages:
   - build
+  - test
+  - build_aarch64
 
 variables:
   APPLICATION_NAME: image-storage
@@ -77,7 +79,7 @@ test:
 
 # Building application for ARM (64bit) plattforms
 aarch64:
-  stage: build
+  stage: build_aarch64
   tags:
     - "aarch64"
   script:
