@@ -1,3 +1,4 @@
 node_modules/
 .env
 uploads_dev
+.nyc_output

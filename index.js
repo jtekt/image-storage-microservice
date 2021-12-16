@@ -1,6 +1,4 @@
-// NPM modules
 const express = require('express')
-const bodyParser = require('body-parser')
 const cors = require('cors')
 const dotenv = require('dotenv')
 const auth = require('@moreillon/express_identification_middleware')
@@ -21,13 +19,13 @@ const {
   AUTHENTICATION_URL,
   AUTHORIZED_GROUPS,
   GROUP_AUTHORIZATION_URL
-}= process.env
+} = process.env
 
 db.connect()
 
 // Express configuration
 const app = express()
-app.use(bodyParser.json())
+app.use(express.json())
 app.use(cors())
 
 app.get('/', (req, res) => {

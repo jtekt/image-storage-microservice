@@ -3,6 +3,7 @@ stages:
   - test
 
 
+image: moreillon/tdd-dind
 
 variables:
   APPLICATION_NAME: image-storage-mongoose
@@ -17,7 +18,7 @@ services:
   - name: docker:19.03.12-dind
     command: ["--insecure-registry=172.16.98.151:5000"]
 
-build-x86:
+build:
   stage: build
   only:
     - master
@@ -62,7 +63,7 @@ test:
       --network ${TEST_NETWORK}
       -e MONGODB_URL=mongodb://${TEST_DB}
       ${CONTAINER_IMAGE_TEST}
-      npm run test
+      npm run coverage
     # Tag
     - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE}
     - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE_TAGGED}
