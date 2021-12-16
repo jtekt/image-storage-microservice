@@ -3,6 +3,8 @@ stages:
   - test
   - build_aarch64
 
+image: moreillon/tdd-dind
+
 variables:
   APPLICATION_NAME: image-storage
   CONTAINER_TAG: ${CI_COMMIT_SHORT_SHA}
@@ -12,7 +14,10 @@ variables:
   CONTAINER_IMAGE_DOCKER_HUB: ${DOCKER_HUB_USERNAME}/${APPLICATION_NAME}
   CONTAINER_IMAGE_DOCKER_HUB_TAGGED: ${CONTAINER_IMAGE_DOCKER_HUB}:${CONTAINER_TAG}
 
-# Building application for X86 plattforms
+services:
+  - name: docker:19.03.12-dind
+    command: ["--insecure-registry=172.16.98.151:5000"]
+
 x86:
   stage: build
   tags:
