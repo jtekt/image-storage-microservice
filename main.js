@@ -56,3 +56,5 @@ const APP_PORT = process.env.APP_PORT || 80
 app.listen(APP_PORT, () => {
   console.log(`[Express] Server listening on port ${APP_PORT}`)
 })
+
+exports.app = app

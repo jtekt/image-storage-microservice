@@ -12,44 +12,39 @@ dotenv.config()
 
 const uploads_directory_path = config.uploads_directory_path
 
-function parse_form(req) {
-  return new Promise ( (resolve, reject) => {
+const parse_form = (req) => new Promise ( (resolve, reject) => {
 
-    const content_type = req.headers['content-type']
-    if(!content_type.includes('multipart/form-data')) {
-      reject({code: 400, message: 'Content-type must bne multipart/form-data'})
-    }
+  const content_type = req.headers['content-type']
 
-    const form = new formidable.IncomingForm()
+  if(!content_type?.includes('multipart/form-data')) {
+    reject({code: 400, message: 'Content-type must bne multipart/form-data'})
+  }
 
-    form.parse(req, (error, fields, files) => {
-      if (error) return reject(error)
-      resolve({ fields, files })
-    })
+  const form = new formidable.IncomingForm()
 
+  form.parse(req, (error, fields, files) => {
+    if (error) return reject(error)
+    resolve({ fields, files })
   })
-}
 
-function move_file(original_path, destination_path){
-   return new Promise ( (resolve, reject) => {
+})
 
-     const options = {mkdirp: true}
+const move_file = (original_path, destination_path) => new Promise ( (resolve, reject) => {
 
-     mv(original_path, destination_path, options, (error) => {
-       if (error) return reject(error)
-       resolve()
-     })
-   })
-}
+  const options = {mkdirp: true}
 
-function delete_file(file_path){
-  return new Promise((resolve, reject) => {
-    rimraf(file_path, (error) => {
-      if(error) return reject(error)
-      resolve()
-    })
+  mv(original_path, destination_path, options, (error) => {
+    if (error) return reject(error)
+    resolve()
   })
-}
+})
+
+const delete_file = (file_path) => new Promise((resolve, reject) => {
+  rimraf(file_path, (error) => {
+    if(error) return reject(error)
+    resolve()
+  })
+})
 
 
 
