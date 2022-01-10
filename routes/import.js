@@ -1,9 +1,7 @@
 const {Router} = require('express')
 const path = require('path')
 const multer  = require('multer')
-const {
-  import_collection,
-} = require('../controllers/import.js')
+const { import_collection } = require('../controllers/import.js')
 
 const router = Router({mergeParams: true})
 const storage = multer.memoryStorage()

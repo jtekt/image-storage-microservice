@@ -6,7 +6,7 @@ const path = require('path')
 const dotenv = require('dotenv')
 const config = require('../config.js')
 const { getDb } = require('../db.js')
-
+const { delete_file } = require('../utils.js')
 // Parse environment variables
 dotenv.config()
 
@@ -39,12 +39,12 @@ const move_file = (original_path, destination_path) => new Promise ( (resolve, r
   })
 })
 
-const delete_file = (file_path) => new Promise((resolve, reject) => {
-  rimraf(file_path, (error) => {
-    if(error) return reject(error)
-    resolve()
-  })
-})
+// const delete_file = (file_path) => new Promise((resolve, reject) => {
+//   rimraf(file_path, (error) => {
+//     if(error) return reject(error)
+//     resolve()
+//   })
+// })
 
 
 

@@ -1,8 +1,11 @@
 const AdmZip = require('adm-zip')
 const path = require('path')
+const fs = require('fs')
+const rimraf = require('rimraf')
 const {ObjectID} = require('mongodb')
 const { error_handling } = require('../utils.js')
 const { getDb } = require('../db.js')
+const { delete_file } = require('../utils.js')
 const {
   uploads_directory_path,
   mongodb_export_file_name
@@ -14,6 +17,9 @@ const mongodb_data_import = async ({collection, data}) => {
   const bulk = getDb()
     .collection(collection)
     .initializeUnorderedBulkOp()
+
+
+  console.log(`[MongodB] Importing ${data.length} items`);
 
   // Build the bulk operations
   // Using update upsert to prevent duplicates
@@ -63,9 +69,14 @@ exports.import_collection = async (req, res) => {
     zip.extractAllTo(unzip_directory, true)
 
     const json_file_path = path.join(unzip_directory, mongodb_export_file_name)
-    const data = require(json_file_path)
+    const data = JSON.parse(fs.readFileSync(json_file_path, 'utf8'));
 
     await mongodb_data_import({data,collection})
+
+    // delete the json file
+    //await delete_file(json_file_path)
+
+    console.log(`[MongoDB] Collection ${collection} imported`)
 
 
     res.send({collection})
