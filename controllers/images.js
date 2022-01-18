@@ -174,7 +174,7 @@ exports.image_upload = async (req, res) => {
     res.send(inserted_document)
 
   }
-  catch (error) { error_handling(res, error) }
+  catch (error) { error_handling(error, res) }
 
 }
 
@@ -200,7 +200,7 @@ exports.get_all_images = async (req, res) => {
     res.send(result)
     console.log(`[MongoDB] Images of ${collection} queried`)
   }
-  catch (error) { error_handling(res, error) }
+  catch (error) { error_handling(error, res) }
 
 }
 
@@ -221,7 +221,7 @@ exports.get_single_image = async (req, res) => {
     res.send(queried_documment)
     console.log(`[MongoDB] Document ${_id} of collection ${collection} queried`)
   }
-  catch (error) { error_handling(res, error) }
+  catch (error) { error_handling(error, res) }
 
 }
 
@@ -251,7 +251,7 @@ exports.delete_image = async (req, res) => {
     res.send(db_deletion_result)
     console.log(`[MongoDB] Document ${_id} of ${collection} deleted`)
   }
-  catch (error) { error_handling(res, error) }
+  catch (error) { error_handling(error, res) }
 
 }
 
@@ -278,7 +278,7 @@ exports.patch_image = async (req, res) => {
 
     console.log(`[MongoDB] Document ${_id} of ${collection} deleted`)
   }
-  catch (error) { error_handling(res, error) }
+  catch (error) { error_handling(error, res) }
 
 }
 
@@ -304,7 +304,7 @@ exports.serve_image_file = async (req,res) => {
 
     console.log(`[Express] Serving image ${_id} of ${collection}`)
   }
-  catch (error) { error_handling(res, error) }
+  catch (error) { error_handling(error, res) }
 
 
 }
