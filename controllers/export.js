@@ -23,7 +23,6 @@ const generate_excel = (data, path) => {
 }
 
 const generate_json = (data, path) => {
-  console.log(data)
   fs.writeFileSync(path, JSON.stringify(data))
 }
 

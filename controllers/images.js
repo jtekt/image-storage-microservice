@@ -1,13 +1,15 @@
 const ObjectID = require('mongodb').ObjectID
-const rimraf = require('rimraf') // Used to delete image files
-const mv = require('mv')
 const formidable = require('formidable')
 const path = require('path')
 const dotenv = require('dotenv')
 const config = require('../config.js')
 const { getDb } = require('../db.js')
-const { delete_file } = require('../utils.js')
-// Parse environment variables
+const {
+  delete_file,
+  error_handling,
+  move_file,
+} = require('../utils.js')
+
 dotenv.config()
 
 const uploads_directory_path = config.uploads_directory_path
@@ -29,32 +31,7 @@ const parse_form = (req) => new Promise ( (resolve, reject) => {
 
 })
 
-const move_file = (original_path, destination_path) => new Promise ( (resolve, reject) => {
 
-  const options = {mkdirp: true}
-
-  mv(original_path, destination_path, options, (error) => {
-    if (error) return reject(error)
-    resolve()
-  })
-})
-
-// const delete_file = (file_path) => new Promise((resolve, reject) => {
-//   rimraf(file_path, (error) => {
-//     if(error) return reject(error)
-//     resolve()
-//   })
-// })
-
-
-
-function error_handling(res, error) {
-  let status_code = error.code || 500
-  if(status_code === 11000) status_code = 500
-  const message = error.message || error
-  console.log(error)
-  if(!res._headerSent) res.status(status_code).send(message)
-}
 
 function get_collection_from_request(req){
     const collection = req.params.collection

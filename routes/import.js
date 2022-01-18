@@ -5,7 +5,7 @@ const { import_collection } = require('../controllers/import.js')
 
 const router = Router({mergeParams: true})
 const storage = multer.memoryStorage()
-const upload = multer({ storage })
+const upload = multer({ storage, limits: { fieldSize: 25 * 1024 * 1024 } })
 
 
 router.route('/')
