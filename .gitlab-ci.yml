@@ -1,15 +1,25 @@
 stages:
-  - build
   - test
-  - build_aarch64
+  - build
 
 image: moreillon/tdd-dind
 
 variables:
   APPLICATION_NAME: image-storage
+
+  CONTAINER_IMAGE_TEST: ${APPLICATION_NAME}:test
+
   CONTAINER_TAG: ${CI_COMMIT_SHORT_SHA}
+  CONTAINER_TAG_AARCH64: aarch64-${CI_COMMIT_SHORT_SHA}
+
   CONTAINER_IMAGE: ${CONTAINER_REGISTRY}/${APPLICATION_NAME}
-  CONTAINER_IMAGE_TEST: ${CONTAINER_IMAGE}:test
+  CONTAINER_IMAGE_TAGGED: ${CONTAINER_IMAGE}:${CONTAINER_TAG}
+  CONTAINER_IMAGE_AARCH64: ${CONTAINER_IMAGE}:${CONTAINER_TAG_AARCH64}
+
+  CONTAINER_IMAGE_DOCKER_HUB: ${DOCKER_HUB_USERNAME}/${APPLICATION_NAME}
+  CONTAINER_IMAGE_DOCKER_HUB_TAGGED: ${CONTAINER_IMAGE_DOCKER_HUB}:${CONTAINER_TAG}
+  CONTAINER_IMAGE_DOCKER_HUB_AARCH64: ${CONTAINER_IMAGE_DOCKER_HUB}:${CONTAINER_TAG_AARCH64}
+
   CONTAINER_IMAGE_TAGGED: ${CONTAINER_IMAGE}:${CONTAINER_TAG}
   CONTAINER_IMAGE_DOCKER_HUB: ${DOCKER_HUB_USERNAME}/${APPLICATION_NAME}
   CONTAINER_IMAGE_DOCKER_HUB_TAGGED: ${CONTAINER_IMAGE_DOCKER_HUB}:${CONTAINER_TAG}
@@ -18,23 +28,7 @@ services:
   - name: docker:19.03.12-dind
     command: ["--insecure-registry=172.16.98.151:5000"]
 
-x86:
-  stage: build
-  tags:
-    - "x86"
-  script:
-    # Docker hub login
-    - >
-      echo "${DOCKER_HUB_PASSWORD}"
-      | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin
-    # Building image
-    - docker build -t ${CONTAINER_IMAGE_TEST} .
-    - docker push ${CONTAINER_IMAGE_TEST}
-    # Cleanup
-    - docker image rm ${CONTAINER_IMAGE_TEST}
 
-
-# Building application for X86 plattforms
 test:
   stage: test
   only:
@@ -42,10 +36,6 @@ test:
   tags:
     - dind
   before_script:
-    # Docker hub login
-    - >
-      echo "${DOCKER_HUB_PASSWORD}"
-      | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin
     # Creating network for TDD
     - docker network create tdd
     # Creating DB container in network
@@ -57,6 +47,7 @@ test:
       mongo
 
   script:
+    - docker build -t ${CONTAINER_IMAGE_TEST} .
     # Run test
     - >
       docker run
@@ -66,11 +57,24 @@ test:
       -e MONGODB_URL=mongodb://tdd-db
       ${CONTAINER_IMAGE_TEST}
       npm run coverage
-    # Tag
-    - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE}
-    - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE_TAGGED}
-    - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE_DOCKER_HUB}
-    - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE_DOCKER_HUB_TAGGED}
+
+x86:
+  stage: build
+  tags:
+    - dind
+  only:
+    - master
+  before_script:
+    - >
+      echo "${DOCKER_HUB_PASSWORD}"
+      | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin
+  script:
+    # Building image
+    - docker build -t ${CONTAINER_IMAGE} .
+    # Tagging image
+    - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE_TAGGED}
+    - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE_DOCKER_HUB}
+    - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE_DOCKER_HUB_TAGGED}
     # Pushing images
     - docker push ${CONTAINER_IMAGE}
     - docker push ${CONTAINER_IMAGE_TAGGED}
@@ -82,15 +86,27 @@ test:
     - docker image rm ${CONTAINER_IMAGE_DOCKER_HUB}
     - docker image rm ${CONTAINER_IMAGE_DOCKER_HUB_TAGGED}
 
-# Building application for ARM (64bit) plattforms
 aarch64:
-  stage: build_aarch64
+  stage: build
   tags:
-    - "aarch64"
+    - aarch64
+  only:
+    - master
+  before_script:
+    - >
+      echo "${DOCKER_HUB_PASSWORD}"
+      | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin
   script:
     - >
       docker build
       --build-arg HTTP_PROXY=http://172.16.98.151:8118
       --build-arg HTTPS_PROXY=http://172.16.98.151:8118
-      -t ${CONTAINER_IMAGE}-aarch64 .
-    - docker push ${CONTAINER_IMAGE}-aarch64
+      -t ${CONTAINER_IMAGE_AARCH64} .
+    # Tagging image
+    - docker tag ${CONTAINER_IMAGE_AARCH64} ${CONTAINER_IMAGE_DOCKER_HUB_AARCH64}
+    # Pushing
+    - docker push ${CONTAINER_IMAGE_AARCH64}
+    - docker push ${CONTAINER_IMAGE_DOCKER_HUB_AARCH64}
+    # Cleanup
+    - docker image rm ${CONTAINER_IMAGE_AARCH64}
+    - docker image rm ${CONTAINER_IMAGE_DOCKER_HUB_AARCH64}
