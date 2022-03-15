@@ -73,5 +73,5 @@ test:
     # Push
     - docker push ${CONTAINER_IMAGE}
     - docker push ${CONTAINER_IMAGE_TAGGED}
-    - docker push ${CONTAINER_IMAGE}
-    - docker push ${CONTAINER_IMAGE_TAGGED}
+    - docker push ${CONTAINER_IMAGE_DOCKER_HUB}
+    - docker push ${CONTAINER_IMAGE_DOCKER_HUB_TAGGED}
