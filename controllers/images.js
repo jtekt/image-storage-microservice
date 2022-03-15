@@ -4,6 +4,7 @@ const {uploads_directory} = require('../config.js')
 const {
   error_handling,
   remove_file,
+  parse_db_query_parameters
 } = require('../utils.js')
 
 
@@ -11,10 +12,17 @@ const {
 exports.read_images = async (req,res) => {
 
   try {
-    // TODO: add filters
-    // TODO: batching
-    const images = await Image.find({})
-      .sort({time: -1})
+
+    const {skip, filter, limit, sort} = parse_db_query_parameters(req)
+
+    const images = await Image
+      .find(filter)
+      .skip(skip)
+      .limit(limit)
+      .sort(sort)
+
+    // TODO: RETURN COUNT
+
     res.send(images)
     console.log(`Images queried`)
   }
