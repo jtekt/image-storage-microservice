@@ -6,6 +6,7 @@ const {
   remove_file,
   parse_db_query_parameters
 } = require('../utils.js')
+const { log } = require('console')
 
 
 

@@ -2,8 +2,11 @@ stages:
   - build
   - test
 
-
 image: moreillon/tdd-dind
+
+services:
+  - name: docker:19.03.12-dind
+    command: ["--insecure-registry=172.16.98.151:5000"]
 
 variables:
   APPLICATION_NAME: image-storage-mongoose
@@ -11,12 +14,10 @@ variables:
   CONTAINER_IMAGE_TEST: ${CONTAINER_IMAGE}:test
   CONTAINER_IMAGE_TAGGED: ${CONTAINER_IMAGE}:${CI_COMMIT_SHORT_SHA}
   CONTAINER_IMAGE_DOCKER_HUB: ${DOCKER_HUB_USERNAME}/${APPLICATION_NAME}
+  CONTAINER_IMAGE_DOCKER_HUB_TAGGED: ${CONTAINER_IMAGE_DOCKER_HUB}:${CI_COMMIT_SHORT_SHA}
   TEST_NETWORK: tdd
   TEST_DB: tdd-db
 
-services:
-  - name: docker:19.03.12-dind
-    command: ["--insecure-registry=172.16.98.151:5000"]
 
 build:
   stage: build
@@ -25,11 +26,6 @@ build:
   tags:
     - dind
   script:
-    # - >
-    #  if [ -z ${DOCKER_HUB_USERNAME} ];
-    #  then echo "No Docker login" -;
-    #  else echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin ;
-    #  fi
     - docker build -t ${CONTAINER_IMAGE_TEST} .
     - docker push ${CONTAINER_IMAGE_TEST}
     # Cleanup
@@ -44,6 +40,11 @@ test:
   tags:
     - dind
   before_script:
+    - >
+     if [ -z ${DOCKER_HUB_USERNAME} ];
+     then echo "No Docker login" -;
+     else echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin ;
+     fi
     # Creating network for TDD
     - docker network create ${TEST_NETWORK}
     # Creating DB container in network
@@ -67,18 +68,10 @@ test:
     # Tag
     - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE}
     - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE_TAGGED}
+    - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE_DOCKER_HUB}
+    - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE_DOCKER_HUB_TAGGED}
     # Push
     - docker push ${CONTAINER_IMAGE}
     - docker push ${CONTAINER_IMAGE_TAGGED}
-    # Cleanup
-    - docker image rm ${CONTAINER_IMAGE}
-    - docker image rm ${CONTAINER_IMAGE_TAGGED}
-
-  after_script:
-    # Remove database and network
-    # - docker container stop ${TEST_DB}
-    # - >
-    #   if [ -n "$(docker network ls | grep ${TEST_NETWORK})" ];
-    #   then docker network rm ${TEST_NETWORK};
-    #   else echo "Network ${TEST_NETWORK} did not exist";
-    #   fi
+    - docker push ${CONTAINER_IMAGE}
+    - docker push ${CONTAINER_IMAGE_TAGGED}
