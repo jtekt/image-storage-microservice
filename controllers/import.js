@@ -1,9 +1,9 @@
 const AdmZip = require('adm-zip')
+const createError = require('http-errors')
 const path = require('path')
 const fs = require('fs')
 const rimraf = require('rimraf')
-const {ObjectID} = require('mongodb')
-const { error_handling } = require('../utils.js')
+const { ObjectID } = require('mongodb')
 const { getDb } = require('../db.js')
 const { delete_file } = require('../utils.js')
 const {
@@ -30,8 +30,8 @@ const mongodb_data_import = async ({collection, data}) => {
     item.time = new Date(item.time)
 
     bulk.find({_id: item._id})
-    .upsert()
-    .updateOne({$set: item})
+      .upsert()
+      .updateOne({$set: item})
   })
 
   await bulk.execute()
@@ -40,19 +40,19 @@ const mongodb_data_import = async ({collection, data}) => {
 
 
 
-exports.import_collection = async (req, res) => {
+exports.import_collection = async (req, res, next) => {
 
   // TODO check if JSON file exists first
 
 
   try {
-    const {collection} = req.params
-    if(!collection) throw {code: 400, message: 'collection not specified'}
+    const { collection } = req.params
+    if(!collection) throw createError(400, 'Collection not specified')
 
     const {file} = req
-    if(!file)  throw {code: 400, message: 'File not provided'}
+    if(!file)  throw createError(400, 'File not provided')
     const {mimetype, buffer} = file
-    if(mimetype !== 'application/x-zip-compressed') throw {code: 400, message: 'File is not zip'}
+    if(mimetype !== 'application/x-zip-compressed') throw createError(400, 'File is not zip')
 
     const unzip_directory = path.join(
       uploads_directory_path,
@@ -64,7 +64,7 @@ exports.import_collection = async (req, res) => {
 
     // Check if archive contains mongodb data file
     const found_json = zip.getEntries().find( ({ entryName }) => entryName === mongodb_export_file_name)
-    if(!found_json) throw {code: 400, message: `${mongodb_export_file_name} not found in archive`}
+    if(!found_json) throw createError(400, `${mongodb_export_file_name} not found in archive`)
 
     zip.extractAllTo(unzip_directory, true)
 
@@ -81,5 +81,7 @@ exports.import_collection = async (req, res) => {
 
     res.send({collection})
   }
-  catch (error) { error_handling(error,res) }
+  catch (error) {
+    next(error)
+  }
 }

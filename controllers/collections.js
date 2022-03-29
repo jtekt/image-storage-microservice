@@ -1,10 +1,10 @@
-const {ObjectID} = require('mongodb')
+const createError = require('http-errors')
 const rimraf = require('rimraf')
 const dotenv = require('dotenv')
-const {uploads_directory_path} = require('../config.js')
 const path = require('path')
+const { ObjectID } = require('mongodb')
+const { uploads_directory_path } = require('../config.js')
 const { getDb } = require('../db.js')
-const { error_handling } = require('../utils.js')
 
 
 // Parse environment variables
@@ -21,11 +21,11 @@ const delete_images_folder = (folder_to_remove) => new Promise((resolve, reject)
 
 const get_collection_from_request = (req) => {
   const {collection} = req.params
-  if(!collection) throw {code: 400, message: 'Collection not specified'}
+  if(!collection) throw createError(400, 'Collection not specified')
   return collection
 }
 
-exports.get_collections = async (req, res) => {
+exports.get_collections = async (req, res, next) => {
 
   // Todo: respond with more info than just name
 
@@ -34,14 +34,15 @@ exports.get_collections = async (req, res) => {
       .listCollections()
       .toArray()
 
-    res.send(collections.map(collection => { return collection.name }))
     console.log(`[MongoDB] Queried list of collections`)
+    res.send(collections.map(collection => collection.name ))
   }
-  catch (error) { error_handling(error, res) }
-
+  catch (error) {
+    next(error)
+  }
 }
 
-exports.get_collection_info = async (req, res) => {
+exports.get_collection_info = async (req, res, next) => {
 
   try {
     const collection = get_collection_from_request(req)
@@ -50,16 +51,17 @@ exports.get_collection_info = async (req, res) => {
       .collection(collection)
       .countDocuments()
 
-      res.send({ name: collection, documents: document_count })
       console.log(`[MongoDB] Queried info for collection ${collection}`)
+      res.send({ name: collection, documents: document_count })
   }
-  catch (error) { error_handling(error, res) }
-
+  catch (error) {
+    next(error)
+  }
 }
 
 
 
-exports.drop_collection = async (req, res) => {
+exports.drop_collection = async (req, res, next) => {
 
   try {
     const collection = get_collection_from_request(req)
@@ -73,6 +75,7 @@ exports.drop_collection = async (req, res) => {
     res.send(`Collection ${collection} dropped`)
 
   }
-  catch (error) { error_handling(error, res) }
-
+  catch (error) {
+    next(error)
+  }
 }

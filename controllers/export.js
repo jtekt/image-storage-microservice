@@ -1,4 +1,5 @@
 const fs = require('fs')
+const createError = require('http-errors')
 const XLSX = require('xlsx')
 const AdmZip = require('adm-zip')
 const rimraf = require('rimraf')
@@ -10,12 +11,13 @@ const {
 } = require('../config.js')
 
 const generate_excel = (data, path) => {
-  // convert any object into String
+
+  // Convmert all objects into strings
   const data_formatted = data.map( (item) => {
-    for (let key in item) { 
+    for (let key in item) {
       try {
         item[key] = item[key].toString()
-      } 
+      }
       catch (error) {
         item[key] = ''
       }
@@ -47,12 +49,12 @@ const delete_file = (file_path) => new Promise( (resolve, reject) => {
   })
 })
 
-exports.export_collection = async (req, res) => {
+exports.export_collection = async (req, res, next) => {
 
   try {
 
     const {collection} = req.params
-    if(!collection) throw {code: 400, message: 'collection not specified'}
+    if(!collection) throw createError(400, 'Collection not specified')
 
     const folder_to_zip = path.join(uploads_directory_path,'images',collection)
     const json_file_path = path.join(folder_to_zip, mongodb_export_file_name)
@@ -85,16 +87,16 @@ exports.export_collection = async (req, res) => {
     await delete_file(excel_file_path)
     await delete_file(json_file_path)
 
+    console.log(`[MongoDB] Images of ${collection} exported`)
+
     res.setHeader("Content-Type", "application/zip" )
     res.setHeader("Content-Disposition", `attachment; filename=${zip_filename}` )
     res.send(zipFileContents)
 
-    console.log(`[MongoDB] Images of ${collection} exported`)
 
   }
   catch (error) {
-    console.log(error)
-    res.status(500).send(error)
+    next(error)
   }
 
 
