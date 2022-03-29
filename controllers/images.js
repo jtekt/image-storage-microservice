@@ -1,25 +1,23 @@
-const ObjectID = require('mongodb').ObjectID
+const createError = require('http-errors')
 const formidable = require('formidable')
 const path = require('path')
 const dotenv = require('dotenv')
-const config = require('../config.js')
+const { uploads_directory_path } = require('../config.js')
+const { ObjectID } = require('mongodb')
 const { getDb } = require('../db.js')
 const {
   delete_file,
-  error_handling,
   move_file,
 } = require('../utils.js')
 
 dotenv.config()
-
-const uploads_directory_path = config.uploads_directory_path
 
 const parse_form = (req) => new Promise ( (resolve, reject) => {
 
   const content_type = req.headers['content-type']
 
   if(!content_type?.includes('multipart/form-data')) {
-    reject({code: 400, message: 'Content-type must bne multipart/form-data'})
+    reject(createError(400,'Content-type must bne multipart/form-data'))
   }
 
   const form = new formidable.IncomingForm()
@@ -34,21 +32,23 @@ const parse_form = (req) => new Promise ( (resolve, reject) => {
 
 
 function get_collection_from_request(req){
-    const collection = req.params.collection
-    if(!collection) throw {code: 400, message: 'Collection not specified'}
+    const {collection} = req.params
+    if(!collection) throw createError(400,'Collection not specified')
     return collection
 }
 
 function get_id_from_request(req){
-    let image_id = req.params.image_id
 
-    if(!image_id) throw {code: 400, message: 'ID not specified'}
+    let {image_id} = req.params
+
+    if(!image_id) throw createError(400,'Missigng ID')
 
 
-    try { image_id = ObjectID(image_id) }
-    //catch (e) { throw {code: 400, message: 'Invalid ID'} }
+    try {
+      image_id = ObjectID(image_id)
+    }
     catch (e) {
-      console.log('Invalid ID')
+      throw createError(400,'Invalid ID')
     }
 
     return image_id
@@ -74,8 +74,9 @@ function parse_db_query_parameters(req) {
     if(req.query.sort) {
       try {
         sort = JSON.parse(req.query.sort)
-      } catch (e) {
-        throw {code: 400, message: 'Malformed sorting'}
+      }
+      catch (e) {
+        throw createError(400,'Malformed sorting')
       }
     }
 
@@ -83,8 +84,9 @@ function parse_db_query_parameters(req) {
     if(req.query.filter) {
       try {
         filter = JSON.parse(req.query.filter)
-      } catch (e) {
-        throw {code: 400, message: 'Malformed filter'}
+      }
+      catch (e) {
+        throw createError(400,'Malformed filter')
       }
     }
 
@@ -116,13 +118,14 @@ function parse_json_properties(fields){
     if (properties.time) properties.time = new Date(properties.time)
 
     return properties
-  } catch (e) {
-    throw { code: 400, message: "Field cannot be parsed as JSON" }
+  }
+  catch (e) {
+    throw createError(400,'Field cannot be parsed as JSON')
   }
 
 }
 
-exports.image_upload = async (req, res) => {
+exports.image_upload = async (req, res, next) => {
 
   try {
 
@@ -132,7 +135,7 @@ exports.image_upload = async (req, res) => {
     // Read the form files
     const original_file = files['image']
 
-    if(!original_file) throw { code: 400, message: "Request does not contain an image" }
+    if(!original_file) throw createError(400, 'Request does not contain an image')
 
     const original_path = original_file.path
     const file_name = original_file.name
@@ -143,7 +146,8 @@ exports.image_upload = async (req, res) => {
       uploads_directory_path,
       'images',
       collection,
-      file_name)
+      file_name
+    )
 
     await move_file(original_path,destination_path)
 
@@ -154,8 +158,8 @@ exports.image_upload = async (req, res) => {
     const json_properties = parse_json_properties(fields)
     const user_defined_properties = json_properties || fields
 
-    if (user_defined_properties._id) throw { code: 400, message: "_id cannot be user-defined" }
-    if (user_defined_properties.time) throw { code: 400, message: "time cannot be user-defined" }
+    if (user_defined_properties._id) throw createError(400, '_id cannot be user-defined')
+    if (user_defined_properties.time) throw createError(400, 'time cannot be user-defined')
 
     // Add user defined properties to the base properties
     const new_document = { ...base_properties, ...user_defined_properties }
@@ -165,16 +169,16 @@ exports.image_upload = async (req, res) => {
       .collection(collection)
       .insertOne(new_document)
 
+    const inserted_document = insertion_result.ops[0]
 
     console.log(`[MongoDB] Image ${file_name} inserted in collection ${collection}`)
 
-    const inserted_document = insertion_result.ops[0]
-
-    // Respond to the client
     res.send(inserted_document)
 
   }
-  catch (error) { error_handling(error, res) }
+  catch (error) {
+    next(error)
+  }
 
 }
 
@@ -182,7 +186,7 @@ exports.image_upload = async (req, res) => {
 
 
 
-exports.get_all_images = async (req, res) => {
+exports.get_all_images = async (req, res, next) => {
 
   try {
 
@@ -197,35 +201,37 @@ exports.get_all_images = async (req, res) => {
     .sort(sort)
     .toArray()
 
-    res.send(result)
     console.log(`[MongoDB] Images of ${collection} queried`)
+    res.send(result)
   }
-  catch (error) { error_handling(error, res) }
-
+  catch (error) {
+    next(error)
+  }
 }
 
 
 
-exports.get_single_image = async (req, res) => {
+exports.get_single_image = async (req, res, next) => {
 
   try {
     const collection = get_collection_from_request(req)
     const _id = get_id_from_request(req)
 
     const queried_documment = await getDb()
-    .collection(collection)
-    .findOne({ _id })
+      .collection(collection)
+      .findOne({ _id })
 
-    if(!queried_documment) throw {code: 404, message: 'Document not found'}
+    if(!queried_documment) throw createError(404, 'Document not found')
 
-    res.send(queried_documment)
     console.log(`[MongoDB] Document ${_id} of collection ${collection} queried`)
+    res.send(queried_documment)
   }
-  catch (error) { error_handling(error, res) }
-
+  catch (error) {
+    next(error)
+  }
 }
 
-exports.delete_image = async (req, res) => {
+exports.delete_image = async (req, res, next) => {
 
   try {
     const collection = get_collection_from_request(req)
@@ -251,11 +257,12 @@ exports.delete_image = async (req, res) => {
     res.send(db_deletion_result)
     console.log(`[MongoDB] Document ${_id} of ${collection} deleted`)
   }
-  catch (error) { error_handling(error, res) }
-
+  catch (error) {
+    next(error)
+  }
 }
 
-exports.patch_image = async (req, res) => {
+exports.patch_image = async (req, res, next) => {
 
   try {
     const collection = get_collection_from_request(req)
@@ -267,8 +274,8 @@ exports.patch_image = async (req, res) => {
     delete new_properties.time
     delete new_properties._id
 
-    const action = {$set: new_properties}
-    const options = {returnOriginal: false}
+    const action = { $set: new_properties }
+    const options = { returnOriginal: false }
 
     const result = await getDb()
       .collection(collection)
@@ -278,12 +285,13 @@ exports.patch_image = async (req, res) => {
 
     console.log(`[MongoDB] Document ${_id} of ${collection} deleted`)
   }
-  catch (error) { error_handling(error, res) }
-
+  catch (error) {
+    next(error)
+  }
 }
 
 
-exports.serve_image_file = async (req,res) => {
+exports.serve_image_file = async (req, res, next) => {
 
   try {
 
@@ -304,7 +312,9 @@ exports.serve_image_file = async (req,res) => {
 
     console.log(`[Express] Serving image ${_id} of ${collection}`)
   }
-  catch (error) { error_handling(error, res) }
+  catch (error) {
+    next(error)
+  }
 
 
 }
