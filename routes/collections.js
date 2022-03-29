@@ -1,5 +1,9 @@
 const {Router} = require('express')
-const collections_controller = require('../controllers/collections.js')
+const {
+  get_collections,
+  get_collection_info,
+  drop_collection,
+} = require('../controllers/collections.js')
 const images_router = require('./images.js')
 const import_router = require('./import.js')
 const export_router = require('./export.js')
@@ -7,17 +11,13 @@ const export_router = require('./export.js')
 const router = Router()
 
 router.route('/')
-  .get(collections_controller.get_collections)
+  .get(get_collections)
 
-// router.route('/import')
-//   .get(collections_controller.import_collection)
 
 router.route('/:collection')
-  .get(collections_controller.get_collection_info)
-  .delete(collections_controller.drop_collection)
+  .get(get_collection_info)
+  .delete(drop_collection)
 
-// router.route('/:collection/export')
-//   .get(collections_controller.export_collection_zip)
 
 router.use('/:collection/import', import_router)
 router.use('/:collection/export', export_router)
