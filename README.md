@@ -1,6 +1,6 @@
 # Image storage microservice
 
-This is a microservice used to store and retrieve images as well as their related metadata via HTTP requests.
+A microservice used to store and retrieve images as well as their related metadata via HTTP requests.
 The service stores images as files and metadata as MongoDB documents.
 
 ## API
@@ -26,7 +26,7 @@ The service stores images as files and metadata as MongoDB documents.
 | APP_PORT | false | The port to which the application listens to, defaults to 80 |
 | MONGODB_URL | true | The URL of the MongoDB database to be used by the service |
 | MONGODB_DB | false| The name of the database to be used by the service |
-| USE_AUTHENTICATION | false | Set this variable to any value to enforce authentciation |
+| USE_AUTHENTICATION | false | Set this variable to any value to enforce authentication |
 | IDENTIFICATION_URL | false | When using authentication, holds the URL used to identify the user |
 
 
