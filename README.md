@@ -1,7 +1,7 @@
-# Storage microservice
-Receives images via HTTP POST (multipart/form-data) and store it locally.
-The images are served as static assets using Express.
-Data related to the image, including its URL, is stored in a MongoDB collection.
+# Image storage microservice
+
+This is a microservice used to store and retrieve images as well as their related metadata via HTTP requests.
+The service stores images as files and metadata as MongoDB documents.
 
 ## API
 
@@ -30,22 +30,14 @@ Data related to the image, including its URL, is stored in a MongoDB collection.
 | IDENTIFICATION_URL | false | When using authentication, holds the URL used to identify the user |
 
 
-## Deployment
-
-### Docker
-
-```
-docker run -p 7070:80 -e MONGODB_URL=http://your-db-url 172.16.98.151:5000/image-storage
-```
-
-## Image upload example
+## Image upload example (Python)
 
 ```python
 import requests
 
-IMAGE_PATH = './example_image.jpg'
-STORAGE_MS_URL = 'http://172.16.98.151:7070'
-COLLECTION = 'example'
+IMAGE_PATH = './example_image.jpg' # Path of the image to upload
+STORAGE_MS_URL = 'http://172.16.98.151:7070' # URL of the microservice
+COLLECTION = 'example' # Collection to upload the data in
 
 url = f'{STORAGE_MS_URL}/collections/{COLLECTION}/images'
 
