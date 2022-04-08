@@ -3,3 +3,4 @@ dev_uploads/
 dev_imports/
 .env
 uploads/*.jpg
+.nyc_output
