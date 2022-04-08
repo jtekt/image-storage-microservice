@@ -84,18 +84,24 @@ function parse_db_query_parameters(req) {
     if(req.query.filter) {
       try {
         filter = JSON.parse(req.query.filter)
+
+        // Convert _id filter
+        if(filter._id) filter._id = ObjectID(filter._id)
+
+        // Convert time filter to date {FLIMSY}
+        if(filter.time) {
+          // Why the for loop?
+          for (let key in filter.time) {
+            filter.time[key] = new Date(filter.time[key])
+          }
+        }
+
       }
       catch (e) {
         throw createError(400,'Malformed filter')
       }
     }
 
-    // Convert time filter to date {FLIMSY}
-    if(filter.time) {
-      for (let key in filter.time) {
-        filter.time[key] = new Date(filter.time[key])
-      }
-    }
 
     return {sort, filter, limit, skip}
 }
