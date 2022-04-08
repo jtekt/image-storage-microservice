@@ -56,7 +56,6 @@ print(response.text)
 | /collections/COLLECTION_NAME/images | POST | multipart/form-data | Upload an image to the collection called "COLLECTION_NAME" |
 | /collections/COLLECTION_NAME/images/IMAGE_ID | GET | - | Get the data related to the image with the ID "IMAGE_ID" from the collection called "COLLECTION_NAME" |
 | /collections/COLLECTION_NAME/images/IMAGE_ID | DELETE | - | Delete the entry with the ID "IMAGE_ID" from the collection called "COLLECTION_NAME" |
-| /collections/COLLECTION_NAME/images/IMAGE_ID | PUT | properties | Replace the properties of  the entry with the ID "IMAGE_ID" from the collection called "COLLECTION_NAME" |
 | /collections/COLLECTION_NAME/images/IMAGE_ID | PATCH | properties | Update the properties of the entry with the ID "IMAGE_ID" from the collection called "COLLECTION_NAME" |
 | /collections/COLLECTION_NAME/images/IMAGE_ID/image | GET | - | Get the image file of the corresponding entry |
 

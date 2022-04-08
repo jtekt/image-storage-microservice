@@ -12,7 +12,6 @@ router.route('/:image_id')
 .get(images_controller.get_single_image)
 .delete(images_controller.delete_image)
 .patch(images_controller.patch_image)
-//.put(images_controller.replace_image)
 
 router.route('/:image_id/info') // Alias
 .get(images_controller.get_single_image)
