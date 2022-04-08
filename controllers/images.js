@@ -60,7 +60,7 @@ function parse_db_query_parameters(req) {
     const limit = Number(req.query.limit
       || req.query.batch_size
       || req.query.count
-      || 0
+      || 500
     )
 
     const skip = Number(
@@ -102,8 +102,6 @@ function parse_db_query_parameters(req) {
 
 function parse_json_properties(fields){
   // JSON properties can be named as folows
-  let properties = {}
-
   const json_field = fields.json
     || fields.json_properties
     || fields.properties_json
@@ -190,16 +188,18 @@ exports.get_all_images = async (req, res, next) => {
 
   try {
 
+    // Note: document count is provided by GET /collections/:collection
+
     const collection = get_collection_from_request(req)
     const {skip, filter, limit, sort} = parse_db_query_parameters(req)
 
     const result = await getDb()
-    .collection(collection)
-    .find(filter)
-    .skip(skip)
-    .limit(limit)
-    .sort(sort)
-    .toArray()
+      .collection(collection)
+      .find(filter)
+      .skip(skip)
+      .limit(limit)
+      .sort(sort)
+      .toArray()
 
     console.log(`[MongoDB] Images of ${collection} queried`)
     res.send(result)
