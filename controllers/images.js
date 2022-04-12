@@ -164,6 +164,7 @@ exports.image_upload = async (req, res, next) => {
 
     if (user_defined_properties._id) throw createError(400, '_id cannot be user-defined')
     if (user_defined_properties.time) throw createError(400, 'time cannot be user-defined')
+    if (user_defined_properties.image) throw createError(400, 'image cannot be user-defined')
 
     // Add user defined properties to the base properties
     const new_document = { ...base_properties, ...user_defined_properties }
@@ -276,9 +277,10 @@ exports.patch_image = async (req, res, next) => {
 
     const new_properties = req.body
 
-    // Prevent edition of time and _id
+    // Prevent edition of base properties
     delete new_properties.time
     delete new_properties._id
+    delete new_properties.image
 
     const action = { $set: new_properties }
     const options = { returnOriginal: false }
