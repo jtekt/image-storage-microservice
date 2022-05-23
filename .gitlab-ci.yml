@@ -2,7 +2,6 @@ stages:
   - test
   - build
 
-image: moreillon/tdd-dind
 
 variables:
   APPLICATION_NAME: image-storage
@@ -24,6 +23,7 @@ variables:
   CONTAINER_IMAGE_DOCKER_HUB: ${DOCKER_HUB_USERNAME}/${APPLICATION_NAME}
   CONTAINER_IMAGE_DOCKER_HUB_TAGGED: ${CONTAINER_IMAGE_DOCKER_HUB}:${CONTAINER_TAG}
 
+image: moreillon/tdd-dind
 services:
   - name: docker:19.03.12-dind
     command: ["--insecure-registry=172.16.98.151:5000"]
