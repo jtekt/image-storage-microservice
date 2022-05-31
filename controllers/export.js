@@ -1,14 +1,13 @@
 const AdmZip = require('adm-zip')
 const Image = require('../models/image.js')
-const {
-  uploads_directory,
-  mongodb_export_file_name,
- } = require('../config.js')
-const { error_handling } = require('../utils.js')
 const path = require('path')
 const fs = require('fs')
 const XLSX = require('xlsx')
 const rimraf = require('rimraf')
+const {
+  uploads_directory,
+  mongodb_export_file_name,
+ } = require('../config.js')
 
 
 const generate_excel = (data, path) => {
@@ -52,7 +51,7 @@ const delete_file = (file_path) => new Promise( (resolve, reject) => {
   })
 })
 
-exports.export_images = async (req,res) => {
+exports.export_images = async (req, res, next) => {
 
   try {
 
@@ -89,6 +88,6 @@ exports.export_images = async (req,res) => {
     console.log(`[Export] Images exported`)
   }
   catch (error) {
-    error_handling(error,res)
+    next(error)
   }
 }

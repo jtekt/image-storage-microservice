@@ -19,7 +19,7 @@ variables:
   TEST_DB: tdd-db
 
 
-build:
+build-x86:
   stage: build
   only:
     - master
@@ -32,7 +32,6 @@ build:
     - docker image rm ${CONTAINER_IMAGE_TEST}
 
 
-# Building application for X86 plattforms
 test:
   stage: test
   only:

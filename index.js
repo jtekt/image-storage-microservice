@@ -62,10 +62,17 @@ app.use('/import', import_router)
 app.use('/export', export_router)
 app.use('/images', images_router)
 
+// Express error handling
+app.use((err, req, res, next) => {
+  console.error(err)
+  const { statusCode = 500, message } = err
+  res.status(statusCode).send(message)
+})
+
 
 // Start server
 app.listen(APP_PORT, () => {
-  console.log(`Image storage (Mongoose version) v${version} listening on port ${APP_PORT}`);
+  console.log(`Image storage v${version} listening on port ${APP_PORT}`);
 })
 
 // Export for testing

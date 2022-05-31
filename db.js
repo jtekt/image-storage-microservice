@@ -3,19 +3,21 @@ const dotenv = require('dotenv')
 
 dotenv.config()
 
-const mongodb_db = process.env.MONGODB_DB ?? 'image_storage_mongoose'
-const mongodb_url = process.env.MONGODB_URL ?? 'mongodb://mongo'
+
+const {
+  MONGODB_URL = 'mongodb://mongo',
+  MONGODB_DB = 'image_storage_mongoose'
+} = process.env
+
 
 const mongodb_options = {
    useUnifiedTopology: true,
    useNewUrlParser: true,
 }
 
-let mongodb_connected = false
-
 
 const connect = () => {
-  const connection_string = `${mongodb_url}/${mongodb_db}`
+  const connection_string = `${MONGODB_URL}/${MONGODB_DB}`
   console.log(`[MongoDB] Attempting connection to ${connection_string}`)
   mongoose.connect(connection_string, mongodb_options)
   .then(() => {console.log('[Mongoose] Initial connection successful')})
@@ -25,17 +27,8 @@ const connect = () => {
   })
 }
 
-const db = mongoose.connection
-db.on('error', () => {
-  console.log('[Mongoose] Connection lost')
-  mongodb_connected = false
-})
-db.once('open', () => {
-  console.log('[Mongoose] Connection established')
-  mongodb_connected = true
-})
 
-exports.url = mongodb_url
-exports.db = mongodb_db
+exports.url = MONGODB_URL
+exports.db = MONGODB_DB
 exports.connect = connect
-exports.get_connected = () => mongodb_connected
+exports.get_connected = () => mongoose.connection.readyState
