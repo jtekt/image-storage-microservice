@@ -1,6 +1,6 @@
 {
   "name": "image_storage_microservice",
-  "version": "2.8.1",
+  "version": "2.8.2",
   "description": "A microservice used to store and retrieve images as well as their related metadata via HTTP requests.",
   "main": "main.js",
   "scripts": {
