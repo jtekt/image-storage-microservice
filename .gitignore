@@ -2,5 +2,5 @@ node_modules/
 dev_uploads/
 dev_imports/
 .env
-#uploads/*
+uploads/*
 .nyc_output
