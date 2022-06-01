@@ -1,5 +1,6 @@
 const express = require('express')
 const cors = require('cors')
+const apiMetrics = require('prometheus-api-metrics')
 const dotenv = require('dotenv')
 const {version, author} = require('./package.json')
 const {uploads_directory_path} = require('./config.js')
@@ -29,6 +30,10 @@ app.use(express.json())
 
 // Authorize requests from different origins
 app.use(cors())
+
+// Prometheus metrics
+app.use(apiMetrics())
+
 
 // Home route
 app.get('/', (req, res) => {
