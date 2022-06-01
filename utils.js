@@ -22,29 +22,7 @@ exports.create_directory_if_not_exists = (target) => {
   }
 }
 
-exports.parse_db_query_parameters = (req) => {
-
-  const limit = Number(req.query.limit
-    || req.query.batch_size
-    || req.query.count
-    || 0
-  )
-
-  const skip = Number(
-    req.query.start_index
-      || req.query.index
-      || req.query.skip
-      || 0
-  )
-
-  let sort = {time: -1}
-  if(req.query.sort) {
-    try {
-      sort = JSON.parse(req.query.sort)
-    } catch (e) {
-      throw {code: 400, message: 'Malformed sorting'}
-    }
-  }
+exports.compute_filters = (req) => {
 
   let filter = {}
   if(req.query.filter) {
@@ -62,5 +40,5 @@ exports.parse_db_query_parameters = (req) => {
     }
   }
 
-  return {sort, filter, limit, skip}
+  return filter
 }

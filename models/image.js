@@ -6,7 +6,7 @@ const imageSchema = new Schema({
     required: true,
     unique: true,
   },
-  time: Date,
+  time: {type: Date, default: Date.now},
   data: Object,
 })
 

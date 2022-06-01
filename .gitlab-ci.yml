@@ -55,7 +55,7 @@ test:
       mongo
 
   script:
-    # Run test
+    # Run tests
     - >
       docker run
       --rm

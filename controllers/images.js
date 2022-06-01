@@ -4,15 +4,15 @@ const createHttpError = require('http-errors')
 const {uploads_directory} = require('../config.js')
 const {
   remove_file,
-  parse_db_query_parameters
+  compute_filters
 } = require('../utils.js')
 
 
 exports.upload_image = async (req, res, next) => {
   try {
 
-    // WARNING: Body becomes data so no way to pass time
-    if (!req.file) throw { code: 400, message: 'File not provided' }
+    // WARNING: Body becomes data so no way fro user to set time
+    if (!req.file) throw createHttpError(400, 'File not provided') 
     const file = req.file.originalname
     const data = req.body
     const time = new Date()
@@ -30,18 +30,25 @@ exports.read_images = async (req, res, next) => {
 
   try {
 
-    const {skip, filter, limit, sort} = parse_db_query_parameters(req)
+    const {
+      skip = 0,
+      limit = 100,
+      sort = 'time',
+      order = -1,
+    } = req.query
 
-    const images = await Image
+    const filter = compute_filters(req)
+
+    const items = await Image
       .find(filter)
-      .skip(skip)
-      .limit(limit)
-      .sort(sort)
+      .sort({ [sort]: order })
+      .skip(Number(skip))
+      .limit(Math.max(Number(limit), 0))
 
-    // TODO: RETURN COUNT
+    const total = await Image.countDocuments(filter)
 
-    res.send(images)
-    console.log(`Images queried`)
+
+    res.send({ total, skip, limit, items })
   }
   catch (error) {
     next(error)
