@@ -1,7 +1,10 @@
 const mongodb = require('mongodb')
 
-const db_url = process.env.MONGODB_URL || 'mongodb://mongo'
-const db_name = process.env.MONGODB_DB || 'image_storage'
+
+const {
+  MONGODB_URL = 'mongodb://mongo',
+  MONGODB_DB = 'image_storage',
+} = process.env
 
 const MongoClient = mongodb.MongoClient
 
@@ -14,11 +17,11 @@ let db
 
 function mongodb_connect(){
   console.log(`[MongoDB] Connecting...`)
-  MongoClient.connect(db_url,mongodb_options)
+  MongoClient.connect(MONGODB_URL,mongodb_options)
   .then(client => {
 
     console.log(`[MongoDB] Connected`)
-    db = client.db(db_name)
+    db = client.db(MONGODB_DB)
 
   })
   .catch(error => {
@@ -33,6 +36,6 @@ mongodb_connect()
 
 
 
-exports.name = db_name
-exports.url = db_url
+exports.url = MONGODB_URL
+exports.name = MONGODB_DB
 exports.getDb = () => db
