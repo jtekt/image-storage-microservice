@@ -1,15 +1,14 @@
 import requests
 from time import time
 
-IMAGE_PATH = './example_image.jpg'
-STORAGE_SERVICE_URL = 'http://172.16.98.151:7070'
+IMAGE_PATH = './example.jpg'
+STORAGE_SERVICE_URL = 'https://172.16.98.151:7070'
 COLLECTION='example'
 
 url = f'{STORAGE_SERVICE_URL}/collections/{COLLECTION}/images'
 
 # Additional info (not necessary)
 fields = {
-    'work': '100-001',
     'ai_prediction': 'OK',
     'frame_index': 12,
     }
