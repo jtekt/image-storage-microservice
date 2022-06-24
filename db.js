@@ -23,7 +23,7 @@ const connect = () => {
   .then(() => {console.log('[Mongoose] Initial connection successful')})
   .catch(error => {
     console.log('[Mongoose] Initial connection failed')
-    setTimeout(mongoose_connect,5000)
+    setTimeout(connect,5000)
   })
 }
 
