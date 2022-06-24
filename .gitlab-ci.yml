@@ -23,6 +23,7 @@ build-x86:
   stage: build
   only:
     - master
+    - mongoose
   tags:
     - dind
   script:
@@ -36,6 +37,7 @@ test:
   stage: test
   only:
     - master
+    - mongoose
   tags:
     - dind
   before_script:
