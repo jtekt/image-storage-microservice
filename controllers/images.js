@@ -104,11 +104,14 @@ exports.update_image = async (req, res, next) => {
     if (!image) throw createHttpError(404, `Image ${_id} not found`)
 
     // Unpack properties into data, overwriting fields if necessary
-    image.data = {...image.data,...properties}
+    image.data = {...image.data, ...properties}
+
+    console.log(image)
+
     const updated_image = await image.save()
 
-    res.send(updated_image)
     console.log(`Image ${_id} updated`)
+    res.send(updated_image)
   }
   catch (error) {
     next(error)

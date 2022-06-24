@@ -7,7 +7,7 @@ const imageSchema = new Schema({
     unique: true,
   },
   time: {type: Date, default: Date.now},
-  data: Object,
+  data: Schema.Types.Mixed,
 })
 
 const Image = model('Image', imageSchema)
