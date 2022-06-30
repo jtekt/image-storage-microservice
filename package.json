@@ -26,7 +26,7 @@
     "supertest": "^6.2.3"
   },
   "scripts": {
-    "dev": "nodemon --ignore ./uploads_dev",
+    "dev": "nodemon --ignore ./uploads",
     "test": "mocha --timeout 10000 --exit",
     "coverage": "nyc mocha --timeout 15000 --exit"
   },

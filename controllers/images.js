@@ -4,32 +4,28 @@ const createHttpError = require('http-errors')
 const {uploads_directory} = require('../config.js')
 const {
   remove_file,
-  compute_filters
+  compute_filters,
 } = require('../utils.js')
 
-const isNumeric = (str) => {
-  if (typeof str != "string") return false // we only process strings!  
-  return !isNaN(str) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
-    !isNaN(parseFloat(str)) // ...and ensure strings of whitespace fail
-}
+
 
 exports.upload_image = async (req, res, next) => {
   try {
 
-    // WARNING: Body becomes data so no way fro user to set time
-    // BUG: NUMBERS ARE CONVERTED TO STRING
+    
     if (!req.file) throw createHttpError(400, 'File not provided') 
     const file = req.file.originalname
-    const data = req.body
-    const {convert_numbers} = req.query
-    const time = new Date()
+    const { body } = req
 
-    if (convert_numbers) {
-      for (const key in data) {
-        if (isNumeric(data[key])) data[key] = parseFloat(data[key])
-      }
+    // User can provide data as a stringified JSON by using the data field
+    const data = body.data ? JSON.parse(body.data) : body
+
+    // Time: Set to upload time unless provided otherwise by user
+    let time = new Date()
+    if ( data.time ) {
+      time = new Date(data.time)
+      delete data.time
     }
-    
 
     const new_image = await Image.create({ file, time, data })
     res.send(new_image)
@@ -48,7 +44,7 @@ exports.read_images = async (req, res, next) => {
       skip = 0,
       limit = 100,
       sort = 'time',
-      order = -1,
+      order = 1,
     } = req.query
 
     const filter = compute_filters(req)
