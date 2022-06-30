@@ -7,15 +7,29 @@ const {
   compute_filters
 } = require('../utils.js')
 
+const isNumeric = (str) => {
+  if (typeof str != "string") return false // we only process strings!  
+  return !isNaN(str) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
+    !isNaN(parseFloat(str)) // ...and ensure strings of whitespace fail
+}
 
 exports.upload_image = async (req, res, next) => {
   try {
 
     // WARNING: Body becomes data so no way fro user to set time
+    // BUG: NUMBERS ARE CONVERTED TO STRING
     if (!req.file) throw createHttpError(400, 'File not provided') 
     const file = req.file.originalname
     const data = req.body
+    const {convert_numbers} = req.query
     const time = new Date()
+
+    if (convert_numbers) {
+      for (const key in data) {
+        if (isNumeric(data[key])) data[key] = parseFloat(data[key])
+      }
+    }
+    
 
     const new_image = await Image.create({ file, time, data })
     res.send(new_image)
@@ -38,6 +52,8 @@ exports.read_images = async (req, res, next) => {
     } = req.query
 
     const filter = compute_filters(req)
+
+    
 
     const items = await Image
       .find(filter)
@@ -105,8 +121,6 @@ exports.update_image = async (req, res, next) => {
 
     // Unpack properties into data, overwriting fields if necessary
     image.data = {...image.data, ...properties}
-
-    console.log(image)
 
     const updated_image = await image.save()
 
