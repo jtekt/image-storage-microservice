@@ -9,9 +9,8 @@ const {
 
 
  const mongodb_data_import = (images) => {
-   const promises = []
-   images.forEach( (image) => {
-     promises.push(Image.findOneAndUpdate( image, image, { upsert: true }))
+   const promises = images.map( (image) => {
+     return Image.findOneAndUpdate( image, image, { upsert: true })
    })
    return Promise.all(promises)
  }
@@ -36,11 +35,11 @@ exports.import_images = async (req, res, next) => {
     const json_file_path = path.join(unzip_directory, mongodb_export_file_name)
     const mongodb_data = require(json_file_path)
 
-    await mongodb_data_import(mongodb_data)
+    const {length} = await mongodb_data_import(mongodb_data)
 
-    res.send('OK')
+    res.send({count: length})
 
-    console.log(`[Import] Images imported`)
+    console.log(`[Import] ${length} Images imported`)
 
   }
   catch (error) {

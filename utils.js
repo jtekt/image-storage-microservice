@@ -33,8 +33,6 @@ exports.compute_filters = (req) => {
     }
   }
 
-  console.log(filter)
-
   // Convert time filter to date {FLIMSY}
   if(filter.time) {
     for (let key in filter.time) {
