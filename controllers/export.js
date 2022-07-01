@@ -17,7 +17,9 @@ const generate_excel = (data, path) => {
     // TODO: Remove the "data" property
 
     // Convert nested data properties
-    for (let key in item.data) { item.data[key] = item.data[key].toString() }
+    for (let key in item.data) { 
+      if (item.data[key]) item.data[key] = item.data[key].toString()
+    }
 
     return {
       ...item,
