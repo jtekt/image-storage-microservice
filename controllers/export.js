@@ -71,15 +71,11 @@ exports.export_images = async (req, res, next) => {
     generate_excel(images_json, excel_file_path)
     generate_json(images_json, json_file_path)
 
-    const files = await list_files_of_directory(folder_to_zip)
     const zip_filename = `export.zip`
 
     const zip = new AdmZip()
 
-    // add every file
-    files.forEach((file) => {
-      zip.addLocalFile(path.join(folder_to_zip,file))
-    })
+    zip.addLocalFolder(folder_to_zip)
 
     const zipFileContents = zip.toBuffer()
 
