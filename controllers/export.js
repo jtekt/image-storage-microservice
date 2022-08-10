@@ -64,6 +64,7 @@ exports.export_images = async (req, res, next) => {
     const folder_to_zip = path.join(__dirname, `../${uploads_directory}`)
     const json_file_path = path.join(__dirname, `../${uploads_directory}`, mongodb_export_file_name)
     const excel_file_path = path.join(__dirname, `../${uploads_directory}`, 'mongodb_data.xlsx')
+    const temp_zip_path = path.join(__dirname, `../image_storage_service_export.zip`)
 
     const images = await Image.find({})
     const images_json = images.map(i => i.toJSON())
@@ -71,21 +72,22 @@ exports.export_images = async (req, res, next) => {
     generate_excel(images_json, excel_file_path)
     generate_json(images_json, json_file_path)
 
-    const zip_filename = `export.zip`
-
     const zip = new AdmZip()
 
     zip.addLocalFolder(folder_to_zip)
+    zip.writeZip(temp_zip_path)
 
-    const zipFileContents = zip.toBuffer()
+    res.download(temp_zip_path)
 
-    // Cleanup of summary files, not strictly necesary but good practice
+
+    // Cleanup of generated files
     await delete_file(excel_file_path)
     await delete_file(json_file_path)
+    await delete_file(temp_zip_path)
 
-    res.setHeader("Content-Type", "application/zip" )
-    res.setHeader("Content-Disposition", `attachment; filename=${zip_filename}` )
-    res.send(zipFileContents)
+    // res.setHeader("Content-Type", "application/zip" )
+    // res.setHeader("Content-Disposition", `attachment; filename=${zip_filename}` )
+    // res.send(zipFileContents)
 
     console.log(`[Export] Images exported`)
   }

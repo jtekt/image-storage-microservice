@@ -3,3 +3,4 @@ node_modules/
 uploads
 uploads_dev
 .nyc_output
+image_storage_service_export.zip
