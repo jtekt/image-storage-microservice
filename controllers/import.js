@@ -1,4 +1,3 @@
-const AdmZip = require('adm-zip')
 const Image = require('../models/image.js')
 const path = require('path')
 const createHttpError = require('http-errors')
@@ -6,6 +5,7 @@ const {
   uploads_directory,
   mongodb_export_file_name,
 } = require('../config.js')
+const unzipper = require('unzipper');
 
 
  const mongodb_data_import = (images) => {
@@ -17,20 +17,25 @@ const {
 
 exports.import_images = async (req, res, next) => {
 
+
   try {
     const {file} = req
     if (!file) throw createHttpError(400, 'File not provided')
     const {mimetype, buffer} = file
-    if (mimetype !== 'application/x-zip-compressed') throw createHttpError(400, 'File is not zip')
 
-    const zip = new AdmZip(buffer)
+    const allowed_mimetypes = [
+      'application/x-zip-compressed',
+      'application/zip',
+    ]
+    if ( ! allowed_mimetypes.includes(mimetype) ) throw createHttpError(400, 'File is not zip')
 
-    // Check if archive contains mongodb data file
-    const found_json = zip.getEntries().find( ({ entryName }) => entryName === mongodb_export_file_name)
-    if (!found_json) throw createHttpError(400, `${mongodb_export_file_name} not found in archive`)
+    console.log(`[Import] Importing archive...`)
 
+    const directory = await unzipper.Open.buffer(buffer);
+    const contains_json = directory.files.some(({ path }) => path === mongodb_export_file_name )
+    if (!contains_json) throw createHttpError(400, `${mongodb_export_file_name} not found in archive`)
     const unzip_directory = path.join(__dirname, `../${uploads_directory}`)
-    zip.extractAllTo(unzip_directory, true)
+    await directory.extract({path: unzip_directory})
 
     const json_file_path = path.join(unzip_directory, mongodb_export_file_name)
     const mongodb_data = require(json_file_path)

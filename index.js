@@ -1,7 +1,7 @@
 const express = require('express')
 const cors = require('cors')
 const dotenv = require('dotenv')
-const apiMetrics = require('prometheus-api-metrics')
+// const apiMetrics = require('prometheus-api-metrics')
 const auth = require('@moreillon/express_identification_middleware')
 const group_auth = require('@moreillon/express_group_based_authorization_middleware')
 const {author, name: application_name, version} = require('./package.json')
@@ -28,7 +28,7 @@ db.connect()
 const app = express()
 app.use(express.json())
 app.use(cors())
-app.use(apiMetrics())
+// app.use(apiMetrics())
 
 
 app.get('/', (req, res) => {
