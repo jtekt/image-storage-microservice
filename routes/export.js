@@ -1,14 +1,12 @@
 const {Router} = require('express')
-const path = require('path')
-const multer  = require('multer')
 const {
-  export_collection,
+  export_images,
 } = require('../controllers/export.js')
 
-const router = Router({mergeParams: true})
+const router = Router()
 
 router.route('/')
-  .get(export_collection)
+  .get(export_images)
 
 
 module.exports = router

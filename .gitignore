@@ -1,6 +1,6 @@
 node_modules/
-dev_uploads/
-dev_imports/
 .env
-uploads/*.jpg
+uploads
+uploads_dev
 .nyc_output
+image_storage_service_export.zip

@@ -1,38 +1,34 @@
-const mongodb = require('mongodb')
+const mongoose = require("mongoose")
+const dotenv = require('dotenv')
 
-const db_url = process.env.MONGODB_URL || 'mongodb://mongo'
-const db_name = process.env.MONGODB_DB || 'image_storage'
+dotenv.config()
 
-const MongoClient = mongodb.MongoClient
+
+const {
+  MONGODB_URL = 'mongodb://mongo',
+  MONGODB_DB = 'image_storage_mongoose'
+} = process.env
+
 
 const mongodb_options = {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
+   useUnifiedTopology: true,
+   useNewUrlParser: true,
 }
 
-let db
 
-function mongodb_connect(){
-  console.log(`[MongoDB] Connecting...`)
-  MongoClient.connect(db_url,mongodb_options)
-  .then(client => {
-
-    console.log(`[MongoDB] Connected`)
-    db = client.db(db_name)
-
-  })
+const connect = () => {
+  const connection_string = `${MONGODB_URL}/${MONGODB_DB}`
+  console.log(`[MongoDB] Attempting connection to ${connection_string}`)
+  mongoose.connect(connection_string, mongodb_options)
+  .then(() => {console.log('[Mongoose] Initial connection successful')})
   .catch(error => {
-    console.log(error)
-    console.log(`[MongoDB] Connection failed`)
-    setTimeout(mongodb_connect,5000)
+    console.log('[Mongoose] Initial connection failed')
+    setTimeout(connect,5000)
   })
 }
 
 
-mongodb_connect()
-
-
-
-exports.name = db_name
-exports.url = db_url
-exports.getDb = () => db
+exports.url = MONGODB_URL
+exports.db = MONGODB_DB
+exports.connect = connect
+exports.get_connected = () => mongoose.connection.readyState

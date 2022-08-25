@@ -1,26 +1,40 @@
+const {Router} = require('express')
+const path = require('path')
+const multer  = require('multer')
+const {uploads_directory} = require('../config.js')
+const {create_directory_if_not_exists} = require('../utils.js')
+const {
+  read_images,
+  upload_image,
+  read_image,
+  read_image_file,
+  delete_image,
+  update_image,
+} = require('../controllers/images.js')
 
-const express = require('express')
-const images_controller = require('../controllers/images.js')
+const router = Router()
 
-const router = express.Router({mergeParams: true})
+const storage = multer.diskStorage({
+  destination:  (req, file, cb) => {
+    create_directory_if_not_exists(uploads_directory)
+    cb(null, uploads_directory)
+  },
+  filename:  (req, file, cb) => { cb(null, file.originalname) }
+})
+
+const upload = multer({ storage })
+
 
 router.route('/')
-.post(images_controller.image_upload)
-.get(images_controller.get_all_images)
+  .get(read_images)
+  .post(upload.single('image'), upload_image)
 
-router.route('/:image_id')
-.get(images_controller.get_single_image)
-.delete(images_controller.delete_image)
-.patch(images_controller.patch_image)
+router.route('/:_id')
+  .get(read_image)
+  .delete(delete_image)
+  .patch(update_image)
 
-router.route('/:image_id/info') // Alias
-.get(images_controller.get_single_image)
-
-router.route('/:image_id/image')
-.get(images_controller.serve_image_file)
-
-router.route('/:image_id/file') // Alias
-.get(images_controller.serve_image_file)
-
+router.route('/:_id/image')
+  .get(read_image_file)
 
 module.exports = router

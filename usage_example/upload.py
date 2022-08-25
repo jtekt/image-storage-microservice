@@ -2,10 +2,9 @@ import requests
 from time import time
 
 IMAGE_PATH = './example_image.jpg'
-STORAGE_SERVICE_URL = 'http://172.16.98.151:7070'
-COLLECTION='example'
+STORAGE_SERVCICE_URL = 'http://172.16.98.151:7070'
 
-url = f'{STORAGE_SERVICE_URL}/collections/{COLLECTION}/images'
+api_url = f'{STORAGE_SERVCICE_URL}/images'
 
 # Additional info (not necessary)
 fields = {
@@ -19,8 +18,8 @@ files = { 'image' : (f'{time()}.jpg', open(IMAGE_PATH,'rb').read()) }
 
 
 # Send the image
-print(f'Uploading image to {url}')
-response = requests.post(url, data=fields, files=files)
+print(f'Uploading image to {api_url}')
+response = requests.post(api_url, data=fields, files=files)
 
 
 # Check if upload is successful

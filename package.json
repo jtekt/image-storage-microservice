@@ -1,35 +1,36 @@
 {
-  "name": "image_storage_microservice",
-  "version": "2.8.1",
-  "description": "A microservice used to store and retrieve images as well as their related metadata via HTTP requests.",
-  "main": "main.js",
-  "scripts": {
-    "dev": "nodemon --ignore ./dev_uploads",
-    "test": "mocha --timeout 10000 --exit",
-    "coverage": "nyc mocha --timeout 15000 --exit"
-  },
-  "keywords": [],
-  "author": "Maxime MOREILLON",
-  "license": "MIT",
+  "name": "image_storage_microservice_mongoose",
+  "version": "1.2.0",
+  "description": "A microservice to store and retrive images and their metadata",
+  "main": "index.js",
   "dependencies": {
+    "@moreillon/express_group_based_authorization_middleware": "^2.1.7",
     "@moreillon/express_identification_middleware": "^1.1.0",
-    "adm-zip": "^0.5.9",
-    "axios": "^0.21.4",
+    "archiver": "^5.3.1",
     "cors": "^2.8.5",
-    "dotenv": "^8.6.0",
-    "express": "^4.17.3",
-    "formidable": "^1.2.6",
+    "dotenv": "^10.0.0",
+    "express": "^4.18.1",
     "http-errors": "^2.0.0",
-    "mongodb": "^3.7.3",
+    "mongoose": "^6.3.4",
     "multer": "^1.4.4",
-    "mv": "^2.1.1",
+    "prom-client": "^14.0.1",
     "rimraf": "^3.0.2",
+    "unzipper": "^0.10.11",
     "xlsx": "^0.17.5"
   },
   "devDependencies": {
     "chai": "^4.3.6",
     "mocha": "^9.2.2",
+    "nodemon": "^2.0.16",
     "nyc": "^15.1.0",
-    "supertest": "^6.2.2"
-  }
+    "supertest": "^6.2.3"
+  },
+  "scripts": {
+    "dev": "nodemon --ignore ./uploads --ignore image_storage_service_export.zip",
+    "test": "mocha --timeout 10000 --exit",
+    "coverage": "nyc mocha --timeout 15000 --exit"
+  },
+  "keywords": [],
+  "author": "Maxime MOREILLON",
+  "license": "MIT"
 }

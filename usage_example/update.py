@@ -1,22 +1,16 @@
 import requests
 
 
-STORAGE_SERVICE_URL = 'http://172.16.98.151:7070'
-COLLECTION='example'
-IMAGE_ID = '61945fc0c4fc6c4e20f7a6f1'
+IMAGE_ID = '617b5731bdfab1340cadc44e'
+STORAGE_SERVCICE_URL = 'http://172.16.98.151:7070'
 
-url = f'{STORAGE_SERVICE_URL}/collections/{COLLECTION}/images/{IMAGE_ID}'
+api_url = f'{STORAGE_SERVCICE_URL}/images/{IMAGE_ID}'
 
-properties = {
-"string": 'Hello',
-"number": 1,
-"array": ['Apple','Banana','Cherry'],
-"object": {"key": "value"}
-}
+properties = {"updated": "success"}
 
 # Send the image
-print(f'Updating image {url}')
-response = requests.patch(url, json=properties)
+print(f'Updating image {api_url}')
+response = requests.patch(api_url, json=properties)
 
 
 # Check if upload is successful
