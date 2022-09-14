@@ -1,6 +1,6 @@
-# Image storage microservice (Mongoose version)
+# Image storage microservice
 
-An image storage microservice built using Mongoose.
+A microservice to store and manage image data
 
 ## API
 | Route  | Method | Description |
