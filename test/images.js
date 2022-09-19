@@ -9,7 +9,7 @@ describe("/images", () => {
 
   beforeEach( async () => {
     // Silencing console
-    console.log = () => {}
+    // console.log = () => {}
   })
 
 
