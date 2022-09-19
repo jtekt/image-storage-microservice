@@ -12,11 +12,11 @@ const {
 
 const generate_excel = (data, path) => {
 
-  formatted_data = data.map(item => {
-
-    // TODO: Remove the "data" property
+  const formatted_data = data.map(item => {
 
     // Convert nested data properties
+
+    // TODO: Remove the "data" property
 
     // Important: create a copy so as to not affect original data
     const data = {...item.data}

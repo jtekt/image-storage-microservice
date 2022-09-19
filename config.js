@@ -2,5 +2,9 @@ const dotenv = require('dotenv')
 
 dotenv.config()
 
-exports.uploads_directory = process.env.UPLOADS_DIRECTORY || 'uploads'
+const {
+    UPLOADS_DIRECTORY = 'uploads'
+} = process.env
+
+exports.uploads_directory = UPLOADS_DIRECTORY
 exports.mongodb_export_file_name = 'mongodb_data.json'

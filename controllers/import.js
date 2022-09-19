@@ -1,17 +1,15 @@
 const Image = require('../models/image.js')
 const path = require('path')
 const createHttpError = require('http-errors')
+const unzipper = require('unzipper')
 const {
   uploads_directory,
   mongodb_export_file_name,
 } = require('../config.js')
-const unzipper = require('unzipper');
 
 
  const mongodb_data_import = (images) => {
-   const promises = images.map( (image) => {
-     return Image.findOneAndUpdate( image, image, { upsert: true })
-   })
+   const promises = images.map( (image) => Image.findOneAndUpdate( image, image, { upsert: true }) )
    return Promise.all(promises)
  }
 
@@ -31,7 +29,7 @@ exports.import_images = async (req, res, next) => {
 
     console.log(`[Import] Importing archive...`)
 
-    const directory = await unzipper.Open.buffer(buffer);
+    const directory = await unzipper.Open.buffer(buffer)
     const contains_json = directory.files.some(({ path }) => path === mongodb_export_file_name )
     if (!contains_json) throw createHttpError(400, `${mongodb_export_file_name} not found in archive`)
     const unzip_directory = path.join(__dirname, `../${uploads_directory}`)
