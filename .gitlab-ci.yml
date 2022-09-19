@@ -29,6 +29,8 @@ build-x86:
     - mongoose
   tags:
     - dind
+  before_script:
+    - echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin ;
   script:
     - docker build -t ${CONTAINER_IMAGE_TEST} .
     - docker push ${CONTAINER_IMAGE_TEST}
@@ -44,11 +46,7 @@ test:
   tags:
     - dind
   before_script:
-    - >
-     if [ -z ${DOCKER_HUB_USERNAME} ];
-     then echo "No Docker login" -;
-     else echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin ;
-     fi
+    - echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin ;
     # Creating network for TDD
     - docker network create ${TEST_NETWORK}
     # Creating DB container in network
