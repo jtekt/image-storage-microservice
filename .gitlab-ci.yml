@@ -10,11 +10,14 @@ services:
 
 variables:
   APPLICATION_NAME: image-storage-mongoose
-  CONTAINER_IMAGE: ${CONTAINER_REGISTRY}/${APPLICATION_NAME}
+
+  CONTAINER_IMAGE: ${DOCKER_HUB_USERNAME}/${APPLICATION_NAME}
   CONTAINER_IMAGE_TEST: ${CONTAINER_IMAGE}:test
   CONTAINER_IMAGE_TAGGED: ${CONTAINER_IMAGE}:${CI_COMMIT_SHORT_SHA}
-  CONTAINER_IMAGE_DOCKER_HUB: ${DOCKER_HUB_USERNAME}/${APPLICATION_NAME}
-  CONTAINER_IMAGE_DOCKER_HUB_TAGGED: ${CONTAINER_IMAGE_DOCKER_HUB}:${CI_COMMIT_SHORT_SHA}
+
+  # CONTAINER_IMAGE_DOCKER_HUB: ${DOCKER_HUB_USERNAME}/${APPLICATION_NAME}
+  # CONTAINER_IMAGE_DOCKER_HUB_TAGGED: ${CONTAINER_IMAGE_DOCKER_HUB}:${CI_COMMIT_SHORT_SHA}
+
   TEST_NETWORK: tdd
   TEST_DB: tdd-db
 
@@ -25,7 +28,7 @@ build-x86:
     - master
     - mongoose
   tags:
-    - internal-dind
+    - dind
   script:
     - docker build -t ${CONTAINER_IMAGE_TEST} .
     - docker push ${CONTAINER_IMAGE_TEST}
@@ -39,7 +42,7 @@ test:
     - master
     - mongoose
   tags:
-    - internal-dind
+    - dind
   before_script:
     - >
      if [ -z ${DOCKER_HUB_USERNAME} ];
@@ -69,10 +72,10 @@ test:
     # Tag
     - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE}
     - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE_TAGGED}
-    - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE_DOCKER_HUB}
-    - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE_DOCKER_HUB_TAGGED}
+    # - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE_DOCKER_HUB}
+    # - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE_DOCKER_HUB_TAGGED}
     # Push
     - docker push ${CONTAINER_IMAGE}
     - docker push ${CONTAINER_IMAGE_TAGGED}
-    - docker push ${CONTAINER_IMAGE_DOCKER_HUB}
-    - docker push ${CONTAINER_IMAGE_DOCKER_HUB_TAGGED}
+    # - docker push ${CONTAINER_IMAGE_DOCKER_HUB}
+    # - docker push ${CONTAINER_IMAGE_DOCKER_HUB_TAGGED}
