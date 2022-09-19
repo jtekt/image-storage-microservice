@@ -1,12 +1,12 @@
 const {Router} = require('express')
-const path = require('path')
 const multer  = require('multer')
-const {
-  import_images,
-} = require('../controllers/import.js')
+const { import_images } = require('../controllers/import.js')
 
 const router = Router()
+
+// Memory storage maybe not ideal if archive is very large
 const storage = multer.memoryStorage()
+
 const upload = multer({ storage })
 
 

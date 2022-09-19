@@ -1,7 +1,5 @@
 const {Router} = require('express')
-const {
-  export_images,
-} = require('../controllers/export.js')
+const { export_images } = require('../controllers/export.js')
 
 const router = Router()
 

@@ -1,8 +1,7 @@
-const {Router} = require('express')
-const path = require('path')
+const { Router } = require('express')
 const multer  = require('multer')
-const {uploads_directory} = require('../config.js')
-const {create_directory_if_not_exists} = require('../utils.js')
+const { uploads_directory } = require('../config.js')
+const { create_directory_if_not_exists } = require('../utils.js')
 const {
   read_images,
   upload_image,
