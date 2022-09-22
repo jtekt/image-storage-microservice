@@ -1,6 +1,6 @@
 import requests
 
-STORAGE_SERVCICE_URL = 'http://172.16.98.151:7070'
+STORAGE_SERVCICE_URL = 'http://localhost:31221'
 
 url = f'{STORAGE_SERVCICE_URL}/images'
 

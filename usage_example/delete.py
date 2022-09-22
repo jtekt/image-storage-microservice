@@ -1,8 +1,8 @@
 import requests
 
 
+STORAGE_SERVCICE_URL = 'http://localhost:31221'
 IMAGE_ID = '6178a016767f7b1522b50402'
-STORAGE_SERVCICE_URL = 'http://172.16.98.151:7070'
 
 api_url = f'{STORAGE_SERVCICE_URL}/images/{IMAGE_ID}'
 

@@ -15,25 +15,25 @@ services:
 
   # Image storage microservice back-end
   image-storage:
-    image: moreillon/image-storage-mongoose:905f3542
+    image: moreillon/image-storage-service:latest
     environment:
       MONGODB_URL: mongodb://mongo:27017
     ports:
       - 31221:80
     volumes:
-      - /usr/share/pv
+      - /usr/src/app/uploads
 
   # Image storage service front-end
   image-storage-front:
     logging:
       driver: none # Disable console output
-    image: moreillon/image-storage-mongoose-front:25d6d151
+    image: moreillon/image-storage-service-gui:latest
     environment:
       VUE_APP_IMAGE_STORAGE_API_URL: /proxy/images
 
   # Image storage service front-end proxy
   image-storage-front-proxy:
-    image: moreillon/api-proxy:a3e8b41e
+    image: moreillon/api-proxy:latest
     environment:
       PROXY_ROOT: http://image-storage-front
       PROXY_IMAGES: http://image-storage
