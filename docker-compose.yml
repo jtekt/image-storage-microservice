@@ -1,0 +1,42 @@
+# This docker-compose files deploys the image storage service, its GUI and a MongoDB instance.
+# The GUI is made available on port 31222 while the API is on port 31221
+
+version: "3.6"
+
+services:
+
+  # MongoDB
+  mongo:
+    logging:
+      driver: none # Disable console output
+    image: mongo
+    volumes:
+      - /data/db
+
+  # Image storage microservice back-end
+  image-storage:
+    image: moreillon/image-storage-mongoose:905f3542
+    environment:
+      MONGODB_URL: mongodb://mongo:27017
+    ports:
+      - 31221:80
+    volumes:
+      - /usr/share/pv
+
+  # Image storage service front-end
+  image-storage-front:
+    logging:
+      driver: none # Disable console output
+    image: moreillon/image-storage-mongoose-front:25d6d151
+    environment:
+      VUE_APP_IMAGE_STORAGE_API_URL: /proxy/images
+
+  # Image storage service front-end proxy
+  image-storage-front-proxy:
+    image: moreillon/api-proxy:a3e8b41e
+    environment:
+      PROXY_ROOT: http://image-storage-front
+      PROXY_IMAGES: http://image-storage
+    ports:
+      - 31222:80
+
