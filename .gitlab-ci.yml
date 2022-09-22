@@ -9,7 +9,7 @@ services:
     command: ["--insecure-registry=172.16.98.151:5000"]
 
 variables:
-  APPLICATION_NAME: image-storage-mongoose
+  APPLICATION_NAME: image-storage-service
 
   CONTAINER_IMAGE: ${DOCKER_HUB_USERNAME}/${APPLICATION_NAME}
   CONTAINER_IMAGE_TEST: ${CONTAINER_IMAGE}:test
