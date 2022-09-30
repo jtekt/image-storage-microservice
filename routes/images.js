@@ -9,6 +9,7 @@ const {
   read_image_file,
   delete_image,
   update_image,
+  read_fields
 } = require('../controllers/images.js')
 
 const router = Router()
@@ -27,6 +28,9 @@ const upload = multer({ storage })
 router.route('/')
   .get(read_images)
   .post(upload.single('image'), upload_image)
+
+router.route('/fields')
+  .get(read_fields)
 
 router.route('/:_id')
   .get(read_image)

@@ -87,6 +87,18 @@ exports.read_image = async (req, res, next) => {
   }
 }
 
+exports.read_fields = async (req, res, next) => {
+  try {
+    
+    const images = await Image.find({})
+    const fields = images.reduce( (prev, image) => [...new Set([...prev, ...Object.keys(image.data)])], [])
+    res.send(fields)
+  }
+  catch (error) {
+    next(error)
+  }
+}
+
 exports.delete_image = async (req, res, next) => {
   try {
     const {_id} = req.params
