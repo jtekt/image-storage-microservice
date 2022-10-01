@@ -1,6 +1,6 @@
 {
-  "name": "image_storage_microservice_mongoose",
-  "version": "1.2.1",
+  "name": "image_storage_microservice",
+  "version": "1.3.1",
   "description": "A microservice to store images and their metadata",
   "main": "index.js",
   "dependencies": {

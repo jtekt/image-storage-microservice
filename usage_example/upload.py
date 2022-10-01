@@ -2,14 +2,14 @@ import requests
 from time import time
 
 IMAGE_PATH = './example_image.jpg'
-STORAGE_SERVCICE_URL = 'http://localhost:31221'
+STORAGE_SERVCICE_URL = 'http://localhost:7070'
 
 api_url = f'{STORAGE_SERVCICE_URL}/images'
 
 # Additional info (not necessary)
 fields = {
-    'part_number': '100-001',
-    'ai_prediction': 'OK',
+    'part_number': '200-002',
+    'ai_prediction': 'NG',
     }
 
 

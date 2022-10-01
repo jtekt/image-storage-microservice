@@ -7,9 +7,11 @@ const group_auth = require('@moreillon/express_group_based_authorization_middlew
 const {author, name: application_name, version} = require('./package.json')
 const db = require('./db.js')
 const { uploads_directory } = require('./config.js')
+
 const images_router = require('./routes/images.js')
 const import_router = require('./routes/import.js')
 const export_router = require('./routes/export.js')
+const fields_router = require('./routes/fields.js')
 
 
 dotenv.config()
@@ -64,6 +66,7 @@ if(AUTHORIZED_GROUPS && GROUP_AUTHORIZATION_URL) {
 app.use('/import', import_router)
 app.use('/export', export_router)
 app.use('/images', images_router)
+app.use('/fields', fields_router)
 
 // Express error handling
 app.use((err, req, res, next) => {

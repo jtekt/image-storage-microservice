@@ -1,5 +1,6 @@
 const rimraf = require('rimraf')
 const fs = require('fs')
+const createHttpError = require('http-errors')
 
 exports.remove_file = (file_path) => new Promise((resolve, reject) => {
   rimraf(file_path, (error) => {
@@ -24,24 +25,11 @@ exports.create_directory_if_not_exists = (target) => {
   }
 }
 
-exports.compute_filters = (req) => {
+exports.format_query = (filter) => {
 
-  let filter = {}
+  // Unused
 
-  if(req.query.filter) {
-    try {
-      filter = JSON.parse(req.query.filter)
-    } catch (e) {
-      throw {code: 400, message: 'Malformed filter'}
-    }
-  }
+  const output = {}
 
-  // Convert time filter to date {FLIMSY}
-  if(filter.time) {
-    for (let key in filter.time) {
-      filter.time[key] = new Date(filter.time[key])
-    }
-  }
-
-  return filter
+  return output
 }

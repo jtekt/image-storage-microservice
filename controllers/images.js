@@ -2,10 +2,7 @@ const Image = require('../models/image.js')
 const path = require('path')
 const createHttpError = require('http-errors')
 const {uploads_directory} = require('../config.js')
-const {
-  remove_file,
-  compute_filters,
-} = require('../utils.js')
+const { remove_file } = require('../utils.js')
 
 
 
@@ -45,19 +42,33 @@ exports.read_images = async (req, res, next) => {
       limit = 100,
       sort = 'time',
       order = 1,
+      from,
+      to,
+      regex, // boolean toggling partial text search, not ideal
+      ...query
     } = req.query
 
-    const filter = compute_filters(req)
+    // NOTE: partial text search on any field might not work because field list not fixed
 
-    
+    const formattedQuery = { }
+
+    for (const key in query) {
+      if (regex) formattedQuery[`data.${key}`] = { $regex: query[key], $options: 'i'}
+      else formattedQuery[`data.${key}`] = query[key]
+    }
+
+    // Time filters
+    if (to || from) formattedQuery.time = {}
+    if (to) formattedQuery.time.$lte = new Date(to)
+    if (from) formattedQuery.time.$gt = new Date(from)
 
     const items = await Image
-      .find(filter)
+      .find(formattedQuery)
       .sort({ [sort]: order })
       .skip(Number(skip))
       .limit(Math.max(Number(limit), 0))
 
-    const total = await Image.countDocuments(filter)
+    const total = await Image.countDocuments(formattedQuery)
 
 
     res.send({ total, skip, limit, items })
@@ -67,8 +78,6 @@ exports.read_images = async (req, res, next) => {
   }
 
 }
-
-
 
 
 exports.read_image = async (req, res, next) => {
@@ -87,17 +96,7 @@ exports.read_image = async (req, res, next) => {
   }
 }
 
-exports.read_fields = async (req, res, next) => {
-  try {
-    
-    const images = await Image.find({})
-    const fields = images.reduce( (prev, image) => [...new Set([...prev, ...Object.keys(image.data)])], [])
-    res.send(fields)
-  }
-  catch (error) {
-    next(error)
-  }
-}
+
 
 exports.delete_image = async (req, res, next) => {
   try {

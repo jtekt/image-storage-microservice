@@ -9,19 +9,21 @@ const {
   read_image_file,
   delete_image,
   update_image,
-  read_fields
 } = require('../controllers/images.js')
 
-const router = Router()
+const {
+  read_fields
+} = require('../controllers/fields.js')
 
 const storage = multer.diskStorage({
-  destination:  (req, file, cb) => {
+  destination: (req, file, cb) => {
     create_directory_if_not_exists(uploads_directory)
     cb(null, uploads_directory)
   },
-  filename:  (req, file, cb) => { cb(null, file.originalname) }
+  filename: (req, file, cb) => { cb(null, file.originalname) }
 })
 
+const router = Router({mergeParams: true})
 const upload = multer({ storage })
 
 
@@ -29,8 +31,10 @@ router.route('/')
   .get(read_images)
   .post(upload.single('image'), upload_image)
 
+  // LEGACY GET RID OF THIS
 router.route('/fields')
   .get(read_fields)
+
 
 router.route('/:_id')
   .get(read_image)
