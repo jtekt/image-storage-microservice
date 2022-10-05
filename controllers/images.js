@@ -58,6 +58,7 @@ exports.read_images = async (req, res, next) => {
     }
 
     // Time filters
+    // Using $gt and $lt instead of $gte and $lte for annotation tool
     if (to || from) formattedQuery.time = {}
     if (to) formattedQuery.time.$lt = new Date(to)
     if (from) formattedQuery.time.$gt = new Date(from)
