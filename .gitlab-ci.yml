@@ -39,7 +39,7 @@ build-x86:
     #   aws ecr create-repository --repository-name ${APPLICATION_NAME}
     #   || echo "Repository might have already existed"
     # Log in to the registry (AWS credentials are stored as GitLab CI/CD env variables)
-    - aws --version
+    - aws ecr-public
     - >
       aws ecr get-login-password
       | docker login
