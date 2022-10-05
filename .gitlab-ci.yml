@@ -34,7 +34,6 @@ build-x86:
   before_script:
     # Docker Hub login
     - echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin ;
-      before_script:
     # Create repository in ECR if it does not exist yet
     - >
       aws ecr create-repository --repository-name ${APPLICATION_NAME}
