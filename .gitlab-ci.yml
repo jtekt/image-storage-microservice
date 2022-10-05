@@ -10,15 +10,10 @@ services:
 
 variables:
   APPLICATION_NAME: image-storage-service
-
   AWS_ECR_PUBLIC_URL: public.ecr.aws/u6l4m3e5
-
   CONTAINER_IMAGE: ${AWS_ECR_PUBLIC_URL}/${APPLICATION_NAME}
   CONTAINER_IMAGE_TEST: ${CONTAINER_IMAGE}:test
   CONTAINER_IMAGE_TAGGED: ${CONTAINER_IMAGE}:${CI_COMMIT_SHORT_SHA}
-
-  CONTAINER_IMAGE_DOCKER_HUB: ${DOCKER_HUB_USERNAME}/${APPLICATION_NAME}
-  CONTAINER_IMAGE_DOCKER_HUB_TAGGED: ${CONTAINER_IMAGE_DOCKER_HUB}:${CI_COMMIT_SHORT_SHA}
 
   TEST_NETWORK: tdd
   TEST_DB: tdd-db
@@ -32,8 +27,6 @@ build-x86:
   tags:
     - dind
   before_script:
-    # Docker Hub login
-    - echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin ;
     # Log in to the registry (AWS credentials are stored as GitLab CI/CD env variables)
     - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ECR_PUBLIC_URL}
     # Create repository in ECR if it does not exist yet
@@ -57,8 +50,6 @@ test:
   tags:
     - dind
   before_script:
-    # Docker Hub login
-    - echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin;
     # AWS ECR login
     - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ECR_PUBLIC_URL}
     # Creating network for TDD
@@ -84,10 +75,6 @@ test:
     # Tag
     - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE}
     - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE_TAGGED}
-    - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE_DOCKER_HUB}
-    - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE_DOCKER_HUB_TAGGED}
     # Push
     - docker push ${CONTAINER_IMAGE}
     - docker push ${CONTAINER_IMAGE_TAGGED}
-    - docker push ${CONTAINER_IMAGE_DOCKER_HUB}
-    - docker push ${CONTAINER_IMAGE_DOCKER_HUB_TAGGED}
