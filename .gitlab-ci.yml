@@ -40,7 +40,7 @@ build-x86:
     #   || echo "Repository might have already existed"
     # Log in to the registry (AWS credentials are stored as GitLab CI/CD env variables)
     - >
-      aws ecr get-login-password
+      aws ecr-public get-login-password
       | docker login
       --username AWS
       --password-stdin
