@@ -11,7 +11,7 @@ services:
 variables:
   APPLICATION_NAME: image-storage-service
 
-  AWS_ECR_PUBLIC_URL: public.ecr.aws/u6l4m3e5/
+  AWS_ECR_PUBLIC_URL: public.ecr.aws/u6l4m3e5
 
   CONTAINER_IMAGE: ${AWS_ECR_PUBLIC_URL}/${APPLICATION_NAME}
   CONTAINER_IMAGE_TEST: ${CONTAINER_IMAGE}:test
@@ -39,7 +39,6 @@ build-x86:
     #   aws ecr create-repository --repository-name ${APPLICATION_NAME}
     #   || echo "Repository might have already existed"
     # Log in to the registry (AWS credentials are stored as GitLab CI/CD env variables)
-    - aws ecr-public get-login-password --region us-east-1
     - >
       aws ecr-public get-login-password --region us-east-1
       | docker login
