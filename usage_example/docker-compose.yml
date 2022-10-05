@@ -27,7 +27,7 @@ services:
   image-storage-front:
     logging:
       driver: none # Disable console output
-    image: moreillon/image-storage-service-gui:latest
+    image: public.ecr.aws/u6l4m3e5/image-storage-service-gui:b3b16dbb
     environment:
       VUE_APP_IMAGE_STORAGE_API_URL: /proxy/images
 

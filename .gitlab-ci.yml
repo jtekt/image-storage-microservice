@@ -3,10 +3,8 @@ stages:
   - test
 
 image: moreillon/tdd-dind
-
 services:
   - name: docker:19.03.12-dind
-    command: ["--insecure-registry=172.16.98.151:5000"]
 
 variables:
   APPLICATION_NAME: image-storage-service
@@ -29,11 +27,6 @@ build-x86:
   before_script:
     # Log in to the registry (AWS credentials are stored as GitLab CI/CD env variables)
     - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ECR_PUBLIC_URL}
-    # Create repository in ECR if it does not exist yet
-    # - >
-    #   aws ecr create-repository --repository-name ${APPLICATION_NAME}
-    #   || echo "Repository might have already existed"
-    
   script:
     - docker build -t ${CONTAINER_IMAGE_TEST} .
     - docker push ${CONTAINER_IMAGE_TEST}
