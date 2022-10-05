@@ -19,3 +19,9 @@ A microservice to store and manage image data
 | --- | --- |
 | MONGODB_URL  | The URL of the MongoDB instance |
 | MONGODB_DB  | The name of the DB in MongoDB, defaults to  "image_storage_mongoose" |
+
+## Docker
+
+```
+docker run -e MONGODB_URL=mongodb://localhost -p 8080:80 public.ecr.aws/u6l4m3e5/image-storage-service:3bded0be
+```

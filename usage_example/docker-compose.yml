@@ -15,7 +15,7 @@ services:
 
   # Image storage microservice back-end
   image-storage:
-    image: moreillon/image-storage-service:latest
+    image: public.ecr.aws/u6l4m3e5/image-storage-service:3bded0be
     environment:
       MONGODB_URL: mongodb://mongo:27017
     ports:
