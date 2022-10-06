@@ -1,5 +1,5 @@
-const { Router } = require('express')
 const multer  = require('multer')
+const { Router } = require('express')
 const { uploads_directory } = require('../config.js')
 const { create_directory_if_not_exists } = require('../utils.js')
 const {
@@ -10,10 +10,6 @@ const {
   delete_image,
   update_image,
 } = require('../controllers/images.js')
-
-const {
-  read_fields
-} = require('../controllers/fields.js')
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
