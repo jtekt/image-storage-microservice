@@ -23,18 +23,13 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => { cb(null, file.originalname) }
 })
 
-const router = Router({mergeParams: true})
+const router = Router({ mergeParams: true })
 const upload = multer({ storage })
 
 
 router.route('/')
   .get(read_images)
   .post(upload.single('image'), upload_image)
-
-  // LEGACY GET RID OF THIS
-router.route('/fields')
-  .get(read_fields)
-
 
 router.route('/:_id')
   .get(read_image)
