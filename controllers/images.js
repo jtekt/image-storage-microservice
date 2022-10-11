@@ -15,7 +15,8 @@ exports.upload_image = async (req, res, next) => {
     const { body } = req
 
     // User can provide data as a stringified JSON by using the data field
-    const data = body.data ? JSON.parse(body.data) : body
+    const json_data = body.data || body.json
+    const data = json_data ? JSON.parse(json_data) : body
 
     // Time: Set to upload time unless provided otherwise by user
     let time = new Date()
@@ -44,7 +45,7 @@ exports.read_images = async (req, res, next) => {
       order = 1,
       from,
       to,
-      regex, // boolean toggling partial text search, not ideal
+      regex = false, // boolean toggling partial text search, not ideal
       ...query
     } = req.query
 
@@ -53,8 +54,14 @@ exports.read_images = async (req, res, next) => {
     const formattedQuery = { }
 
     for (const key in query) {
-      if (regex) formattedQuery[`data.${key}`] = { $regex: query[key], $options: 'i'}
-      else formattedQuery[`data.${key}`] = query[key]
+      let value = query[key]
+
+      try {
+        value = JSON.parse(value)
+      } catch (error) { }
+
+      if (regex) formattedQuery[`data.${key}`] = { $regex: value, $options: 'i'}
+      else formattedQuery[`data.${key}`] = value
     }
 
     // Time filters
