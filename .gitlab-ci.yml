@@ -12,6 +12,7 @@ variables:
 
   CONTAINER_IMAGE: ${AWS_ECR_PUBLIC_URL}/${APPLICATION_NAME}
   CONTAINER_IMAGE_TAGGED: ${CONTAINER_IMAGE}:${CI_COMMIT_SHORT_SHA}
+  CONTAINER_IMAGE_AARCH64: ${CONTAINER_IMAGE}:aarch64-${CI_COMMIT_SHORT_SHA}
 
   CONTAINER_IMAGE_TEST: ${APPLICATION_NAME}:test
 
@@ -70,3 +71,16 @@ build-x86:
     - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE_TAGGED}
     - docker push ${CONTAINER_IMAGE}
     - docker push ${CONTAINER_IMAGE_TAGGED}
+
+
+build-aarch64:
+  stage: build
+  tags:
+    - aarch64
+  only:
+    - master
+  before_script:
+    - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ECR_PUBLIC_URL}
+  script:
+  - docker build -t ${CONTAINER_IMAGE_AARCH64} .
+  - docker push ${CONTAINER_IMAGE_AARCH64}
