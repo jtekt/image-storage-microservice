@@ -82,5 +82,5 @@ build-aarch64:
   before_script:
     - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ECR_PUBLIC_URL}
   script:
-  - docker build -t ${CONTAINER_IMAGE_AARCH64} .
-  - docker push ${CONTAINER_IMAGE_AARCH64}
+    - docker build -f Dockerfile-aarch64 -t ${CONTAINER_IMAGE_AARCH64} .
+    - docker push ${CONTAINER_IMAGE_AARCH64}
