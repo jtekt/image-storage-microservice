@@ -6,7 +6,7 @@ dotenv.config()
 
 const {
   MONGODB_URL = 'mongodb://mongo',
-  MONGODB_DB = 'image_storage_mongoose'
+  MONGODB_DB = 'image_storage'
 } = process.env
 
 

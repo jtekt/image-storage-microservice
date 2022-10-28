@@ -18,7 +18,8 @@ A microservice to store and manage image data
 | Variable  | Description |
 | --- | --- |
 | MONGODB_URL  | The URL of the MongoDB instance |
-| MONGODB_DB  | The name of the DB in MongoDB, defaults to  "image_storage_mongoose" |
+| MONGODB_DB  | The name of the DB in MongoDB, defaults to  "image_storage" |
+| UPLOADS_DIRECTORY  | Uploads directory name, defaults to  "uploads" |
 
 ## Docker
 
