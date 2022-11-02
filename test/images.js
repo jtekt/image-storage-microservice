@@ -7,22 +7,15 @@ describe("/images", () => {
 
   let image_id
 
-  beforeEach( async () => {
+  before( async () => {
     // Silencing console
-    // console.log = () => {}
+    console.log = () => {}
   })
 
 
-  describe("GET /", () => {
-    it("Should return all images", async () => {
-      const {status} = await request(app)
-        .get("/images")
+  
 
-      expect(status).to.equal(200)
-    })
-  })
-
-  describe("POST /", () => {
+  describe("POST /images", () => {
     
     it("Should allow posting an image", async () => {
       const {status, body} = await request(app)
@@ -35,26 +28,34 @@ describe("/images", () => {
     })
 
     it("Should Not allow posting images without an image field", async () => {
-      const {status} = await request(app)
-        .post("/images")
-
+      const {status} = await request(app).post("/images")
       expect(status).to.not.equal(200)
     })
 
-    
-
   })
 
-  describe("DELETE /", () => {
+  describe("GET /images", () => {
+    it("Should return all images", async () => {
+      const { status } = await request(app).get("/images")
+      expect(status).to.equal(200)
+    })
+  })
+
+  describe("GET /images/:id", () => {
+    it("Should query the image uploaded previously", async () => {
+      const { status } = await request(app).get(`/images/${image_id}`)
+      expect(status).to.equal(200)
+    })
+  })
+
+
+  describe("DELETE /images/:id", () => {
     
-    it("Should allow deleting an image", async () => {
-      const {status, body} = await request(app)
-        .delete(`/images/${image_id}`)
-      
+    it("Should allow deleting the image uploaded previosuly", async () => {
+      const {status, body} = await request(app).delete(`/images/${image_id}`)
       expect(status).to.equal(200)
     })
     
-
   })
 
 
