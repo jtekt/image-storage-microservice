@@ -8,16 +8,15 @@ describe("/images", () => {
   let image_id
 
   before( async () => {
-    // Silencing console
-    console.log = () => {}
+    // Silencing console (not working)
+    // console.log = () => {}
   })
 
-
-  
 
   describe("POST /images", () => {
     
     it("Should allow posting an image", async () => {
+
       const {status, body} = await request(app)
         .post("/images")
         .attach('image', 'test/example.jpg')
@@ -48,11 +47,30 @@ describe("/images", () => {
     })
   })
 
+  describe("GET /images/:id/image", () => {
+    it("Should download the image uploaded previously", async () => {
+      const { status } = await request(app).get(`/images/${image_id}/image`)
+      expect(status).to.equal(200)
+    })
+  })
+
+  describe('PATCH /images/:id', () => {
+    it('Should allow the update of an image metadata', async () => {
+      const properties = { newField: 'test'}
+      const { status, body } = await request(app)
+        .patch(`/images/${image_id}`)
+        .send(properties)
+
+      expect(status).to.equal(200)
+      expect(body.data.newField).to.equal('test')
+    })
+  })
+
 
   describe("DELETE /images/:id", () => {
     
-    it("Should allow deleting the image uploaded previosuly", async () => {
-      const {status, body} = await request(app).delete(`/images/${image_id}`)
+    it("Should allow deleting the image uploaded previously", async () => {
+      const {status} = await request(app).delete(`/images/${image_id}`)
       expect(status).to.equal(200)
     })
     

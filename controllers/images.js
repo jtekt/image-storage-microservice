@@ -8,7 +8,6 @@ const { remove_file } = require('../utils.js')
 
 exports.upload_image = async (req, res, next) => {
   try {
-
     
     if (!req.file) throw createHttpError(400, 'File not provided') 
     const file = req.file.originalname

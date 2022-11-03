@@ -9,7 +9,7 @@ api_url = f'{STORAGE_SERVCICE_URL}/images'
 # Additional info (not necessary)
 fields = {
     'part_number': '200-002',
-    'ai_prediction': 'NG',
+    'label': 'golgo',
     }
 
 
