@@ -5,7 +5,7 @@ const {app} = require("../index.js")
 
 describe("/images", () => {
 
-  let image_id
+  let image_id, field_name
 
   before( async () => {
     // Silencing console (not working)
@@ -19,7 +19,7 @@ describe("/images", () => {
 
       const {status, body} = await request(app)
         .post("/images")
-        .attach('image', 'test/example.jpg')
+        .attach('image', 'test/sample.jpg')
       
       image_id = body._id
 
@@ -54,6 +54,21 @@ describe("/images", () => {
     })
   })
 
+  describe("GET /fields", () => {
+    it("Should allow the query of fields", async () => {
+      const { status, body} = await request(app).get(`/fields`)
+      expect(status).to.equal(200)
+      field_name = body[0]
+    })
+  })
+
+  describe("GET /fields/:field", () => {
+    it("Should allow the query of a single field", async () => {
+      const { status } = await request(app).get(`/fields/${field_name}`)
+      expect(status).to.equal(200)
+    })
+  })
+
   describe('PATCH /images/:id', () => {
     it('Should allow the update of an image metadata', async () => {
       const properties = { newField: 'test'}
@@ -63,6 +78,23 @@ describe("/images", () => {
 
       expect(status).to.equal(200)
       expect(body.data.newField).to.equal('test')
+    })
+  })
+
+  describe("GET /export", () => {
+    it("Should allow the export of data", async () => {
+      const { status } = await request(app).get(`/export`)
+      expect(status).to.equal(200)
+    })
+  })
+
+  describe("POST /import", () => {
+    it("Should allow the import of data", async () => {
+      const { status } = await request(app)
+        .post(`/import`)
+        .attach('archive', 'test/export.zip')
+
+      expect(status).to.equal(200)
     })
   })
 
