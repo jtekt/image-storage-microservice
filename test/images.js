@@ -19,6 +19,7 @@ describe("/images", () => {
 
       const {status, body} = await request(app)
         .post("/images")
+        .field('test_key', 'test_value')
         .attach('image', 'test/sample.jpg')
       
       image_id = body._id
@@ -36,6 +37,11 @@ describe("/images", () => {
   describe("GET /images", () => {
     it("Should return all images", async () => {
       const { status } = await request(app).get("/images")
+      expect(status).to.equal(200)
+    })
+
+    it("Should allow querying using filters", async () => {
+      const { status } = await request(app).get("/images?test_key=test_value")
       expect(status).to.equal(200)
     })
   })
