@@ -2,5 +2,7 @@ node_modules/
 .env
 uploads
 uploads_dev
+import
+imports
 .nyc_output
 image_storage_service_export.zip

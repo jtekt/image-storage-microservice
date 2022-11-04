@@ -1,7 +1,7 @@
 const Image = require('../models/image.js')
 const path = require('path')
 const createHttpError = require('http-errors')
-const {uploads_directory} = require('../config.js')
+const { uploads_directory } = require('../config.js')
 const { remove_file } = require('../utils.js')
 
 

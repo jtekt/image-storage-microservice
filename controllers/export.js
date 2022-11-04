@@ -1,4 +1,5 @@
-const archiver = require('archiver');
+
+const archiver = require('archiver') // NOTE: Archiver is advertized as having a low memory footprint
 const Image = require('../models/image.js')
 const path = require('path')
 const fs = require('fs')

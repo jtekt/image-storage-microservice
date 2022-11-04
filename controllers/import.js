@@ -1,7 +1,8 @@
 const Image = require('../models/image.js')
 const path = require('path')
 const createHttpError = require('http-errors')
-const unzipper = require('unzipper')
+const unzipper = require('unzipper') // NOTE: Unzipper is advertized as having a low memory footprint
+const { remove_file } = require('../utils.js')
 const {
   uploads_directory,
   mongodb_export_file_name,
@@ -17,21 +18,29 @@ exports.import_images = async (req, res, next) => {
 
 
   try {
+
     const {file} = req
+
     if (!file) throw createHttpError(400, 'File not provided')
-    const {mimetype, buffer} = file
+    const {mimetype, path: archive_relative_path} = file
 
     const allowed_mimetypes = [
       'application/x-zip-compressed',
       'application/zip',
     ]
+
     if ( ! allowed_mimetypes.includes(mimetype) ) throw createHttpError(400, 'File is not zip')
 
     console.log(`[Import] Importing archive...`)
 
-    const directory = await unzipper.Open.buffer(buffer)
+    const archive_path = path.join(__dirname, `../${archive_relative_path}`) 
+
+    const directory = await unzipper.Open.file(archive_path)
+
+    // Check if the archive contains the .json file containing the MonggoDB backup
     const contains_json = directory.files.some(({ path }) => path === mongodb_export_file_name )
     if (!contains_json) throw createHttpError(400, `${mongodb_export_file_name} not found in archive`)
+
     const unzip_directory = path.join(__dirname, `../${uploads_directory}`)
     await directory.extract({path: unzip_directory})
 
@@ -40,10 +49,11 @@ exports.import_images = async (req, res, next) => {
 
     const {length} = await mongodb_data_import(mongodb_data)
 
-    res.send({count: length})
+    // Remove the archive when done extracting
+    await remove_file(archive_path)
 
     console.log(`[Import] ${length} Images imported`)
-
+    res.send({count: length})
   }
   catch (error) {
     next(error)

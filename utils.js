@@ -1,6 +1,5 @@
 const rimraf = require('rimraf')
 const fs = require('fs')
-const createHttpError = require('http-errors')
 
 exports.remove_file = (file_path) => new Promise((resolve, reject) => {
   rimraf(file_path, (error) => {
@@ -23,13 +22,4 @@ exports.create_directory_if_not_exists = (target) => {
   if (stat && !stat.isDirectory()) {
     throw new Error(`Directory cannot be created because an inode of a different type exists at ${target}`);
   }
-}
-
-exports.format_query = (filter) => {
-
-  // Unused
-
-  const output = {}
-
-  return output
 }
