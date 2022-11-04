@@ -152,7 +152,7 @@ exports.read_image_file = async (req, res, next) => {
     const {file} = await Image.findOne({_id})
     const file_absolute_path = path.join(__dirname, `../${uploads_directory}`,file)
     console.log(`Image file ${_id} queried`)
-    res.sendFile(file_absolute_path)
+    res.download(file_absolute_path, file)
   }
   catch (error) {
     next(error)
