@@ -19,9 +19,6 @@ variables:
   TEST_NETWORK: tdd
   TEST_DB: tdd-db
 
-
-
-
 test:
   stage: test
   coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'

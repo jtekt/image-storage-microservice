@@ -17,20 +17,22 @@ const generate_excel = (data, path) => {
 
     // Convert nested data properties
 
-    // TODO: Remove the "data" property
-
     // Important: create a copy so as to not affect original data
-    const data = {...item.data}
+    const {data, ...baseMetaData} = item
+
+    const output = {
+      ...baseMetaData,
+      _id: baseMetaData._id.toString(),
+    }
+
+    // Remove unused properties
+    delete output.data
     
     for (let key in data) { 
-      if (data[key]) data[key] = data[key].toString()
+      if (data[key]) output[key] = data[key].toString()
     }
 
-    return {
-      ...item,
-      _id: item._id.toString(),
-      ...data
-    }
+    return output
 
   })
 
