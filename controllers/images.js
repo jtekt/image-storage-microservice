@@ -10,6 +10,9 @@ exports.upload_image = async (req, res, next) => {
   try {
     
     if (!req.file) throw createHttpError(400, 'File not provided') 
+
+    // TODO: Only allow images
+    
     const file = req.file.originalname
     const { body } = req
 

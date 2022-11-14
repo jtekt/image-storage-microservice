@@ -37,23 +37,34 @@ exports.import_images = async (req, res, next) => {
 
     const directory = await unzipper.Open.file(archive_path)
 
+
     // Check if the archive contains the .json file containing the MonggoDB backup
     const contains_json = directory.files.some(({ path }) => path === mongodb_export_file_name )
-    if (!contains_json) throw createHttpError(400, `${mongodb_export_file_name} not found in archive`)
+    // if (!contains_json) throw createHttpError(400, `${mongodb_export_file_name} not found in archive`)
 
+    if(contains_json) {
+      // Restore DB records MonggoDB backup
+      const json_file_path = path.join(unzip_directory, mongodb_export_file_name)
+      const mongodb_data = require(json_file_path)
+      await mongodb_data_import(mongodb_data)
+    }
+    else {
+      const mongodb_data = directory.files.map( f => ({file: f.path}))
+      await mongodb_data_import(mongodb_data)
+    }
+
+
+    
+
+    // Unzip the archive to the uploads directory
     const unzip_directory = path.join(__dirname, `../${uploads_directory}`)
-    await directory.extract({path: unzip_directory})
-
-    const json_file_path = path.join(unzip_directory, mongodb_export_file_name)
-    const mongodb_data = require(json_file_path)
-
-    const {length} = await mongodb_data_import(mongodb_data)
+    await directory.extract({ path: unzip_directory })
 
     // Remove the archive when done extracting
     await remove_file(archive_path)
 
-    console.log(`[Import] ${length} Images imported`)
-    res.send({count: length})
+    console.log(`[Import] Images from archive ${archive_relative_path} imported`)
+    res.send({ file: archive_relative_path })
   }
   catch (error) {
     next(error)

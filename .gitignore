@@ -4,5 +4,6 @@ uploads
 uploads_dev
 import
 imports
+temp
 .nyc_output
 image_storage_service_export.zip
