@@ -12,7 +12,7 @@ exports.upload_image = async (req, res, next) => {
     if (!req.file) throw createHttpError(400, 'File not provided') 
 
     // TODO: Only allow images
-    
+
     const file = req.file.originalname
     const { body } = req
 
@@ -154,7 +154,6 @@ exports.read_image_file = async (req, res, next) => {
     const {_id} = req.params
     const {file} = await Image.findOne({_id})
     const file_absolute_path = path.join(__dirname, `../${uploads_directory}`,file)
-    console.log(`Image file ${_id} queried`)
     res.download(file_absolute_path, file)
   }
   catch (error) {
