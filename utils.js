@@ -23,3 +23,41 @@ exports.create_directory_if_not_exists = (target) => {
     throw new Error(`Directory cannot be created because an inode of a different type exists at ${target}`);
   }
 }
+
+exports.parse_query = (rawQuery) => {
+
+  const {
+    skip = 0,
+    limit,
+    sort = 'time',
+    order = 1,
+    from,
+    to,
+    regex = false, // boolean toggling partial text search, not ideal
+    ...rest
+  } = rawQuery
+
+  // NOTE: partial text search on any field might not work because field list not fixed
+
+  const query = {}
+
+  for (const key in rest) {
+    let value = rest[key]
+
+    try {
+      value = JSON.parse(value)
+    } catch (error) { }
+
+    if (regex) query[`data.${key}`] = { $regex: value, $options: 'i' }
+    else query[`data.${key}`] = value
+  }
+
+  // Time filters
+  // Using $gt and $lt instead of $gte and $lte for annotation tool
+  if (to || from) query.time = {}
+  if (to) query.time.$lt = new Date(to)
+  if (from) query.time.$gt = new Date(from)
+
+  return {query, to, from, limit, skip}
+
+}

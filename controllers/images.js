@@ -2,7 +2,7 @@ const Image = require('../models/image.js')
 const path = require('path')
 const createHttpError = require('http-errors')
 const { uploads_directory } = require('../config.js')
-const { remove_file } = require('../utils.js')
+const { remove_file, parse_query } = require('../utils.js')
 
 
 
@@ -40,45 +40,16 @@ exports.read_images = async (req, res, next) => {
 
   try {
 
-    const {
-      skip = 0,
-      limit = 100,
-      sort = 'time',
-      order = 1,
-      from,
-      to,
-      regex = false, // boolean toggling partial text search, not ideal
-      ...query
-    } = req.query
-
-    // NOTE: partial text search on any field might not work because field list not fixed
-
-    const formattedQuery = { }
-
-    for (const key in query) {
-      let value = query[key]
-
-      try {
-        value = JSON.parse(value)
-      } catch (error) { }
-
-      if (regex) formattedQuery[`data.${key}`] = { $regex: value, $options: 'i'}
-      else formattedQuery[`data.${key}`] = value
-    }
-
-    // Time filters
-    // Using $gt and $lt instead of $gte and $lte for annotation tool
-    if (to || from) formattedQuery.time = {}
-    if (to) formattedQuery.time.$lt = new Date(to)
-    if (from) formattedQuery.time.$gt = new Date(from)
+    // Limiting here because parse_query also used in export
+    const { query, sort, order, limit = 100, skip } = parse_query(req.query)
 
     const items = await Image
-      .find(formattedQuery)
+      .find(query)
       .sort({ [sort]: order })
       .skip(Number(skip))
       .limit(Math.max(Number(limit), 0))
 
-    const total = await Image.countDocuments(formattedQuery)
+    const total = await Image.countDocuments(query)
 
 
     res.send({ total, skip, limit, items })

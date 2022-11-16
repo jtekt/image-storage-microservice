@@ -5,6 +5,7 @@ const path = require('path')
 const fs = require('fs')
 const XLSX = require('xlsx')
 const rimraf = require('rimraf')
+const { parse_query } = require('../utils.js')
 const {
   uploads_directory,
   mongodb_export_file_name,
@@ -70,18 +71,26 @@ exports.export_images = async (req, res, next) => {
     const temp_zip_path = path.join(__dirname, `../image_storage_service_export.zip`)
 
     
+    // Limiting here because parse_query also used in images controller
+    const { query, sort, order, limit = 0, skip} = parse_query(req.query)
 
-    const images = await Image.find({})
+    const images = await Image
+      .find(query)
+      .sort({ [sort]: order })
+      .skip(Number(skip))
+      .limit(Math.max(Number(limit), 0))
+
+    // const images = await Image.find({})
     const images_json = images.map(i => i.toJSON())
 
     generate_excel(images_json, excel_file_path)
     generate_json(images_json, json_file_path)
 
     const output = fs.createWriteStream(temp_zip_path);
-    const archive = archiver('zip', {
-      zlib: { level: 9 } // Sets the compression level.
-    });
+    const archiver_options = { zlib: { level: 9 } }
+    const archive = archiver('zip', archiver_options );
 
+    // TODO: use async await
     output.on('close', async () => {
       console.log(`[Export] ${archive.pointer()} total bytes`);
       console.log('[Export] archiver has been finalized and the output file descriptor has closed.');
@@ -109,10 +118,7 @@ exports.export_images = async (req, res, next) => {
     archive.on('warning', function (err) {
       if (err.code === 'ENOENT') {
         // log warning
-      } else {
-        // throw error
-        throw err;
-      }
+      } else throw err;
     });
 
     // good practice to catch this error explicitly
@@ -123,7 +129,8 @@ exports.export_images = async (req, res, next) => {
     console.log(`[Export] Exporting started`)
 
     archive.pipe(output);
-    archive.directory(folder_to_zip, false);
+    // Adding files one by one instead of whole folder because query parameters might be used as filters
+    images.forEach(({ file }) => archive.file(path.join(folder_to_zip, file), { name: file })) 
     archive.finalize();
 
     
