@@ -1,6 +1,6 @@
 {
   "name": "image_storage_microservice",
-  "version": "1.6.0",
+  "version": "1.6.2",
   "description": "A microservice to store images and their metadata",
   "main": "index.js",
   "dependencies": {
@@ -16,6 +16,7 @@
     "prom-client": "^14.0.1",
     "rimraf": "^3.0.2",
     "unzipper": "^0.10.11",
+    "uuid": "^9.0.0",
     "xlsx": "^0.17.5"
   },
   "devDependencies": {
@@ -26,7 +27,7 @@
     "supertest": "^6.2.3"
   },
   "scripts": {
-    "dev": "nodemon --ignore ./uploads --ignore image_storage_service_export.zip",
+    "dev": "nodemon --ignore ./uploads --ignore ./temp",
     "test": "mocha --timeout 10000 --exit",
     "coverage": "nyc mocha --timeout 15000 --exit"
   },

@@ -4,8 +4,11 @@ const Image = require('../models/image.js')
 const path = require('path')
 const fs = require('fs')
 const XLSX = require('xlsx')
-const rimraf = require('rimraf')
-const { parse_query } = require('../utils.js')
+const { v4: uuidv4 } = require('uuid');
+const {
+  parse_query, 
+  remove_file
+} = require('../utils.js')
 const {
   uploads_directory,
   mongodb_export_file_name,
@@ -47,28 +50,25 @@ const generate_json = (data, path) => {
   fs.writeFileSync(path, JSON.stringify(data))
 }
 
-const list_files_of_directory = (folder) => new Promise((resolve, reject) => {
-  fs.readdir(folder, (error, files) => {
-    if(error) return reject(error)
-    resolve(files)
-  })
-})
-
-const delete_file = (file_path) => new Promise( (resolve, reject) => {
-  rimraf(file_path, (error) => {
-    if(error) reject(error)
-    resolve()
-  })
-})
 
 exports.export_images = async (req, res, next) => {
 
   try {
 
-    const folder_to_zip = path.join(__dirname, `../${uploads_directory}`)
-    const json_file_path = path.join(__dirname, `../${uploads_directory}`, mongodb_export_file_name)
-    const excel_file_path = path.join(__dirname, `../${uploads_directory}`, 'mongodb_data.xlsx')
-    const temp_zip_path = path.join(__dirname, `../image_storage_service_export.zip`)
+    // Making zip name unique so as to allow parallel exports
+    const export_id = uuidv4()
+
+    const uploads_directory_full_path = path.join(__dirname, `../${uploads_directory}`)
+    const temp_directory = path.join(__dirname, '../temp')
+    
+
+    // Create temp directory if it does not exist
+    if (!fs.existsSync(temp_directory)) fs.mkdirSync(temp_directory)
+
+    
+    const temp_zip_path = path.join(temp_directory, `${export_id}.zip`)
+    const json_file_path = path.join(temp_directory, `${export_id}.json`)
+    const excel_file_path = path.join(temp_directory, `${export_id}.xlsx`)
 
     
     // Limiting here because parse_query also used in images controller
@@ -98,9 +98,9 @@ exports.export_images = async (req, res, next) => {
 
 
       // Cleanup of generated files
-      await delete_file(excel_file_path)
-      await delete_file(json_file_path)
-      await delete_file(temp_zip_path)
+      await remove_file(excel_file_path)
+      await remove_file(json_file_path)
+      await remove_file(temp_zip_path)
 
       console.log(`[Export] Images exported`)
 
@@ -130,7 +130,12 @@ exports.export_images = async (req, res, next) => {
 
     archive.pipe(output);
     // Adding files one by one instead of whole folder because query parameters might be used as filters
-    images.forEach(({ file }) => archive.file(path.join(folder_to_zip, file), { name: file })) 
+    images.forEach(({ file }) => archive.file(path.join(uploads_directory_full_path, file), { name: file })) 
+
+    // Adding excel and json files
+    archive.file(json_file_path, { name: mongodb_export_file_name })
+    archive.file(excel_file_path, { name: 'mongodb_data.xlsx' })
+
     archive.finalize();
 
     
