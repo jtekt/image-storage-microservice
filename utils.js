@@ -44,9 +44,10 @@ exports.parse_query = (rawQuery) => {
   for (const key in rest) {
     let value = rest[key]
 
-    try {
-      value = JSON.parse(value)
-    } catch (error) { }
+    // Convert numbers into numbers
+    // try {
+    //   value = JSON.parse(value)
+    // } catch (error) { }
 
     if (regex) query[`data.${key}`] = { $regex: value, $options: 'i' }
     else query[`data.${key}`] = value

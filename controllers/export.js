@@ -61,11 +61,9 @@ exports.export_images = async (req, res, next) => {
     const uploads_directory_full_path = path.join(__dirname, `../${uploads_directory}`)
     const temp_directory = path.join(__dirname, '../temp')
     
-
     // Create temp directory if it does not exist
     if (!fs.existsSync(temp_directory)) fs.mkdirSync(temp_directory)
 
-    
     const temp_zip_path = path.join(temp_directory, `${export_id}.zip`)
     const json_file_path = path.join(temp_directory, `${export_id}.json`)
     const excel_file_path = path.join(temp_directory, `${export_id}.xlsx`)
@@ -74,13 +72,13 @@ exports.export_images = async (req, res, next) => {
     // Limiting here because parse_query also used in images controller
     const { query, sort, order, limit = 0, skip} = parse_query(req.query)
 
+    // const images = await Image.find({})
     const images = await Image
       .find(query)
       .sort({ [sort]: order })
       .skip(Number(skip))
       .limit(Math.max(Number(limit), 0))
 
-    // const images = await Image.find({})
     const images_json = images.map(i => i.toJSON())
 
     generate_excel(images_json, excel_file_path)
@@ -98,6 +96,7 @@ exports.export_images = async (req, res, next) => {
 
 
       // Cleanup of generated files
+      // TODO: Store everything in a dedicated directory
       await remove_file(excel_file_path)
       await remove_file(json_file_path)
       await remove_file(temp_zip_path)
