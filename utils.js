@@ -59,6 +59,6 @@ exports.parse_query = (rawQuery) => {
   if (to) query.time.$lt = new Date(to)
   if (from) query.time.$gt = new Date(from)
 
-  return {query, to, from, limit, skip}
+  return {query, to, from, limit, skip, sort, order}
 
 }

@@ -14,15 +14,17 @@ const {
 // Need a special hander because keeping the original file name
 const storage = multer.diskStorage({
 
-  destination: (req, file, callback) => {
-    create_directory_if_not_exists(uploads_directory)
-    callback(null, uploads_directory)
-  },
+  // destination: (req, file, callback) => {
+  //   create_directory_if_not_exists(uploads_directory)
+  //   callback(null, uploads_directory)
+  // },
+
+  destination: uploads_directory,
 
   filename: (req, file, callback) => {
     callback(null, file.originalname)
   }
-  
+
 })
 
 const router = Router({ mergeParams: true })
