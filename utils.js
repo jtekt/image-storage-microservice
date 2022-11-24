@@ -62,3 +62,17 @@ exports.parse_query = (rawQuery) => {
   return {query, to, from, limit, skip, sort, order}
 
 }
+
+exports.parse_formdata_fields = (body) => {
+  const json_data = body.data || body.json
+
+  let data
+  try {
+    data = json_data ? JSON.parse(json_data) : body
+  } catch (error) {
+    console.log('JSON body cannot be parsed')
+    data = body
+  }
+
+  return data
+}

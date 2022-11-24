@@ -2,7 +2,11 @@ const Image = require('../models/image.js')
 const path = require('path')
 const createHttpError = require('http-errors')
 const { directories } = require('../config.js')
-const { remove_file, parse_query } = require('../utils.js')
+const { 
+  remove_file,
+  parse_query,
+  parse_formdata_fields
+} = require('../utils.js')
 
 
 
@@ -12,13 +16,13 @@ exports.upload_image = async (req, res, next) => {
     if (!req.file) throw createHttpError(400, 'File not provided') 
 
     // TODO: Only allow images
-
-    const file = req.file.originalname
-    const { body } = req
+    const { 
+      file: { originalname : file},
+      body
+    } = req
 
     // User can provide data as a stringified JSON by using the data field
-    const json_data = body.data || body.json
-    const data = json_data ? JSON.parse(json_data) : body
+    const data = parse_formdata_field(body)
 
     // Time: Set to upload time unless provided otherwise by user
     let time = new Date()
@@ -82,13 +86,10 @@ exports.read_image = async (req, res, next) => {
 exports.delete_image = async (req, res, next) => {
   try {
     const {_id} = req.params
-    const {file} = await Image.findOne({_id})
-
-    const file_absolute_path = path.join(directories.uploads,file)
-    await remove_file(file_absolute_path)
-
     const image = await Image.findOneAndDelete({_id})
     if (!image) throw createHttpError(404, `Image ${_id} not found`)
+    const file_absolute_path = path.join(directories.uploads, image.file)
+    await remove_file(file_absolute_path)
 
     console.log(`Image ${_id} deleted`)
     res.send({_id})
@@ -123,8 +124,11 @@ exports.update_image = async (req, res, next) => {
 exports.read_image_file = async (req, res, next) => {
   try {
     const {_id} = req.params
-    const {file} = await Image.findOne({_id})
+    const image = await Image.findOne({ _id })
+    if (!image) throw createHttpError(404, `Image ${_id} not found`)
+    const {file} = image
     const file_absolute_path = path.join(directories.uploads,file)
+    // Second argument is filename
     res.download(file_absolute_path, file)
   }
   catch (error) {
