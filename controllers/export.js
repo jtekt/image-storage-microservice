@@ -10,7 +10,7 @@ const {
   remove_file
 } = require('../utils.js')
 const {
-  uploads_directory,
+  directories,
   mongodb_export_file_name,
  } = require('../config.js')
 
@@ -58,15 +58,14 @@ exports.export_images = async (req, res, next) => {
     // Making zip name unique so as to allow parallel exports
     const export_id = uuidv4()
 
-    const uploads_directory_full_path = path.join(__dirname, `../${uploads_directory}`)
-    const temp_directory = path.join(__dirname, '../temp')
     
     // Create temp directory if it does not exist
-    if (!fs.existsSync(temp_directory)) fs.mkdirSync(temp_directory)
+    if (!fs.existsSync(directories.temp)) fs.mkdirSync(directories.temp)
 
-    const temp_zip_path = path.join(temp_directory, `${export_id}.zip`)
-    const json_file_path = path.join(temp_directory, `${export_id}.json`)
-    const excel_file_path = path.join(temp_directory, `${export_id}.xlsx`)
+    // TODO: Store everything in a dedicated directory
+    const temp_zip_path = path.join(directories.temp, `${export_id}.zip`)
+    const json_file_path = path.join(directories.temp, `${export_id}.json`)
+    const excel_file_path = path.join(directories.temp, `${export_id}.xlsx`)
 
     
     // Limiting here because parse_query also used in images controller
@@ -90,13 +89,11 @@ exports.export_images = async (req, res, next) => {
 
     // TODO: use async await
     output.on('close', async () => {
-      console.log(`[Export] ${archive.pointer()} total bytes`);
-      console.log('[Export] archiver has been finalized and the output file descriptor has closed.');
+
+
       res.download(temp_zip_path)
 
-
       // Cleanup of generated files
-      // TODO: Store everything in a dedicated directory
       await remove_file(excel_file_path)
       await remove_file(json_file_path)
       await remove_file(temp_zip_path)
@@ -129,7 +126,7 @@ exports.export_images = async (req, res, next) => {
 
     archive.pipe(output);
     // Adding files one by one instead of whole folder because query parameters might be used as filters
-    images.forEach(({ file }) => archive.file(path.join(uploads_directory_full_path, file), { name: file })) 
+    images.forEach(({ file }) => archive.file(path.join(directories.uploads, file), { name: file })) 
 
     // Adding excel and json files
     archive.file(json_file_path, { name: mongodb_export_file_name })

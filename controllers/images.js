@@ -1,7 +1,7 @@
 const Image = require('../models/image.js')
 const path = require('path')
 const createHttpError = require('http-errors')
-const { uploads_directory } = require('../config.js')
+const { directories } = require('../config.js')
 const { remove_file, parse_query } = require('../utils.js')
 
 
@@ -84,7 +84,7 @@ exports.delete_image = async (req, res, next) => {
     const {_id} = req.params
     const {file} = await Image.findOne({_id})
 
-    const file_absolute_path = path.join(__dirname, `../${uploads_directory}`,file)
+    const file_absolute_path = path.join(directories.uploads,file)
     await remove_file(file_absolute_path)
 
     const image = await Image.findOneAndDelete({_id})
@@ -124,7 +124,7 @@ exports.read_image_file = async (req, res, next) => {
   try {
     const {_id} = req.params
     const {file} = await Image.findOne({_id})
-    const file_absolute_path = path.join(uploads_directory,file)
+    const file_absolute_path = path.join(directories.uploads,file)
     res.download(file_absolute_path, file)
   }
   catch (error) {

@@ -4,9 +4,9 @@ const dotenv = require('dotenv')
 // const apiMetrics = require('prometheus-api-metrics')
 const auth = require('@moreillon/express_identification_middleware')
 const group_auth = require('@moreillon/express_group_based_authorization_middleware')
-const {author, name: application_name, version} = require('./package.json')
 const db = require('./db.js')
-const { uploads_directory } = require('./config.js')
+const {author, name: application_name, version} = require('./package.json')
+const { directories } = require('./config.js')
 
 const images_router = require('./routes/images.js')
 const import_router = require('./routes/import.js')
@@ -43,7 +43,7 @@ app.get('/', (req, res) => {
       db: db.db,
       connected: db.get_connected(),
     },
-    uploads_directory,
+    directories,
     auth:{
       authentication_url: AUTHENTICATION_URL,
       group_authorization_url: GROUP_AUTHORIZATION_URL,

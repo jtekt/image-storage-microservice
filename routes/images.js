@@ -1,7 +1,6 @@
 const multer  = require('multer')
 const { Router } = require('express')
-const { uploads_directory } = require('../config.js')
-const { create_directory_if_not_exists } = require('../utils.js')
+const { directories } = require('../config.js')
 const {
   read_images,
   upload_image,
@@ -14,12 +13,7 @@ const {
 // Need a special hander because keeping the original file name
 const storage = multer.diskStorage({
 
-  // destination: (req, file, callback) => {
-  //   create_directory_if_not_exists(uploads_directory)
-  //   callback(null, uploads_directory)
-  // },
-
-  destination: uploads_directory,
+  destination: directories.uploads,
 
   filename: (req, file, callback) => {
     callback(null, file.originalname)
