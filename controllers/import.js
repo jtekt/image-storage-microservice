@@ -2,7 +2,10 @@ const Image = require('../models/image.js')
 const path = require('path')
 const createHttpError = require('http-errors')
 const unzipper = require('unzipper') // NOTE: Unzipper is advertized as having a low memory footprint
-const { remove_file } = require('../utils.js')
+const { 
+  remove_file,
+  parse_formdata_fields
+} = require('../utils.js')
 const {
   directories,
   mongodb_export_file_name,
@@ -57,9 +60,7 @@ exports.import_images = async (req, res, next) => {
       console.log(`[Import] importing without restoring MongoDB data`)
 
       // The user can pass data for all the images of the zip
-      const json_data = body.data || body.json
-      const data = json_data ? JSON.parse(json_data) : {...body}
-
+      const data = parse_formdata_fields(body)
       const mongodb_data = directory.files.map( f => ({file: f.path, data}))
       await mongodb_data_import(mongodb_data)
     }

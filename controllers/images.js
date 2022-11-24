@@ -22,7 +22,7 @@ exports.upload_image = async (req, res, next) => {
     } = req
 
     // User can provide data as a stringified JSON by using the data field
-    const data = parse_formdata_field(body)
+    const data = parse_formdata_fields(body)
 
     // Time: Set to upload time unless provided otherwise by user
     let time = new Date()
