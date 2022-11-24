@@ -124,7 +124,7 @@ exports.read_image_file = async (req, res, next) => {
   try {
     const {_id} = req.params
     const {file} = await Image.findOne({_id})
-    const file_absolute_path = path.join(__dirname, `../${uploads_directory}`,file)
+    const file_absolute_path = path.join(uploads_directory,file)
     res.download(file_absolute_path, file)
   }
   catch (error) {

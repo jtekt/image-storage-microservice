@@ -11,12 +11,18 @@ const {
   update_image,
 } = require('../controllers/images.js')
 
+// Need a special hander because keeping the original file name
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
+
+  destination: (req, file, callback) => {
     create_directory_if_not_exists(uploads_directory)
-    cb(null, uploads_directory)
+    callback(null, uploads_directory)
   },
-  filename: (req, file, cb) => { cb(null, file.originalname) }
+
+  filename: (req, file, callback) => {
+    callback(null, file.originalname)
+  }
+  
 })
 
 const router = Router({ mergeParams: true })
