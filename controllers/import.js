@@ -4,8 +4,7 @@ const createHttpError = require('http-errors')
 const unzipper = require('unzipper') // NOTE: Unzipper is advertized as having a low memory footprint
 const { remove_file } = require('../utils.js')
 const {
-  uploads_directory,
-  import_temp_directory,
+  directories,
   mongodb_export_file_name,
 } = require('../config.js')
 
@@ -35,12 +34,12 @@ exports.import_images = async (req, res, next) => {
 
     console.log(`[Import] Importing archive...`)
 
-    const archive_path = path.join(import_temp_directory, filename) 
+    const archive_path = path.join(directories.temp, filename) 
 
     const directory = await unzipper.Open.file(archive_path)
     
     // Unzip the archive to the uploads directory
-    await directory.extract({ path: uploads_directory })
+    await directory.extract({ path: directories.uploads })
 
     // Check if the archive contains the .json file containing the MonggoDB backup
     const contains_json = directory.files.some(({ path }) => path === mongodb_export_file_name )
@@ -49,7 +48,7 @@ exports.import_images = async (req, res, next) => {
     if(contains_json) {
       // Restore DB records MonggoDB backup
       console.log(`[Import] importing and restoring MongDB data`)
-      const json_file_path = path.join(uploads_directory, mongodb_export_file_name)
+      const json_file_path = path.join(directories.uploads, mongodb_export_file_name)
       const mongodb_data = require(json_file_path)
       await mongodb_data_import(mongodb_data)
     }
