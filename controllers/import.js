@@ -12,11 +12,12 @@ const {
 } = require('../config.js')
 
 
- const mongodb_data_import = (images) => {
+const mongodb_data_import = (images) => {
+  // TODO: Consider bulkwrite
   // Querying by file because unique and imports without mongodb data do not have an ID
-   const promises = images.map( (image) => Image.findOneAndUpdate( {file: image.file}, image, { upsert: true }) )
-   return Promise.all(promises)
- }
+  const promises = images.map( (image) => Image.findOneAndUpdate( {file: image.file}, image, { upsert: true }) )
+  return Promise.all(promises)
+}
 
 exports.import_images = async (req, res, next) => {
 
@@ -53,6 +54,8 @@ exports.import_images = async (req, res, next) => {
       console.log(`[Import] importing and restoring MongDB data`)
       const json_file_path = path.join(directories.uploads, mongodb_export_file_name)
       const mongodb_data = require(json_file_path)
+
+      // TODO: consider allowing the addition of properties
       await mongodb_data_import(mongodb_data)
     }
     else {
