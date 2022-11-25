@@ -6,8 +6,9 @@ const {
   upload_image,
   read_image,
   read_image_file,
-  delete_image,
   update_image,
+  delete_image,
+  delete_images,
 } = require('../controllers/images.js')
 
 // Need a special hander because keeping the original file name
@@ -28,6 +29,7 @@ const upload = multer({ storage })
 router.route('/')
   .get(read_images)
   .post(upload.single('image'), upload_image)
+  .delete(delete_images)
 
 router.route('/:_id')
   .get(read_image)
