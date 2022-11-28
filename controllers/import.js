@@ -1,5 +1,6 @@
 const Image = require('../models/image.js')
 const path = require('path')
+const fs = require('fs')
 const createHttpError = require('http-errors')
 const unzipper = require('unzipper') // NOTE: Unzipper is advertized as having a low memory footprint
 const { 
@@ -53,7 +54,8 @@ exports.import_images = async (req, res, next) => {
       // Restore DB records MonggoDB backup
       console.log(`[Import] importing and restoring MongDB data`)
       const json_file_path = path.join(directories.uploads, mongodb_export_file_name)
-      const mongodb_data = require(json_file_path)
+      const jsonFileDataBuffer = fs.readFileSync(json_file_path);
+      const mongodb_data = JSON.parse(jsonFileDataBuffer)
 
       // TODO: consider allowing the addition of properties
       await mongodb_data_import(mongodb_data)
