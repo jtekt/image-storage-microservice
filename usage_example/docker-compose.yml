@@ -15,7 +15,7 @@ services:
 
   # Image storage microservice back-end
   image-storage:
-    image: public.ecr.aws/u6l4m3e5/image-storage-service:3bded0be
+    image: public.ecr.aws/jtekt-corporation/image-storage-service:168df190
     environment:
       MONGODB_URL: mongodb://mongo:27017
     ports:
@@ -27,7 +27,7 @@ services:
   image-storage-front:
     logging:
       driver: none # Disable console output
-    image: public.ecr.aws/u6l4m3e5/image-storage-service-gui:b3b16dbb
+    image: public.ecr.aws/jtekt-corporation/image-storage-service-gui:31956362
     environment:
       VUE_APP_IMAGE_STORAGE_API_URL: /proxy/images
 
