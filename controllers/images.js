@@ -31,12 +31,11 @@ exports.upload_image = async (req, res, next) => {
       delete data.time
     }
 
+    const query = {file}
     const itemProperties = { file, time, data }
     const options = {upsert: true}
     
-    // TODO: upsert
-    // const new_image = await Image.create()
-    const query = {file}
+    // const new_image = await Image.create(itemProperties)
     const newImage = await Image.findOneAndUpdate(query, itemProperties, options)
     console.log(`Image ${file} uploaded and saved`)
     res.send(newImage)
