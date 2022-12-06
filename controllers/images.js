@@ -11,19 +11,19 @@ const {
 
 
 exports.upload_image = async (req, res, next) => {
+  // NOTE: Req.body is multipart form-data
   try {
     
     if (!req.file) throw createHttpError(400, 'File not provided') 
-
+    
     // TODO: Only allow images
     const { 
       file: { originalname : file},
       body
     } = req
-
-    // User can provide data as a stringified JSON by using the data field
+    
     const data = parse_formdata_fields(body)
-
+    
     // Time: Set to upload time unless provided otherwise by user
     let time = new Date()
     if ( data.time ) {
@@ -31,9 +31,15 @@ exports.upload_image = async (req, res, next) => {
       delete data.time
     }
 
-    const new_image = await Image.create({ file, time, data })
-    res.send(new_image)
+    const itemProperties = { file, time, data }
+    const options = {upsert: true}
+    
+    // TODO: upsert
+    // const new_image = await Image.create()
+    const query = {file}
+    const newImage = await Image.findOneAndUpdate(query, itemProperties, options)
     console.log(`Image ${file} uploaded and saved`)
+    res.send(newImage)
   }
   catch (error) {
     next(error)
@@ -98,6 +104,7 @@ exports.read_image_file = async (req, res, next) => {
 
 
 exports.update_image = async (req, res, next) => {
+  // NOTE: Req.body is JSON
   try {
 
     const { _id } = req.params
