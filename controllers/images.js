@@ -33,7 +33,7 @@ exports.upload_image = async (req, res, next) => {
 
     const query = {file}
     const itemProperties = { file, time, data }
-    const options = {upsert: true}
+    const options = { upsert: true, new: true}
     
     // const new_image = await Image.create(itemProperties)
     const newImage = await Image.findOneAndUpdate(query, itemProperties, options)
