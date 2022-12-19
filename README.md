@@ -21,6 +21,12 @@ A microservice to store and manage image data
 | MONGODB_DB  | The name of the DB in MongoDB, defaults to  "image_storage" |
 | UPLOADS_DIRECTORY  | Uploads directory name, defaults to  "uploads" |
 
+## Running in development
+
+```
+npm run dev
+```
+
 ## Docker
 
 ```
