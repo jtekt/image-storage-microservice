@@ -20,6 +20,15 @@ const mongodb_data_import = (documents) => {
   return Promise.all(promises)
 }
 
+
+const extract_single_file = (file, output_directory) => new Promise ( (resolve, reject) => {
+  const file_name = file.path
+  const output_path = path.join(output_directory, file_name)
+  file.stream()
+      .pipe(fs.createWriteStream(output_path))
+      .on('error',reject)
+      .on('finish',resolve)
+})
 exports.import_images = async (req, res, next) => {
 
 
@@ -44,18 +53,42 @@ exports.import_images = async (req, res, next) => {
     const directory = await unzipper.Open.file(archive_path)
     
     // Unzip the archive to the uploads directory
-    await directory.extract({ path: directories.uploads })
+    // TODO: This is very memory intensive for large archives
+    // await directory.extract({ path: directories.uploads })
 
-    // Check if the archive contains the .json file containing the MonggoDB backup
-    const contains_json = directory.files.some(({ path }) => path === mongodb_export_file_name )
+    for await ( const file of directory.files) {
+      await extract_single_file(file, directories.uploads)
+    }
+
+    // Another attempt using streams, but throws Unexpected end of file Zlib zlibOnError 5 Z_BUF_ERROR
+    // try {
+    //   const zip = fs.createReadStream(archive_path)
+    //   .pipe(unzipper.Parse({forceStream: true}));
+
+    //   for await (const entry of zip) {
+    //     const fileName = entry.path;
+    //     const outut_path = path.join(directories.uploads, fileName)
+    //     entry.pipe(fs.createWriteStream(outut_path));      
+    //   }
+    // } catch (error) {
+    //   console.log('Error was caught!')
+    //   throw 'banana'
+    // }
+
+    
+    
+
 
     // The user can pass data for all the images of the zip
     const userDefinedData = parse_formdata_fields(body)
 
-    if(contains_json) {
+    const json_file_path = path.join(directories.uploads, mongodb_export_file_name)
+    const json_file_exists = directory.files.some(({ path }) => path === mongodb_export_file_name )
+
+
+    if(json_file_exists) {
       // Restore DB records MonggoDB backup
       console.log(`[Import] importing and restoring MongDB data`)
-      const json_file_path = path.join(directories.uploads, mongodb_export_file_name)
       const jsonFileDataBuffer = fs.readFileSync(json_file_path);
       const mongodbData = JSON.parse(jsonFileDataBuffer)
 
