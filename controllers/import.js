@@ -10,6 +10,7 @@ const {
 const {
   directories,
   mongodb_export_file_name,
+  export_excel_file_name,
 } = require('../config.js')
 
 
@@ -57,6 +58,7 @@ exports.import_images = async (req, res, next) => {
     // await directory.extract({ path: directories.uploads })
 
     for await ( const file of directory.files) {
+      // TODO: only move images
       await extract_single_file(file, directories.uploads)
     }
 
@@ -75,20 +77,19 @@ exports.import_images = async (req, res, next) => {
     //   throw 'banana'
     // }
 
-    
-    
-
-
     // The user can pass data for all the images of the zip
     const userDefinedData = parse_formdata_fields(body)
 
     const json_file_path = path.join(directories.uploads, mongodb_export_file_name)
+    const excel_file_path = path.join(directories.uploads, export_excel_file_name)
+
     const json_file_exists = directory.files.some(({ path }) => path === mongodb_export_file_name )
 
 
     if(json_file_exists) {
       // Restore DB records MonggoDB backup
       console.log(`[Import] importing and restoring MongDB data`)
+      // TODO: Read file directly from archive
       const jsonFileDataBuffer = fs.readFileSync(json_file_path);
       const mongodbData = JSON.parse(jsonFileDataBuffer)
 
@@ -109,6 +110,12 @@ exports.import_images = async (req, res, next) => {
 
     // Remove the archive when done extracting
     await remove_file(archive_path)
+    
+    // remove excel and json (will not be needed if only copying images from archive)
+    if(fs.existsSync(excel_file_path)) remove_file(excel_file_path)
+    if(fs.existsSync(json_file_path)) remove_file(json_file_path)
+    
+
 
     console.log(`[Import] Images from archive ${filename} imported`)
     res.send({ file: filename })

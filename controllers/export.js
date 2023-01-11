@@ -12,6 +12,7 @@ const {
 const {
   directories,
   mongodb_export_file_name,
+  export_excel_file_name,
  } = require('../config.js')
 
 
@@ -130,7 +131,7 @@ exports.export_images = async (req, res, next) => {
 
     // Adding excel and json files
     archive.file(json_file_path, { name: mongodb_export_file_name })
-    archive.file(excel_file_path, { name: 'mongodb_data.xlsx' })
+    archive.file(excel_file_path, { name: export_excel_file_name })
 
     archive.finalize();
 

@@ -14,3 +14,4 @@ exports.directories = {
 }
 
 exports.mongodb_export_file_name = 'mongodb_data.json'
+exports.export_excel_file_name = 'mongodb_data.xlsx'
