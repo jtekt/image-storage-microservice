@@ -1,37 +1,41 @@
 const request = require("supertest")
-const {expect} = require("chai")
-const {app} = require("../index.js")
+const { expect } = require("chai")
+const { app } = require("../index.js")
+const { get_connected } = require("")
 
-
-describe("/images", () => {
-
-  let image_id, field_name
-
-  before( async () => {
-    // Silencing console (not working)
-    // console.log = () => {}
+const waitForDB = () =>
+  new Promise((resolve) => {
+    while (!get_connected) {
+      // Do nothing
+    }
+    resolve()
   })
 
+describe("/images", () => {
+  let image_id, field_name
+
+  before(async () => {
+    // Silencing console (not working)
+    // console.log = () => {}
+    await waitForDB()
+  })
 
   describe("POST /images", () => {
-    
     it("Should allow posting an image", async () => {
-
-      const {status, body} = await request(app)
+      const { status, body } = await request(app)
         .post("/images")
-        .field('test_key', 'test_value')
-        .attach('image', 'test/sample.jpg')
-      
+        .field("test_key", "test_value")
+        .attach("image", "test/sample.jpg")
+
       image_id = body._id
 
       expect(status).to.equal(200)
     })
 
     it("Should Not allow posting images without an image field", async () => {
-      const {status} = await request(app).post("/images")
+      const { status } = await request(app).post("/images")
       expect(status).to.not.equal(200)
     })
-
   })
 
   describe("GET /images", () => {
@@ -62,7 +66,7 @@ describe("/images", () => {
 
   describe("GET /fields", () => {
     it("Should allow the query of fields", async () => {
-      const { status, body} = await request(app).get(`/fields`)
+      const { status, body } = await request(app).get(`/fields`)
       expect(status).to.equal(200)
       field_name = body[0]
     })
@@ -75,15 +79,15 @@ describe("/images", () => {
     })
   })
 
-  describe('PATCH /images/:id', () => {
-    it('Should allow the update of an image metadata', async () => {
-      const properties = { newField: 'test'}
+  describe("PATCH /images/:id", () => {
+    it("Should allow the update of an image metadata", async () => {
+      const properties = { newField: "test" }
       const { status, body } = await request(app)
         .patch(`/images/${image_id}`)
         .send(properties)
 
       expect(status).to.equal(200)
-      expect(body.data.newField).to.equal('test')
+      expect(body.data.newField).to.equal("test")
     })
   })
 
@@ -98,21 +102,16 @@ describe("/images", () => {
     it("Should allow the import of data", async () => {
       const { status } = await request(app)
         .post(`/import`)
-        .attach('archive', 'test/export.zip')
+        .attach("archive", "test/export.zip")
 
       expect(status).to.equal(200)
     })
   })
-
 
   describe("DELETE /images/:id", () => {
-    
     it("Should allow deleting the image uploaded previously", async () => {
-      const {status} = await request(app).delete(`/images/${image_id}`)
+      const { status } = await request(app).delete(`/images/${image_id}`)
       expect(status).to.equal(200)
     })
-    
   })
-
-
 })
