@@ -5,7 +5,7 @@ const { get_connected } = require("../db")
 
 const waitForDB = () =>
   new Promise((resolve) => {
-    while (!get_connected) {
+    while (!get_connected()) {
       // Do nothing
     }
     resolve()
