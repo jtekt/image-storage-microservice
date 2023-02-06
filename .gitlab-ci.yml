@@ -36,7 +36,7 @@ test:
       --name ${TEST_DB}
       --network ${TEST_NETWORK}
       --hostname ${TEST_DB}
-      mongo
+      mongo:4
 
   script:
     # Building test image
@@ -50,8 +50,6 @@ test:
       -e MONGODB_URL=mongodb://${TEST_DB}
       ${CONTAINER_IMAGE_TEST}
       npm run coverage
-
-
 
 build-x86:
   stage: build
@@ -68,7 +66,6 @@ build-x86:
     - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE_TAGGED}
     - docker push ${CONTAINER_IMAGE}
     - docker push ${CONTAINER_IMAGE_TAGGED}
-
 
 build-aarch64:
   stage: build
