@@ -17,7 +17,7 @@ describe("/images", () => {
   before(async () => {
     // Silencing console (not working)
     // console.log = () => {}
-    await waitForDB()
+    // await waitForDB()
   })
 
   describe("POST /images", () => {
