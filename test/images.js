@@ -1,7 +1,7 @@
 const request = require("supertest")
 const { expect } = require("chai")
 const { app } = require("../index.js")
-const { get_connected } = require("")
+const { get_connected } = require("../db")
 
 const waitForDB = () =>
   new Promise((resolve) => {
