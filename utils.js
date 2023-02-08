@@ -1,45 +1,51 @@
-const rimraf = require('rimraf')
-const fs = require('fs')
+const rimraf = require("rimraf")
+const fs = require("fs")
 
-exports.remove_file = (file_path) => new Promise((resolve, reject) => {
-  rimraf(file_path, (error) => {
-    if(error) return reject(error)
-    resolve()
+exports.remove_file = (file_path) =>
+  new Promise((resolve, reject) => {
+    rimraf(file_path, (error) => {
+      if (error) return reject(error)
+      resolve()
+    })
   })
-})
-
 
 exports.create_directory_if_not_exists = (target) => {
   let stat = null
-  
+
   try {
     stat = fs.statSync(target)
-  } 
-  catch (err) {
+  } catch (err) {
     fs.mkdirSync(target, { recursive: true })
   }
 
   if (stat && !stat.isDirectory()) {
-    throw new Error(`Directory cannot be created because an inode of a different type exists at ${target}`);
+    throw new Error(
+      `Directory cannot be created because an inode of a different type exists at ${target}`
+    )
   }
 }
 
 exports.parse_query = (rawQuery) => {
-
   const {
     skip = 0,
     limit,
-    sort = 'time',
+    sort = "time",
     order = 1,
     from,
     to,
     regex = false, // boolean toggling partial text search, not ideal
+    file,
     ...rest
   } = rawQuery
 
   // NOTE: partial text search on any field might not work because field list not fixed
 
   const query = {}
+
+  if (file) {
+    if (regex) query.file = { $regex: file, $options: "i" }
+    else query.file = file
+  }
 
   for (const key in rest) {
     let value = rest[key]
@@ -49,7 +55,7 @@ exports.parse_query = (rawQuery) => {
     //   value = JSON.parse(value)
     // } catch (error) { }
 
-    if (regex) query[`data.${key}`] = { $regex: value, $options: 'i' }
+    if (regex) query[`data.${key}`] = { $regex: value, $options: "i" }
     else query[`data.${key}`] = value
   }
 
@@ -59,8 +65,7 @@ exports.parse_query = (rawQuery) => {
   if (to) query.time.$lt = new Date(to)
   if (from) query.time.$gt = new Date(from)
 
-  return {query, to, from, limit, skip, sort, order}
-
+  return { query, to, from, limit, skip, sort, order }
 }
 
 exports.parse_formdata_fields = (body) => {
@@ -70,7 +75,7 @@ exports.parse_formdata_fields = (body) => {
   try {
     data = json_data ? JSON.parse(json_data) : body
   } catch (error) {
-    console.log('JSON body cannot be parsed')
+    console.log("JSON body cannot be parsed")
     data = body
   }
 
