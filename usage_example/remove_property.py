@@ -6,7 +6,9 @@ IMAGE_ID = '63630043e69a96978b2bd2dc'
 
 api_url = f'{STORAGE_SERVCICE_URL}/images/{IMAGE_ID}'
 
-properties = {"myProperty": "myValue"}
+# Removing properties is achieved by setting it to null (None in python)
+properties = {"myProperty": None}
+
 response = requests.patch(api_url, json=properties)
 
 

@@ -7,7 +7,6 @@ STORAGE_SERVCICE_URL = 'http://localhost:7070'
 
 api_url = f'{STORAGE_SERVCICE_URL}/images'
 
-# Additional info (not necessary)
 
 data = {
     'example_number': 2,
@@ -15,7 +14,6 @@ data = {
     }
 
 fields = { 'data': json.dumps(data) }
-
 
 files = { 'image' : (f'{time()}.jpg', open(IMAGE_PATH,'rb').read()) }
 
