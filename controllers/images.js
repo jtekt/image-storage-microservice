@@ -104,6 +104,12 @@ exports.update_image = async (req, res, next) => {
     // WARNING: Nested fields are replaced
     image.data = { ...image.data, ...properties }
 
+    // Deleting properties by setting them to null
+    // WARNING: this makes it imposible to have null properties
+    Object.keys(properties).forEach((k) => {
+      if (properties[k] === null) delete image.data[k]
+    })
+
     const updated_image = await image.save()
 
     console.log(`Image ${_id} updated`)

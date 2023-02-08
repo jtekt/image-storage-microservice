@@ -6,11 +6,11 @@ IMAGE_ID = '63630043e69a96978b2bd2dc'
 
 api_url = f'{STORAGE_SERVCICE_URL}/images/{IMAGE_ID}'
 
-properties = {"nested": {"prop1": "valupdated"}}
+properties = {"deleteMe": None}
 
 # Send the image
 print(f'Updating image {api_url}')
-response = requests.put(api_url, json=properties)
+response = requests.patch(api_url, json=properties)
 
 
 # Check if upload is successful
