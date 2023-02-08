@@ -1,16 +1,16 @@
 import requests
 
 
-STORAGE_SERVCICE_URL = 'http://localhost:31221'
-IMAGE_ID = '617b5731bdfab1340cadc44e'
+STORAGE_SERVCICE_URL = 'http://localhost:7070'
+IMAGE_ID = '63630043e69a96978b2bd2dc'
 
 api_url = f'{STORAGE_SERVCICE_URL}/images/{IMAGE_ID}'
 
-properties = {"updated": "success"}
+properties = {"nested": {"prop1": "valupdated"}}
 
 # Send the image
 print(f'Updating image {api_url}')
-response = requests.patch(api_url, json=properties)
+response = requests.put(api_url, json=properties)
 
 
 # Check if upload is successful
