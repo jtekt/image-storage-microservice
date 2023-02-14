@@ -1,5 +1,6 @@
 # Image storage microservice
 
+[![AWS ECR](https://img.shields.io/badge/AWS%20ECR-image--storage--service-blue)](https://gallery.ecr.aws/jtekt-corporation/image-storage-service)
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/image-storage-service)](https://artifacthub.io/packages/search?repo=image-storage-service)
 
 A microservice to store and manage image datasets in the cloud.
