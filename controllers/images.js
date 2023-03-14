@@ -27,8 +27,16 @@ exports.upload_image = async (req, res) => {
     delete data.time
   }
 
+  let _id = undefined
+  if (data._id) {
+    _id = data._id
+    delete data._id
+  }
+
+  // TODO: allow user to set _id (used for data transfer)
+
   const query = { file }
-  const itemProperties = { file, time, data }
+  const itemProperties = { _id, file, time, data }
   const options = { upsert: true, new: true }
 
   // const new_image = await Image.create(itemProperties)

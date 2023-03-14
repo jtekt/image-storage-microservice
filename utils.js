@@ -42,8 +42,6 @@ exports.parse_query = (rawQuery) => {
 
   const query = {}
 
-  console.log({ regex })
-
   if (file) {
     if (regex) query.file = { $regex: file, $options: "i" }
     else query.file = file
