@@ -13,6 +13,7 @@ fields = {
     }
 
 
+
 filename = f'{time()}.jpg'
 files = { 'image' : (filename, open(IMAGE_PATH,'rb').read()) }
 

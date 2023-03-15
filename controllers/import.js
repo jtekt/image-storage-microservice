@@ -36,8 +36,6 @@ exports.import_images = async (req, res) => {
   if (!file) throw createHttpError(400, "File not provided")
   const { mimetype, filename } = file
 
-  console.log({ mimetype })
-
   const allowed_mimetypes = [
     "application/x-zip-compressed",
     "application/zip",
@@ -57,25 +55,11 @@ exports.import_images = async (req, res) => {
   // This is very memory intensive for large archives
   // await directory.extract({ path: directories.uploads })
 
+  // This method is not too memory intensive (about 300Mi for a 3Gi archive)
   for await (const file of directory.files) {
     // TODO: only move images
     await extract_single_file(file, directories.uploads)
   }
-
-  // Another attempt using streams, but throws Unexpected end of file Zlib zlibOnError 5 Z_BUF_ERROR
-  // try {
-  //   const zip = fs.createReadStream(archive_path)
-  //   .pipe(unzipper.Parse({forceStream: true}));
-
-  //   for await (const entry of zip) {
-  //     const fileName = entry.path;
-  //     const outut_path = path.join(directories.uploads, fileName)
-  //     entry.pipe(fs.createWriteStream(outut_path));
-  //   }
-  // } catch (error) {
-  //   console.log('Error was caught!')
-  //   throw 'banana'
-  // }
 
   // The user can pass data for all the images of the zip
   const userDefinedData = parse_formdata_fields(body)
