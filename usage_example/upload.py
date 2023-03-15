@@ -8,23 +8,22 @@ api_url = f'{STORAGE_SERVCICE_URL}/images'
 
 # Additional info (not necessary)
 fields = {
-    # '_id': '63630043e69a96978b2bd2dd',
     'part_number': '200-002',
     'label': 'golgo',
     }
 
 
-files = { 'image' : (f'{time()}.jpg', open(IMAGE_PATH,'rb').read()) }
+filename = f'{time()}.jpg'
+files = { 'image' : (filename, open(IMAGE_PATH,'rb').read()) }
 
 
 # Send the image
 print(f'Uploading image to {api_url}')
 response = requests.post(api_url, data=fields, files=files)
 
-
 # Check if upload is successful
 if response.status_code ==  200:
-    print('Upload successful')
+    print(f'Upload successful of image {filename}')
     print(response.json())
 else:
     print(f'Upload failed with code {response.status_code}')

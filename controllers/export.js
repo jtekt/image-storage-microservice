@@ -96,6 +96,7 @@ exports.export_images = async (req, res) => {
   archive.on("warning", function (err) {
     if (err.code === "ENOENT") {
       // log warning
+      console.log(err)
     } else throw err
   })
 

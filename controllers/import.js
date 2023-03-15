@@ -36,10 +36,16 @@ exports.import_images = async (req, res) => {
   if (!file) throw createHttpError(400, "File not provided")
   const { mimetype, filename } = file
 
-  const allowed_mimetypes = ["application/x-zip-compressed", "application/zip"]
+  console.log({ mimetype })
+
+  const allowed_mimetypes = [
+    "application/x-zip-compressed",
+    "application/zip",
+    "application/octet-stream",
+  ]
 
   if (!allowed_mimetypes.includes(mimetype))
-    throw createHttpError(400, "File is not zip")
+    throw createHttpError(400, `Mimetype ${mimetype} is not allowed`)
 
   console.log(`[Import] Importing archive...`)
 
@@ -48,7 +54,7 @@ exports.import_images = async (req, res) => {
   const directory = await unzipper.Open.file(archive_path)
 
   // Unzip the archive to the uploads directory
-  // TODO: This is very memory intensive for large archives
+  // This is very memory intensive for large archives
   // await directory.extract({ path: directories.uploads })
 
   for await (const file of directory.files) {

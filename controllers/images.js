@@ -27,13 +27,12 @@ exports.upload_image = async (req, res) => {
     delete data.time
   }
 
+  // Allowing user to set _id (used for transfers)
   let _id = undefined
   if (data._id) {
     _id = data._id
     delete data._id
   }
-
-  // TODO: allow user to set _id (used for data transfer)
 
   const query = { file }
   const itemProperties = { _id, file, time, data }
