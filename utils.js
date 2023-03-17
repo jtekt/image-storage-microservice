@@ -35,16 +35,25 @@ exports.parse_query = (rawQuery) => {
     to,
     regex = false, // boolean toggling partial text search, not ideal
     file,
+    filter,
     ...rest
   } = rawQuery
 
   // NOTE: partial text search on any field might not work because field list not fixed
 
-  const query = {}
+  let query = {}
 
   if (file) {
     if (regex) query.file = { $regex: file, $options: "i" }
     else query.file = file
+  }
+
+  if (filter) {
+    try {
+      query = { ...query, ...JSON.parse(filter) }
+    } catch (error) {
+      console.error(`Filter cannot be parsed`)
+    }
   }
 
   for (const key in rest) {
