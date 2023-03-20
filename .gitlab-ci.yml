@@ -10,17 +10,12 @@ services:
 variables:
   APPLICATION_NAME: image-storage-service
   AWS_ECR_PUBLIC_URL: public.ecr.aws/u6l4m3e5
-  ON_PREMISE_REGISTRY_URL: 172.16.98.151:5000
 
   CONTAINER_IMAGE_TEST: ${APPLICATION_NAME}:test
 
   CONTAINER_IMAGE: ${AWS_ECR_PUBLIC_URL}/${APPLICATION_NAME}
   CONTAINER_IMAGE_TAGGED: ${CONTAINER_IMAGE}:${CI_COMMIT_SHORT_SHA}
   CONTAINER_IMAGE_AARCH64: ${CONTAINER_IMAGE}:aarch64-${CI_COMMIT_SHORT_SHA}
-
-  CONTAINER_IMAGE_ON_PREMISE: ${ON_PREMISE_REGISTRY_URL}/${APPLICATION_NAME}
-  CONTAINER_IMAGE_ON_PREMISE_TAGGED: ${CONTAINER_IMAGE_ON_PREMISE}:${CI_COMMIT_SHORT_SHA}
-  CONTAINER_IMAGE_AARCH64_ON_PREMISE_TAGGED: ${CONTAINER_IMAGE_ON_PREMISE}:aarch64-${CI_COMMIT_SHORT_SHA}
 
   TEST_NETWORK: tdd
   TEST_DB: tdd-db
@@ -65,20 +60,12 @@ build-x86:
   tags:
     - dind
   before_script:
-    # Log in to the registry (AWS credentials are stored as GitLab CI/CD env variables)
     - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ECR_PUBLIC_URL}
   script:
     - docker build -t ${CONTAINER_IMAGE} .
-
     - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE_TAGGED}
-    - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE_ON_PREMISE}
-    - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE_ON_PREMISE_TAGGED}
-
     - docker push ${CONTAINER_IMAGE}
     - docker push ${CONTAINER_IMAGE_TAGGED}
-
-    - docker push ${CONTAINER_IMAGE_ON_PREMISE}
-    - docker push ${CONTAINER_IMAGE_ON_PREMISE_TAGGED}
 
 build-aarch64:
   stage: build
@@ -90,6 +77,4 @@ build-aarch64:
     - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ECR_PUBLIC_URL}
   script:
     - docker build -f Dockerfile-aarch64 -t ${CONTAINER_IMAGE_AARCH64} .
-    - docker tag ${CONTAINER_IMAGE_AARCH64} ${CONTAINER_IMAGE_AARCH64_ON_PREMISE_TAGGED}
     - docker push ${CONTAINER_IMAGE_AARCH64}
-    - docker push ${CONTAINER_IMAGE_AARCH64_ON_PREMISE_TAGGED}
