@@ -21,7 +21,10 @@ const {
   AUTHENTICATION_URL,
   AUTHORIZED_GROUPS,
   GROUP_AUTHORIZATION_URL,
+  TZ,
 } = process.env
+
+process.env.TZ = TZ || "Asia/Tokyo"
 
 db.connect()
 
@@ -34,6 +37,7 @@ app.use(apiMetrics())
 app.get("/", (req, res) => {
   res.send({
     application_name,
+    timeZone: process.env.TZ,
     author,
     version,
     mongodb: {

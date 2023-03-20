@@ -25,6 +25,9 @@ exports.create_directory_if_not_exists = (target) => {
   }
 }
 
+const dateInLocalTz = (date) =>
+  new Date(new Date(date).getTime() + new Date().getTimezoneOffset() * 60000)
+
 exports.parse_query = (rawQuery) => {
   const {
     skip = 0,
@@ -71,8 +74,8 @@ exports.parse_query = (rawQuery) => {
   // Time filters
   // Using $gt and $lt instead of $gte and $lte for annotation tool
   if (to || from) query.time = {}
-  if (to) query.time.$lt = new Date(to)
-  if (from) query.time.$gt = new Date(from)
+  if (to) query.time.$lt = dateInLocalTz(to)
+  if (from) query.time.$gt = dateInLocalTz(from)
 
   return { query, to, from, limit, skip, sort, order }
 }
