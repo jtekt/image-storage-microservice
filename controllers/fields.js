@@ -1,5 +1,5 @@
 const Image = require("../models/image.js")
-const createHttpError = require("http-errors")
+const { parse_query } = require("../utils.js")
 
 exports.read_fields = async (req, res) => {
   const images = await Image.find({})
@@ -13,6 +13,9 @@ exports.read_fields = async (req, res) => {
 
 exports.read_field_unique_values = async (req, res) => {
   const { field_name } = req.params
-  const items = await Image.find().distinct(`data.${field_name}`)
+  const { query } = parse_query(req.query)
+
+  const items = await Image.distinct(`data.${field_name}`, query)
+
   res.send(items)
 }

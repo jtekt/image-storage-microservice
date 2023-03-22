@@ -8,8 +8,8 @@ api_url = f'{STORAGE_SERVCICE_URL}/images'
 
 # Additional info (not necessary)
 fields = {
-    'part_number': '200-002',
-    'label': 'golgo',
+    'part_number': '200-003',
+    'label': 'golgo13',
     }
 
 
