@@ -1,3 +1,4 @@
+require("express-async-errors")
 const express = require("express")
 const cors = require("cors")
 const dotenv = require("dotenv")
@@ -7,7 +8,6 @@ const group_auth = require("@moreillon/express_group_based_authorization_middlew
 const db = require("./db.js")
 const { author, name: application_name, version } = require("./package.json")
 const { directories } = require("./config.js")
-require("express-async-errors")
 
 const images_router = require("./routes/images.js")
 const import_router = require("./routes/import.js")

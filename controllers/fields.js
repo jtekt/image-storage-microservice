@@ -2,6 +2,7 @@ const Image = require("../models/image.js")
 const { parse_query } = require("../utils.js")
 
 exports.read_fields = async (req, res) => {
+  // TODO: find more efficient way
   const images = await Image.find({})
   // Using set to remove duplicates
   const fields = images.reduce(
