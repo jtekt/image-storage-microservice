@@ -3,13 +3,16 @@ const { parse_query } = require("../utils.js")
 
 exports.read_fields = async (req, res) => {
   // TODO: find more efficient way
-  const images = await Image.find({})
+  const { limit = 10000 } = req.query
+  const images = await Image.find({}).limit(limit)
+
   // Using set to remove duplicates
-  const fields = images.reduce(
-    (prev, image) => [...new Set([...prev, ...Object.keys(image.data)])],
-    []
-  )
-  res.send(fields)
+  const fields = images.reduce((prev, { data }) => {
+    Object.keys(data).forEach((i) => prev.add(i))
+    return prev
+  }, new Set([]))
+
+  res.send([...fields])
 }
 
 exports.read_field_unique_values = async (req, res) => {
