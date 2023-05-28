@@ -1,15 +1,16 @@
-const rimraf = require("rimraf")
-const fs = require("fs")
+// @ts-ignore
+import rimraf from "rimraf"
+import fs from "fs"
 
-exports.remove_file = (file_path) =>
+export const remove_file = (file_path: string) =>
   new Promise((resolve, reject) => {
-    rimraf(file_path, (error) => {
+    rimraf(file_path, (error: any) => {
       if (error) return reject(error)
-      resolve()
+      resolve(null)
     })
   })
 
-exports.create_directory_if_not_exists = (target) => {
+export const create_directory_if_not_exists = (target: string) => {
   let stat = null
 
   try {
@@ -25,7 +26,7 @@ exports.create_directory_if_not_exists = (target) => {
   }
 }
 
-exports.parse_query = (rawQuery) => {
+export const parse_query = (rawQuery: any) => {
   const {
     skip = 0,
     limit,
@@ -41,7 +42,7 @@ exports.parse_query = (rawQuery) => {
 
   // NOTE: partial text search on any field might not work because field list not fixed
 
-  let query = {}
+  let query: any = {}
 
   if (file) {
     if (regex) query.file = { $regex: file, $options: "i" }
@@ -77,7 +78,7 @@ exports.parse_query = (rawQuery) => {
   return { query, to, from, limit, skip, sort, order }
 }
 
-exports.parse_formdata_fields = (body) => {
+export const parse_formdata_fields = (body: {json?: any, data?: any}) => {
   const json_data = body.data || body.json
 
   let data

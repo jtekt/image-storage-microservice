@@ -1,16 +1,18 @@
-const Image = require("../models/image.js")
-const path = require("path")
-const fs = require("fs")
-const createHttpError = require("http-errors")
-const unzipper = require("unzipper") // NOTE: Unzipper is advertized as having a low memory footprint
-const { remove_file, parse_formdata_fields } = require("../utils.js")
-const {
+import Image from "../models/image"
+import path from "path"
+import fs from "fs"
+import createHttpError from "http-errors"
+import unzipper, { File } from "unzipper" // NOTE: Unzipper is advertized as having a low memory footprint
+import { remove_file, parse_formdata_fields } from "../utils"
+import { Request, Response } from "express"
+import IImage from '../interfaces/IImage'
+import {
   directories,
   mongodb_export_file_name,
   export_excel_file_name,
-} = require("../config.js")
+} from "../config"
 
-const mongodb_data_import = (documents) => {
+const mongodb_data_import = (documents: IImage[]) => {
   // TODO: Consider bulkwrite
   // Querying by file because unique and imports without mongodb data do not have an ID
   const promises = documents.map((document) =>
@@ -19,7 +21,7 @@ const mongodb_data_import = (documents) => {
   return Promise.all(promises)
 }
 
-const extract_single_file = (file, output_directory) =>
+const extract_single_file = (file: File, output_directory: string) =>
   new Promise((resolve, reject) => {
     const file_name = file.path
     const output_path = path.join(output_directory, file_name)
@@ -30,7 +32,7 @@ const extract_single_file = (file, output_directory) =>
       .on("finish", resolve)
   })
 
-exports.import_images = async (req, res) => {
+export const import_images = async (req: Request, res: Response) => {
   const { file, body } = req
 
   if (!file) throw createHttpError(400, "File not provided")
@@ -78,10 +80,13 @@ exports.import_images = async (req, res) => {
     // Restore DB records MonggoDB backup
     console.log(`[Import] importing and restoring MongDB data`)
     // TODO: Read file directly from archive
+
     const jsonFileDataBuffer = fs.readFileSync(json_file_path)
+    // TODO: chewck if this is really an error
+    // @ts-ignore
     const mongodbData = JSON.parse(jsonFileDataBuffer)
 
-    mongodbData.forEach((document) => {
+    mongodbData.forEach((document: IImage) => {
       document.data = { ...document.data, ...userDefinedData }
     })
 
@@ -90,7 +95,7 @@ exports.import_images = async (req, res) => {
   } else {
     // No backup is provided
     console.log(`[Import] importing without restoring MongoDB data`)
-    const mongodbData = directory.files.map((f) => ({
+    const mongodbData: IImage[] = directory.files.map((f) => ({
       file: f.path,
       data: userDefinedData,
     }))
