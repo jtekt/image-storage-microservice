@@ -4,7 +4,7 @@ import path from "path"
 import fs from "fs"
 import XLSX from "xlsx"
 import { v4 as uuidv4 } from "uuid"
-import { parse_query, remove_file } from "../utils.js"
+import { parse_query, remove_file } from "../utils"
 import { Request, Response } from "express"
 import IImage from '../interfaces/IImage'
 import {

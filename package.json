@@ -37,7 +37,7 @@
     "typescript": "^5.0.4"
   },
   "scripts": {
-    "dev": "nodemon --ignore ./uploads --ignore ./temp",
+    "dev": "nodemon index.ts --ignore ./uploads --ignore ./temp",
     "test": "mocha --timeout 10000 --exit",
     "start": "ts-node index.ts",
     "coverage": "nyc mocha --timeout 15000 --exit"
