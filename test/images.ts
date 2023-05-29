@@ -1,18 +1,18 @@
-const request = require("supertest")
-const { expect } = require("chai")
-const { app } = require("../index.js")
-const { get_connected } = require("../db")
+import request from "supertest"
+import { expect } from "chai"
+import { app } from "../index"
+import { get_connected } from "../db"
 
 const waitForDB = () =>
   new Promise((resolve) => {
     while (!get_connected()) {
       // Do nothing
     }
-    resolve()
+    resolve(null)
   })
 
 describe("/images", () => {
-  let image_id, field_name
+  let image_id: string, field_name: string
 
   before(async () => {
     // Silencing console (not working)
