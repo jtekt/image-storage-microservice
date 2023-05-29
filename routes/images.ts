@@ -1,7 +1,7 @@
-const multer = require("multer")
-const { Router } = require("express")
-const { directories } = require("../config.js")
-const {
+import multer from "multer"
+import { Router } from "express"
+import { directories } from "../config"
+import {
   read_images,
   upload_image,
   read_image,
@@ -10,7 +10,7 @@ const {
   replace_image_data,
   delete_image,
   delete_images,
-} = require("../controllers/images.js")
+} from "../controllers/images"
 
 // Need a special hander because keeping the original file name
 const storage = multer.diskStorage({
@@ -39,4 +39,4 @@ router
 
 router.route("/:_id/image").get(read_image_file)
 
-module.exports = router
+export default router

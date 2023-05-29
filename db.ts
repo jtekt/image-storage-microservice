@@ -1,5 +1,5 @@
-const mongoose = require("mongoose")
-const dotenv = require('dotenv')
+import mongoose from "mongoose"
+import dotenv from 'dotenv'
 
 dotenv.config()
 
@@ -10,16 +10,11 @@ const {
 } = process.env
 
 
-const mongodb_options = {
-   useUnifiedTopology: true,
-   useNewUrlParser: true,
-}
 
-
-const connect = () => {
+export const connect = () => {
   const connection_string = `${MONGODB_URL}/${MONGODB_DB}`
   console.log(`[MongoDB] Attempting connection to ${connection_string}`)
-  mongoose.connect(connection_string, mongodb_options)
+  mongoose.connect(connection_string)
   .then(() => {console.log('[Mongoose] Initial connection successful')})
   .catch(error => {
     console.log('[Mongoose] Initial connection failed')
@@ -28,7 +23,6 @@ const connect = () => {
 }
 
 
-exports.url = MONGODB_URL
-exports.db = MONGODB_DB
-exports.connect = connect
-exports.get_connected = () => mongoose.connection.readyState
+export const url = MONGODB_URL
+export const db = MONGODB_DB
+export const get_connected = () => mongoose.connection.readyState

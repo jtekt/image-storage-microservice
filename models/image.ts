@@ -1,8 +1,9 @@
-const { Schema, model } = require('mongoose')
+import { Schema, model } from 'mongoose'
+import IImage from '../interfaces/IImage'
 
 const options = { minimize: false }
 
-const imageSchema = new Schema({
+const imageSchema = new Schema<IImage>({
   file: { type: String, required: true, unique: true },
   time: { type: Date, default: Date.now },
   data: { type: Schema.Types.Mixed, default: {} },
@@ -10,4 +11,4 @@ const imageSchema = new Schema({
 
 const Image = model('Image', imageSchema)
 
-module.exports = Image
+export default Image

@@ -1,17 +1,19 @@
-const archiver = require("archiver") // NOTE: Archiver is advertized as having a low memory footprint
-const Image = require("../models/image.js")
-const path = require("path")
-const fs = require("fs")
-const XLSX = require("xlsx")
-const { v4: uuidv4 } = require("uuid")
-const { parse_query, remove_file } = require("../utils.js")
-const {
+import archiver from "archiver" // NOTE: Archiver is advertized as having a low memory footprint
+import Image from "../models/image"
+import path from "path"
+import fs from "fs"
+import XLSX from "xlsx"
+import { v4 as uuidv4 } from "uuid"
+import { parse_query, remove_file } from "../utils"
+import { Request, Response } from "express"
+import IImage from '../interfaces/IImage'
+import {
   directories,
   mongodb_export_file_name,
   export_excel_file_name,
-} = require("../config.js")
+} from "../config"
 
-const generate_excel = (data, path) => {
+const generate_excel = (data: IImage[], path: string) => {
   const formatted_data = data.map((item) => {
     // Convert nested data properties
 
@@ -20,13 +22,12 @@ const generate_excel = (data, path) => {
 
     const output = {
       ...baseMetaData,
-      _id: baseMetaData._id.toString(),
+      _id: baseMetaData._id? baseMetaData._id.toString() : undefined,
     }
 
-    // Remove unused properties
-    delete output.data
 
     for (let key in data) {
+      // @ts-ignore
       if (data[key]) output[key] = data[key].toString()
     }
 
@@ -39,11 +40,11 @@ const generate_excel = (data, path) => {
   XLSX.writeFile(workbook, path)
 }
 
-const generate_json = (data, path) => {
+const generate_json = (data: IImage[], path: string) => {
   fs.writeFileSync(path, JSON.stringify(data))
 }
 
-exports.export_images = async (req, res) => {
+export const export_images = async (req: Request, res: Response) => {
   // Making zip name unique so as to allow parallel exports
   const export_id = uuidv4()
 
@@ -64,7 +65,7 @@ exports.export_images = async (req, res) => {
     .skip(Number(skip))
     .limit(Math.max(Number(limit), 0))
 
-  const images_json = images.map((i) => i.toJSON())
+  const images_json = images.map((i) => i.toJSON()) as IImage[]
 
   generate_excel(images_json, excel_file_path)
   generate_json(images_json, json_file_path)

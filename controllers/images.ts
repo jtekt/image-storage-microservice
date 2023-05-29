@@ -1,14 +1,15 @@
-const Image = require("../models/image.js")
-const path = require("path")
-const createHttpError = require("http-errors")
-const { directories } = require("../config.js")
-const {
+import Image from "../models/image"
+import path from "path"
+import createHttpError from "http-errors"
+import { directories } from "../config"
+import {
   remove_file,
   parse_query,
   parse_formdata_fields,
-} = require("../utils.js")
+} from "../utils"
+import { Request, Response } from "express"
 
-exports.upload_image = async (req, res) => {
+export const upload_image = async (req: Request, res: Response) => {
   // NOTE: Req.body is multipart form-data
   if (!req.file) throw createHttpError(400, "File not provided")
 
@@ -44,7 +45,7 @@ exports.upload_image = async (req, res) => {
   res.send(newImage)
 }
 
-exports.read_images = async (req, res) => {
+export const read_images = async (req: Request, res: Response) => {
   // Limiting here because parse_query also used in export
   const { query, sort, order, limit = 100, skip } = parse_query(req.query)
 
@@ -58,7 +59,7 @@ exports.read_images = async (req, res) => {
   res.send({ total, skip, limit, items })
 }
 
-exports.read_image = async (req, res) => {
+export const read_image = async (req: Request, res: Response) => {
   const { _id } = req.params
 
   const image = await Image.findOne({ _id })
@@ -69,7 +70,7 @@ exports.read_image = async (req, res) => {
   console.log(`Image ${_id} queried`)
 }
 
-exports.read_image_file = async (req, res) => {
+export const read_image_file = async (req: Request, res: Response) => {
   const { _id } = req.params
   const image = await Image.findOne({ _id })
   if (!image) throw createHttpError(404, `Image ${_id} not found`)
@@ -79,7 +80,7 @@ exports.read_image_file = async (req, res) => {
   res.download(file_absolute_path, file)
 }
 
-exports.update_image = async (req, res) => {
+export const update_image = async (req: Request, res: Response) => {
   const { _id } = req.params
   const properties = req.body
 
@@ -102,7 +103,7 @@ exports.update_image = async (req, res) => {
   res.send(updated_image)
 }
 
-exports.replace_image_data = async (req, res) => {
+export const replace_image_data = async (req: Request, res: Response) => {
   const { _id } = req.params
   const properties = req.body
 
@@ -117,7 +118,7 @@ exports.replace_image_data = async (req, res) => {
   res.send(updated_image)
 }
 
-exports.delete_images = async (req, res) => {
+export const delete_images = async (req: Request, res: Response) => {
   const { query, sort, order, limit = 0, skip } = parse_query(req.query)
 
   const items = await Image.find(query)
@@ -139,7 +140,7 @@ exports.delete_images = async (req, res) => {
   res.send({ item_count: items.length })
 }
 
-exports.delete_image = async (req, res) => {
+export const delete_image = async (req: Request, res: Response) => {
   const { _id } = req.params
   const image = await Image.findOneAndDelete({ _id })
   if (!image) throw createHttpError(404, `Image ${_id} not found`)

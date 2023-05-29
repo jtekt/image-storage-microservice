@@ -1,8 +1,8 @@
-const { Router } = require('express')
-const {
+import { Router } from 'express'
+import {
     read_fields,
     read_field_unique_values
-} = require('../controllers/fields')
+} from '../controllers/fields'
 
 const router = Router()
 
@@ -14,4 +14,4 @@ router.route('/:field_name')
     .get(read_field_unique_values)
 
 
-module.exports = router
+export default router
