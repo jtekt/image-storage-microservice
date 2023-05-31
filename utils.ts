@@ -53,7 +53,7 @@ export const parse_query = (rawQuery: any) => {
     try {
       query = { ...query, ...JSON.parse(filter) }
     } catch (error) {
-      console.error(`Filter cannot be parsed`)
+      throw "Malformed filter"
     }
   }
 
@@ -78,7 +78,7 @@ export const parse_query = (rawQuery: any) => {
   return { query, to, from, limit, skip, sort, order }
 }
 
-export const parse_formdata_fields = (body: {json?: any, data?: any}) => {
+export const parse_formdata_fields = (body: { json?: any; data?: any }) => {
   const json_data = body.data || body.json
 
   let data
