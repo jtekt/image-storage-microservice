@@ -1,4 +1,4 @@
-import express, { NextFunction, Request, Response} from "express"
+import express, { NextFunction, Request, Response } from "express"
 import "express-async-errors"
 import cors from "cors"
 import dotenv from "dotenv"
@@ -8,7 +8,8 @@ import group_auth from "@moreillon/express_group_based_authorization_middleware"
 import * as db from "./db"
 import { author, name as application_name, version } from "./package.json"
 import { directories } from "./config"
-
+import swaggerUi from "swagger-ui-express"
+import swaggerDocument from "./swagger-output.json"
 import images_router from "./routes/images"
 import import_router from "./routes/import"
 import export_router from "./routes/export"
@@ -33,6 +34,7 @@ export const app = express()
 app.use(express.json())
 app.use(cors())
 app.use(apiMetrics())
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 
 app.get("/", (req, res) => {
   res.send({
@@ -80,4 +82,3 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 app.listen(APP_PORT, () => {
   console.log(`Image storage v${version} listening on port ${APP_PORT}`)
 })
-
