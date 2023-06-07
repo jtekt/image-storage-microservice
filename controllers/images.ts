@@ -15,6 +15,7 @@ export const upload_image = async (req: Request, res: Response) => {
     body,
   } = req
 
+  // TODO: refactor this
   const data = parse_formdata_fields(body)
 
   // Time: Set to upload time unless provided otherwise by user

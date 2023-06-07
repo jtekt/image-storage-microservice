@@ -3,9 +3,13 @@ import path from "path"
 import fs from "fs"
 import createHttpError from "http-errors"
 import unzipper, { File } from "unzipper" // NOTE: Unzipper is advertized as having a low memory footprint
-import { remove_file, parse_formdata_fields } from "../utils"
+import {
+  remove_file,
+  parse_formdata_fields,
+  create_directory_if_not_exists,
+} from "../utils"
 import { Request, Response } from "express"
-import IImage from '../interfaces/IImage'
+import IImage from "../interfaces/IImage"
 import {
   directories,
   mongodb_export_file_name,
@@ -24,6 +28,8 @@ const mongodb_data_import = (documents: IImage[]) => {
 const extract_single_file = (file: File, output_directory: string) =>
   new Promise((resolve, reject) => {
     const file_name = file.path
+    const file_folder = path.join(directories.uploads, path.dirname(file_name))
+    create_directory_if_not_exists(file_folder)
     const output_path = path.join(output_directory, file_name)
     file
       .stream()
@@ -56,8 +62,8 @@ export const import_images = async (req: Request, res: Response) => {
   // Unzip the archive to the uploads directory
   // This is very memory intensive for large archives
   // await directory.extract({ path: directories.uploads })
-
   // This method is not too memory intensive (about 300Mi for a 3Gi archive)
+  // TODO: find way to just unzip without using out too much memory
   for await (const file of directory.files) {
     // TODO: only move images
     await extract_single_file(file, directories.uploads)

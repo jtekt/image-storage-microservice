@@ -10,7 +10,7 @@ api_url = f'{STORAGE_SERVCICE_URL}/images'
 fields = {
     'part_number': '200-003',
     'label': 'golgo13',
-    # 'file': f'test/{time()}.jpg' 
+    'file': f'test2/{time()}.jpg' 
     }
 
 
