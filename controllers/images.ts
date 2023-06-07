@@ -2,11 +2,7 @@ import Image from "../models/image"
 import path from "path"
 import createHttpError from "http-errors"
 import { directories } from "../config"
-import {
-  remove_file,
-  parse_query,
-  parse_formdata_fields,
-} from "../utils"
+import { remove_file, parse_query, parse_formdata_fields } from "../utils"
 import { Request, Response } from "express"
 
 export const upload_image = async (req: Request, res: Response) => {
@@ -14,7 +10,7 @@ export const upload_image = async (req: Request, res: Response) => {
   if (!req.file) throw createHttpError(400, "File not provided")
 
   // TODO: Only allow images
-  const {
+  let {
     file: { originalname: file },
     body,
   } = req
@@ -33,6 +29,11 @@ export const upload_image = async (req: Request, res: Response) => {
   if (data._id) {
     _id = data._id
     delete data._id
+  }
+
+  if (data.file) {
+    file = data.file
+    delete data.file
   }
 
   const query = { file }

@@ -10,11 +10,12 @@ api_url = f'{STORAGE_SERVCICE_URL}/images'
 fields = {
     'part_number': '200-003',
     'label': 'golgo13',
+    # 'file': f'test/{time()}.jpg' 
     }
 
 
 
-filename = f'{time()}.jpg'
+filename = f'honkhonk{time()}.jpg'
 files = { 'image' : (filename, open(IMAGE_PATH,'rb').read()) }
 
 
