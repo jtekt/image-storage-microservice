@@ -28,8 +28,11 @@ const mongodb_data_import = (documents: IImage[]) => {
 const extract_single_file = (file: File, output_directory: string) =>
   new Promise((resolve, reject) => {
     const file_name = file.path
+
+    // Restore folder structure if necessary
     const file_folder = path.join(directories.uploads, path.dirname(file_name))
     create_directory_if_not_exists(file_folder)
+
     const output_path = path.join(output_directory, file_name)
     file
       .stream()
