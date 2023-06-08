@@ -8,6 +8,7 @@ import group_auth from "@moreillon/express_group_based_authorization_middleware"
 import * as db from "./db"
 import { author, name as application_name, version } from "./package.json"
 import { directories } from "./config"
+import { create_directory_if_not_exists } from "./utils"
 import swaggerUi from "swagger-ui-express"
 import swaggerDocument from "./swagger-output.json"
 import images_router from "./routes/images"
@@ -27,6 +28,8 @@ const {
 
 process.env.TZ = TZ || "Asia/Tokyo"
 
+create_directory_if_not_exists(directories.temp)
+create_directory_if_not_exists(directories.uploads)
 db.connect()
 
 // Express configuration
