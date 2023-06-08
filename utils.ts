@@ -29,7 +29,7 @@ export const create_directory_if_not_exists = (target: string) => {
 export const parse_query = (rawQuery: any) => {
   const {
     skip = 0,
-    limit,
+    limit = 10000,
     sort = "time",
     order = 1,
     from,

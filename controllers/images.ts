@@ -39,7 +39,6 @@ export const upload_image = async (req: Request, res: Response) => {
 
   const options = { upsert: true, new: true }
   const newImage = await Image.findOneAndUpdate(query, itemProperties, options)
-  console.log(`Image ${file} uploaded and saved`)
   res.send(newImage)
 }
 
@@ -59,13 +58,9 @@ export const read_images = async (req: Request, res: Response) => {
 
 export const read_image = async (req: Request, res: Response) => {
   const { _id } = req.params
-
   const image = await Image.findOne({ _id })
-
   if (!image) throw createHttpError(404, `Image ${_id} not found`)
-
   res.send(image)
-  console.log(`Image ${_id} queried`)
 }
 
 export const read_image_file = async (req: Request, res: Response) => {
@@ -96,8 +91,6 @@ export const update_image = async (req: Request, res: Response) => {
   })
 
   const updated_image = await image.save()
-
-  console.log(`Image ${_id} updated`)
   res.send(updated_image)
 }
 
@@ -111,8 +104,6 @@ export const replace_image_data = async (req: Request, res: Response) => {
   // replace all properties
   image.data = properties
   const updated_image = await image.save()
-
-  console.log(`Image ${_id} replaced`)
   res.send(updated_image)
 }
 
@@ -144,7 +135,5 @@ export const delete_image = async (req: Request, res: Response) => {
   if (!image) throw createHttpError(404, `Image ${_id} not found`)
   const file_absolute_path = path.join(directories.uploads, image.file)
   await remove_file(file_absolute_path)
-
-  console.log(`Image ${_id} deleted`)
   res.send({ _id })
 }

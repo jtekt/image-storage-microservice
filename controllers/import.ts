@@ -91,7 +91,7 @@ export const import_images = async (req: Request, res: Response) => {
     // TODO: Read file directly from archive
 
     const jsonFileDataBuffer = fs.readFileSync(json_file_path)
-    // TODO: chewck if this is really an error
+    // TODO: check if this is really an error
     // @ts-ignore
     const mongodbData = JSON.parse(jsonFileDataBuffer)
 
@@ -99,7 +99,6 @@ export const import_images = async (req: Request, res: Response) => {
       document.data = { ...document.data, ...userDefinedData }
     })
 
-    // TODO: consider allowing the addition of properties
     await mongodb_data_import(mongodbData)
   } else {
     // No backup is provided
