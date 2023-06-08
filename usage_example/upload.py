@@ -10,11 +10,13 @@ api_url = f'{STORAGE_SERVCICE_URL}/images'
 fields = {
     'part_number': '200-003',
     'label': 'golgo13',
+    'time': '2020-01-01',
+    'file': 'golgo/banana.jpg'
     }
 
 
 
-filename = f'{time()}.jpg'
+filename = f'banana{time()}.jpg'
 files = { 'image' : (filename, open(IMAGE_PATH,'rb').read()) }
 
 

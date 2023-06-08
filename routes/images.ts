@@ -1,4 +1,6 @@
 import multer from "multer"
+import path from "path"
+import { create_directory_if_not_exists } from "../utils"
 import { Router } from "express"
 import { directories } from "../config"
 import {
@@ -14,10 +16,24 @@ import {
 
 // Need a special hander because keeping the original file name
 const storage = multer.diskStorage({
-  destination: directories.uploads,
-
-  filename: (req, file, callback) => {
-    callback(null, file.originalname)
+  destination: (req, _, callback) => {
+    // Allowing the user to specify a file name
+    const { file } = req.body
+    if (file) {
+      const destinationPath = path.join(directories.uploads, path.dirname(file))
+      create_directory_if_not_exists(destinationPath)
+      callback(null, destinationPath)
+    } else {
+      callback(null, directories.uploads)
+    }
+  },
+  filename: (req, { originalname }, callback) => {
+    const { file } = req.body
+    if (file) {
+      callback(null, path.basename(file))
+    } else {
+      callback(null, originalname)
+    }
   },
 })
 

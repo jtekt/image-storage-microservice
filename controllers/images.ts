@@ -2,12 +2,15 @@ import Image from "../models/image"
 import path from "path"
 import createHttpError from "http-errors"
 import { directories } from "../config"
-import {
-  remove_file,
-  parse_query,
-  parse_formdata_fields,
-} from "../utils"
+import { remove_file, parse_query } from "../utils"
 import { Request, Response } from "express"
+
+interface NewImage {
+  _id?: string
+  time: Date
+  file: string
+  data: any
+}
 
 export const upload_image = async (req: Request, res: Response) => {
   // NOTE: Req.body is multipart form-data
@@ -15,31 +18,26 @@ export const upload_image = async (req: Request, res: Response) => {
 
   // TODO: Only allow images
   const {
-    file: { originalname: file },
+    file: { originalname },
     body,
   } = req
 
-  const data = parse_formdata_fields(body)
+  const { _id, time, file: filePath, json, data: bodyData, ...bodyRest } = body
 
-  // Time: Set to upload time unless provided otherwise by user
-  let time = new Date()
-  if (data.time) {
-    time = new Date(data.time)
-    delete data.time
-  }
+  const jsonData = json || bodyData
+  const data = jsonData ? JSON.parse(jsonData) : bodyRest
 
-  // Allowing user to set _id (used for transfers)
-  let _id = undefined
-  if (data._id) {
-    _id = data._id
-    delete data._id
-  }
+  const file = filePath || originalname
 
   const query = { file }
-  const itemProperties = { _id, file, time, data }
-  const options = { upsert: true, new: true }
+  const itemProperties: NewImage = {
+    _id,
+    time: time ? new Date(time) : new Date(),
+    file,
+    data,
+  }
 
-  // const new_image = await Image.create(itemProperties)
+  const options = { upsert: true, new: true }
   const newImage = await Image.findOneAndUpdate(query, itemProperties, options)
   console.log(`Image ${file} uploaded and saved`)
   res.send(newImage)
