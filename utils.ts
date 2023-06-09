@@ -11,6 +11,7 @@ export const remove_file = (file_path: string) =>
   })
 
 export const create_directory_if_not_exists = (target: string) => {
+  // TODO: find if no better way
   let stat = null
 
   try {
@@ -76,10 +77,4 @@ export const parse_query = (rawQuery: any) => {
   if (from) query.time.$gt = new Date(from)
 
   return { query, to, from, limit, skip, sort, order }
-}
-
-export const parse_formdata_fields = (body: { json?: any; data?: any }) => {
-  const json_data = body.data || body.json
-  const data = json_data ? JSON.parse(json_data) : body
-  return data
 }

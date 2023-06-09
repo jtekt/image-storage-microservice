@@ -6,7 +6,7 @@ import XLSX from "xlsx"
 import { v4 as uuidv4 } from "uuid"
 import { parse_query, remove_file } from "../utils"
 import { Request, Response } from "express"
-import IImage from '../interfaces/IImage'
+import IImage from "../interfaces/IImage"
 import {
   directories,
   mongodb_export_file_name,
@@ -22,9 +22,8 @@ const generate_excel = (data: IImage[], path: string) => {
 
     const output = {
       ...baseMetaData,
-      _id: baseMetaData._id? baseMetaData._id.toString() : undefined,
+      _id: baseMetaData._id ? baseMetaData._id.toString() : undefined,
     }
-
 
     for (let key in data) {
       // @ts-ignore
@@ -84,13 +83,6 @@ export const export_images = async (req: Request, res: Response) => {
     await remove_file(temp_zip_path)
 
     console.log(`[Export] Images exported`)
-  })
-
-  // This event is fired when the data source is drained no matter what was the data source.
-  // It is not part of this library but rather from the NodeJS Stream API.
-  // @see: https://nodejs.org/api/stream.html#stream_event_end
-  output.on("end", function () {
-    console.log("[Export] Data has been drained")
   })
 
   // good practice to catch warnings (ie stat failures and other non-blocking errors)
