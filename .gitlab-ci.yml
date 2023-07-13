@@ -24,8 +24,7 @@ test:
   stage: test
   coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
   only:
-    - master
-    - mongoose
+    - tags
   tags:
     - dind
   before_script:
@@ -55,8 +54,7 @@ test:
 build-x86:
   stage: build
   only:
-    - master
-    - mongoose
+    - tags
   tags:
     - dind
   before_script:
@@ -72,7 +70,7 @@ build-aarch64:
   tags:
     - aarch64
   only:
-    - master
+    - tags
   before_script:
     - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ECR_PUBLIC_URL}
   script:
