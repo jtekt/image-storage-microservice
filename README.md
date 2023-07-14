@@ -3,7 +3,7 @@
 [![AWS ECR](https://img.shields.io/badge/AWS%20ECR-image--storage--service-blue)](https://gallery.ecr.aws/jtekt-corporation/image-storage-service)
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/jtekt)](https://artifacthub.io/packages/search?repo=jtekt)
 
-A microservice to store and manage image datasets.
+A microservice to store and manage image datasets. It allows to store images with their metadata, the latter being stored in a MongoDB database.
 
 ## API
 
