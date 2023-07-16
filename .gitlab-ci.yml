@@ -1,55 +1,24 @@
 stages:
-  - test
   - build
+  - test
+  - release
 
 image: moreillon/tdd-dind
 services:
   - name: docker:19.03.12-dind
-    command: ["--insecure-registry=172.16.98.151:5000"]
 
 variables:
   APPLICATION_NAME: image-storage-service
   AWS_ECR_PUBLIC_URL: public.ecr.aws/u6l4m3e5
 
-  CONTAINER_IMAGE_TEST: ${APPLICATION_NAME}:test
-
   CONTAINER_IMAGE: ${AWS_ECR_PUBLIC_URL}/${APPLICATION_NAME}
-  CONTAINER_IMAGE_TAGGED: ${CONTAINER_IMAGE}:${CI_COMMIT_TAG}
-  CONTAINER_IMAGE_AARCH64: ${CONTAINER_IMAGE}:aarch64-${CI_COMMIT_TAG}
+  CONTAINER_IMAGE_TEST_X86: ${CONTAINER_IMAGE}:test
+  CONTAINER_IMAGE_TEST_AARCH64: ${CONTAINER_IMAGE}:aarch64-test
+  CONTAINER_IMAGE_TAGGED_X86: ${CONTAINER_IMAGE}:${CI_COMMIT_TAG}
+  CONTAINER_IMAGE_TAGGED_AARCH64: ${CONTAINER_IMAGE}:aarch64-${CI_COMMIT_TAG}
 
   TEST_NETWORK: tdd
   TEST_DB: tdd-db
-
-test:
-  stage: test
-  coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
-  only:
-    - tags
-  tags:
-    - dind
-  before_script:
-    # Creating network for TDD
-    - docker network create ${TEST_NETWORK}
-    # Creating DB container in network
-    - >
-      docker run --rm -d
-      --name ${TEST_DB}
-      --network ${TEST_NETWORK}
-      --hostname ${TEST_DB}
-      mongo:4
-
-  script:
-    # Building test image
-    - docker build -t ${CONTAINER_IMAGE_TEST} .
-    # Run tests
-    - >
-      docker run
-      --rm
-      --name tdd-app
-      --network ${TEST_NETWORK}
-      -e MONGODB_URL=mongodb://${TEST_DB}
-      ${CONTAINER_IMAGE_TEST}
-      npm run coverage
 
 build-x86:
   stage: build
@@ -60,10 +29,7 @@ build-x86:
   before_script:
     - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ECR_PUBLIC_URL}
   script:
-    - docker build -t ${CONTAINER_IMAGE} .
-    - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE_TAGGED}
-    - docker push ${CONTAINER_IMAGE}
-    - docker push ${CONTAINER_IMAGE_TAGGED}
+    - docker build -t ${CONTAINER_IMAGE_TEST_X86} .
 
 build-aarch64:
   stage: build
@@ -74,5 +40,52 @@ build-aarch64:
   before_script:
     - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ECR_PUBLIC_URL}
   script:
-    - docker build -f Dockerfile-aarch64 -t ${CONTAINER_IMAGE_AARCH64} .
-    - docker push ${CONTAINER_IMAGE_AARCH64}
+    - docker build -f Dockerfile-aarch64 -t ${CONTAINER_IMAGE_TEST_AARCH64} .
+
+test-x86:
+  stage: test
+  coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
+  only:
+    - tags
+  tags:
+    - dind
+  before_script:
+    - docker network create ${TEST_NETWORK}
+    - >
+      docker run --rm -d
+      --name ${TEST_DB}
+      --network ${TEST_NETWORK}
+      --hostname ${TEST_DB}
+      mongo:4
+  script:
+    - >
+      docker run
+      --rm
+      --name tdd-app
+      --network ${TEST_NETWORK}
+      -e MONGODB_URL=mongodb://${TEST_DB}
+      ${CONTAINER_IMAGE_TEST_X86}
+      npm run coverage
+
+release-x86:
+  stage: release
+  only:
+    - tags
+  tags:
+    - dind
+  before_script:
+    - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ECR_PUBLIC_URL}
+  script:
+    - docker tag ${CONTAINER_IMAGE_TEST_X86} ${CONTAINER_IMAGE}
+    - docker tag ${CONTAINER_IMAGE_TEST_X86} ${CONTAINER_IMAGE_TAGGED_X86}
+
+release-aarch64:
+  stage: release
+  only:
+    - tags
+  tags:
+    - dind
+  before_script:
+    - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ECR_PUBLIC_URL}
+  script:
+    - docker tag ${CONTAINER_IMAGE_TEST_AARCH64} ${CONTAINER_IMAGE_TAGGED_AARCH64}
