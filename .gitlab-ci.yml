@@ -42,7 +42,7 @@ build-aarch64:
     - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ECR_PUBLIC_URL}
   script:
     - docker build -f Dockerfile-aarch64 -t ${CONTAINER_IMAGE_TEST_AARCH64} .
-    - docker push ${CONTAINER_IMAGE_TEST_X86}
+    - docker push ${CONTAINER_IMAGE_TEST_AARCH64}
 
 test-x86:
   stage: test
