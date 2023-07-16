@@ -30,6 +30,7 @@ build-x86:
     - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ECR_PUBLIC_URL}
   script:
     - docker build -t ${CONTAINER_IMAGE_TEST_X86} .
+    - docker push ${CONTAINER_IMAGE_TEST_X86}
 
 build-aarch64:
   stage: build
@@ -41,6 +42,7 @@ build-aarch64:
     - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ECR_PUBLIC_URL}
   script:
     - docker build -f Dockerfile-aarch64 -t ${CONTAINER_IMAGE_TEST_AARCH64} .
+    - docker push ${CONTAINER_IMAGE_TEST_X86}
 
 test-x86:
   stage: test
@@ -79,6 +81,8 @@ release-x86:
     - docker pull ${CONTAINER_IMAGE_TEST_X86}
     - docker tag ${CONTAINER_IMAGE_TEST_X86} ${CONTAINER_IMAGE}
     - docker tag ${CONTAINER_IMAGE_TEST_X86} ${CONTAINER_IMAGE_TAGGED_X86}
+    - docker push ${CONTAINER_IMAGE}
+    - docker push ${CONTAINER_IMAGE_TAGGED_X86}
 
 release-aarch64:
   stage: release
@@ -91,3 +95,4 @@ release-aarch64:
   script:
     - docker pull ${CONTAINER_IMAGE_TEST_AARCH64}
     - docker tag ${CONTAINER_IMAGE_TEST_AARCH64} ${CONTAINER_IMAGE_TAGGED_AARCH64}
+    - docker push ${CONTAINER_IMAGE_TAGGED_AARCH64}
