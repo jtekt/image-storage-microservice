@@ -1,6 +1,6 @@
 {
   "name": "image_storage_microservice",
-  "version": "1.11.1",
+  "version": "1.11.2",
   "description": "A microservice to store images and their metadata",
   "main": "index.ts",
   "scripts": {
