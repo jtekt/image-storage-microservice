@@ -72,7 +72,7 @@ export const read_images = async (req: Request, res: Response) => {
 
     const total = await Image.countDocuments(query)
 
-    res.send({ total, skip, limit, items })
+    res.send({ total, skip, limit, items, select })
 }
 
 export const read_image = async (req: Request, res: Response) => {
