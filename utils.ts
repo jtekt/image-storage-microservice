@@ -1,14 +1,7 @@
-// @ts-ignore
-import rimraf from 'rimraf'
+import { rimraf } from 'rimraf'
 import fs from 'fs'
 
-export const remove_file = (file_path: string) =>
-    new Promise((resolve, reject) => {
-        rimraf(file_path, (error: any) => {
-            if (error) return reject(error)
-            resolve(null)
-        })
-    })
+export const remove_file = (file_path: string) => rimraf(file_path)
 
 export const create_directory_if_not_exists = (target: string) => {
     let stat = null
