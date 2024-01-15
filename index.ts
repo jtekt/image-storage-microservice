@@ -47,8 +47,7 @@ app.get('/', (req, res) => {
         author,
         version,
         mongodb: {
-            url: db.url,
-            db: db.db,
+            connection_string: db.redactedConnectionString,
             connected: db.get_connected(),
         },
         directories,
