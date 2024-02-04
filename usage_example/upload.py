@@ -16,7 +16,7 @@ fields = {
 
 
 
-filename = f'banana{time()}.jpg'
+filename = f'{time()}.jpg'
 files = { 'image' : (filename, open(IMAGE_PATH,'rb').read()) }
 
 

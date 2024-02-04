@@ -1,4 +1,8 @@
-import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3'
+import {
+    S3Client,
+    GetObjectCommand,
+    DeleteObjectCommand,
+} from '@aws-sdk/client-s3'
 import { Response } from 'express'
 import path from 'path'
 
@@ -55,4 +59,10 @@ export const streamFileFromS3 = async (res: Response, Key: string) => {
             },
         })
     )
+}
+
+export const deleteFileFromS3 = async (Key: string) => {
+    if (!S3_BUCKET || !s3Client) throw 'S3 not configured'
+    const options = { Key, Bucket: S3_BUCKET }
+    await s3Client.send(new DeleteObjectCommand(options))
 }
