@@ -1,22 +1,24 @@
+import dotenv from 'dotenv'
+dotenv.config()
+import { author, name as application_name, version } from './package.json'
+console.log(`Image storage v${version}`)
+
 import express, { NextFunction, Request, Response } from 'express'
 import 'express-async-errors'
 import cors from 'cors'
-import dotenv from 'dotenv'
 import promBundle from 'express-prom-bundle'
 import auth from '@moreillon/express_identification_middleware'
 import group_auth from '@moreillon/express_group_based_authorization_middleware'
 import * as db from './db'
-import { author, name as application_name, version } from './package.json'
 import { directories } from './config'
 import { create_directory_if_not_exists } from './utils'
+import { S3_BUCKET, S3_ENDPOINT, S3_REGION } from './s3'
 import swaggerUi from 'swagger-ui-express'
 import swaggerDocument from './swagger-output.json'
 import images_router from './routes/images'
 import import_router from './routes/import'
 import export_router from './routes/export'
 import fields_router from './routes/fields'
-
-dotenv.config()
 
 const {
     APP_PORT = 80,
@@ -29,6 +31,9 @@ const {
 process.env.TZ = TZ || 'Asia/Tokyo'
 
 const promOptions = { includeMethod: true, includePath: true }
+const corsOptions = {
+    exposedHeaders: 'Content-Disposition',
+}
 
 create_directory_if_not_exists(directories.temp)
 create_directory_if_not_exists(directories.uploads)
@@ -36,16 +41,16 @@ db.connect()
 
 export const app = express()
 app.use(express.json())
-app.use(cors())
+app.use(cors(corsOptions))
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 app.use(promBundle(promOptions))
 
 app.get('/', (req, res) => {
     res.send({
         application_name,
-        timeZone: process.env.TZ,
         author,
         version,
+        timeZone: process.env.TZ,
         mongodb: {
             connection_string: db.redactedConnectionString,
             connected: db.get_connected(),
@@ -55,6 +60,11 @@ app.get('/', (req, res) => {
             authentication_url: AUTHENTICATION_URL,
             group_authorization_url: GROUP_AUTHORIZATION_URL,
             authorized_groups: AUTHORIZED_GROUPS,
+        },
+        s3: {
+            bucket: S3_BUCKET,
+            endpoint: S3_ENDPOINT,
+            region: S3_REGION,
         },
     })
 })
@@ -83,5 +93,5 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
 // Start server
 app.listen(APP_PORT, () => {
-    console.log(`Image storage v${version} listening on port ${APP_PORT}`)
+    console.log(`[Express] Listening on port ${APP_PORT}`)
 })

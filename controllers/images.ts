@@ -4,6 +4,7 @@ import createHttpError from 'http-errors'
 import { directories } from '../config'
 import { remove_file, parse_query } from '../utils'
 import { Request, Response } from 'express'
+import { s3Client, streamFileFromS3 } from '../s3'
 
 interface NewImage {
     _id?: string
@@ -87,9 +88,14 @@ export const read_image_file = async (req: Request, res: Response) => {
     const image = await Image.findOne({ _id })
     if (!image) throw createHttpError(404, `Image ${_id} not found`)
     const { file } = image
-    const file_absolute_path = path.join(directories.uploads, file)
-    // Second argument is filename
-    res.download(file_absolute_path, file)
+
+    if (s3Client) {
+        await streamFileFromS3(res, file)
+    } else {
+        const file_absolute_path = path.join(directories.uploads, file)
+        // Second argument is filename
+        res.download(file_absolute_path, file)
+    }
 }
 
 export const update_image = async (req: Request, res: Response) => {
