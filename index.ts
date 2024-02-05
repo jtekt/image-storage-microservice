@@ -12,7 +12,7 @@ import group_auth from '@moreillon/express_group_based_authorization_middleware'
 import * as db from './db'
 import { directories } from './config'
 import { create_directory_if_not_exists } from './utils'
-import { S3_BUCKET, S3_ENDPOINT, S3_REGION } from './s3'
+import { S3_BUCKET, S3_ENDPOINT, S3_REGION, s3Client } from './s3'
 import swaggerUi from 'swagger-ui-express'
 import swaggerDocument from './swagger-output.json'
 import images_router from './routes/images'
@@ -22,6 +22,7 @@ import fields_router from './routes/fields'
 
 const {
     APP_PORT = 80,
+
     AUTHENTICATION_URL,
     AUTHORIZED_GROUPS,
     GROUP_AUTHORIZATION_URL,
@@ -55,16 +56,20 @@ app.get('/', (req, res) => {
             connection_string: db.redactedConnectionString,
             connected: db.get_connected(),
         },
-        directories,
         auth: {
             authentication_url: AUTHENTICATION_URL,
             group_authorization_url: GROUP_AUTHORIZATION_URL,
             authorized_groups: AUTHORIZED_GROUPS,
         },
-        s3: {
-            bucket: S3_BUCKET,
-            endpoint: S3_ENDPOINT,
-            region: S3_REGION,
+        storage: {
+            directories: !s3Client ? directories : undefined,
+            s3: s3Client
+                ? {
+                      bucket: S3_BUCKET,
+                      endpoint: S3_ENDPOINT,
+                      region: S3_REGION,
+                  }
+                : undefined,
         },
     })
 })

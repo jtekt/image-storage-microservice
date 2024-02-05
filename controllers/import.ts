@@ -12,6 +12,7 @@ import {
     export_excel_file_name,
 } from '../config'
 import { rimraf } from 'rimraf'
+import { s3Client } from '../s3'
 
 const mongodb_data_import = (documents: IImage[]) => {
     // TODO: Consider bulkwrite
@@ -43,6 +44,7 @@ const extract_single_file = (file: File, output_directory: string) =>
     })
 
 export const import_images = async (req: Request, res: Response) => {
+    if (s3Client) throw `Import is not supported with S3`
     const { file, body } = req
 
     if (!file) throw createHttpError(400, 'File not provided')

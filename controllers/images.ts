@@ -1,7 +1,5 @@
 import Image from '../models/image'
-import path from 'path'
 import createHttpError from 'http-errors'
-import { directories } from '../config'
 import { parse_query } from '../utils'
 import { Request, Response } from 'express'
 import { s3Client, streamFileFromS3, deleteFileFromS3 } from '../s3'
