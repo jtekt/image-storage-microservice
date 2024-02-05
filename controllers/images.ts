@@ -1,9 +1,9 @@
 import Image from '../models/image'
-import path from 'path'
 import createHttpError from 'http-errors'
-import { directories } from '../config'
-import { remove_file, parse_query } from '../utils'
+import { parse_query } from '../utils'
 import { Request, Response } from 'express'
+import { s3Client, streamFileFromS3, deleteFileFromS3 } from '../s3'
+import { downloadLocalFile, removeLocalFile } from '../localStorage'
 
 interface NewImage {
     _id?: string
@@ -87,9 +87,9 @@ export const read_image_file = async (req: Request, res: Response) => {
     const image = await Image.findOne({ _id })
     if (!image) throw createHttpError(404, `Image ${_id} not found`)
     const { file } = image
-    const file_absolute_path = path.join(directories.uploads, file)
-    // Second argument is filename
-    res.download(file_absolute_path, file)
+
+    if (s3Client) await streamFileFromS3(res, file)
+    else downloadLocalFile(res, file)
 }
 
 export const update_image = async (req: Request, res: Response) => {
@@ -135,9 +135,10 @@ export const delete_images = async (req: Request, res: Response) => {
         .limit(Math.max(Number(limit), 0))
 
     // Delete files
-    const fileDeletePromises = items.map(({ file }) =>
-        remove_file(path.join(directories.uploads, file))
-    )
+    const fileDeletePromises = items.map(({ file }) => {
+        if (s3Client) deleteFileFromS3(file)
+        else removeLocalFile(file)
+    })
     await Promise.all(fileDeletePromises)
 
     // delete records
@@ -154,7 +155,7 @@ export const delete_image = async (req: Request, res: Response) => {
     const { _id } = req.params
     const image = await Image.findOneAndDelete({ _id })
     if (!image) throw createHttpError(404, `Image ${_id} not found`)
-    const file_absolute_path = path.join(directories.uploads, image.file)
-    await remove_file(file_absolute_path)
+    if (s3Client) deleteFileFromS3(image.file)
+    else removeLocalFile(image.file)
     res.send({ _id })
 }
