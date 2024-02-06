@@ -9,8 +9,12 @@ import { Request, Response } from 'express'
 import IImage from '../interfaces/IImage'
 import { rimraf } from 'rimraf'
 import { mongodb_export_file_name, export_excel_file_name } from '../config'
-import { tempDirectoryPath, uploadsDirectoryPath } from '../fileStorage/local'
 import { s3Client } from '../fileStorage/s3'
+import {
+    create_directory_if_not_exists,
+    tempDirectoryPath,
+    uploadsDirectoryPath,
+} from '../fileStorage/local'
 
 const generate_excel = (data: IImage[], path: string) => {
     const formatted_data = data.map((item) => {
@@ -48,7 +52,7 @@ export const export_images = async (req: Request, res: Response) => {
     const export_id = uuidv4()
 
     // Create temp directory if it does not exist
-    if (!fs.existsSync(tempDirectoryPath)) fs.mkdirSync(tempDirectoryPath)
+    create_directory_if_not_exists(tempDirectoryPath)
 
     // TODO: Store everything in a dedicated directory
     const temp_zip_path = path.join(tempDirectoryPath, `${export_id}.zip`)

@@ -10,7 +10,6 @@ import promBundle from 'express-prom-bundle'
 import auth from '@moreillon/express_identification_middleware'
 import group_auth from '@moreillon/express_group_based_authorization_middleware'
 import * as db from './db'
-import { create_directory_if_not_exists } from './utils'
 import { S3_BUCKET, S3_ENDPOINT, S3_REGION, s3Client } from './fileStorage/s3'
 import { uploadsDirectoryPath, tempDirectoryPath } from './fileStorage/local'
 import swaggerUi from 'swagger-ui-express'
@@ -36,8 +35,6 @@ const corsOptions = {
     exposedHeaders: 'Content-Disposition',
 }
 
-create_directory_if_not_exists(uploadsDirectoryPath)
-create_directory_if_not_exists(uploadsDirectoryPath)
 db.connect()
 
 export const app = express()

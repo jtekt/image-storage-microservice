@@ -1,8 +1,10 @@
 import multer, { StorageEngine } from 'multer'
 import path from 'path'
-import { create_directory_if_not_exists } from '../utils'
 import { Router } from 'express'
-import { uploadsDirectoryPath } from '../fileStorage/local'
+import {
+    uploadsDirectoryPath,
+    create_directory_if_not_exists,
+} from '../fileStorage/local'
 import { s3Client, S3_BUCKET } from '../fileStorage/s3'
 import multerS3 from 'multer-s3'
 import {
@@ -32,6 +34,7 @@ const diskStorage = multer.diskStorage({
             create_directory_if_not_exists(destinationPath)
             callback(null, destinationPath)
         } else {
+            create_directory_if_not_exists(uploadsDirectoryPath)
             callback(null, uploadsDirectoryPath)
         }
     },

@@ -3,13 +3,17 @@ import path from 'path'
 import fs from 'fs'
 import createHttpError from 'http-errors'
 import unzipper, { File } from 'unzipper' // NOTE: Unzipper is advertized as having a low memory footprint
-import { parse_formdata_fields, create_directory_if_not_exists } from '../utils'
+import { parse_formdata_fields } from '../utils'
 import { Request, Response } from 'express'
 import IImage from '../interfaces/IImage'
 import { mongodb_export_file_name, export_excel_file_name } from '../config'
 import { rimraf } from 'rimraf'
 import { s3Client } from '../fileStorage/s3'
-import { tempDirectoryPath, uploadsDirectoryPath } from '../fileStorage/local'
+import {
+    tempDirectoryPath,
+    uploadsDirectoryPath,
+    create_directory_if_not_exists,
+} from '../fileStorage/local'
 
 const mongodb_data_import = (documents: IImage[]) => {
     // TODO: Consider bulkwrite

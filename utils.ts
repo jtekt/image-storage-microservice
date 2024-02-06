@@ -1,21 +1,3 @@
-import fs from 'fs'
-
-export const create_directory_if_not_exists = (target: string) => {
-    let stat = null
-
-    try {
-        stat = fs.statSync(target)
-    } catch (err) {
-        fs.mkdirSync(target, { recursive: true })
-    }
-
-    if (stat && !stat.isDirectory()) {
-        throw new Error(
-            `Directory cannot be created because an inode of a different type exists at ${target}`
-        )
-    }
-}
-
 export const parse_query = (rawQuery: any) => {
     const {
         skip = 0,
@@ -70,18 +52,12 @@ export const parse_formdata_fields = (body: { json?: any; data?: any }) => {
     return data
 }
 
+const nestInDataField = (obj: any) =>
+    Object.keys(obj).reduce(
+        (acc, key) => ({ ...acc, [`data.${key}`]: obj[key] }),
+        {}
+    )
 export const parseUpdateBody = (body: any) => {
-    let { $unset = {}, ...$set } = body
-
-    $set = Object.keys($set).reduce(
-        (acc, key) => ({ ...acc, [`data.${key}`]: $set[key] }),
-        {}
-    )
-
-    $unset = Object.keys($unset).reduce(
-        (acc, key) => ({ ...acc, [`data.${key}`]: $unset[key] }),
-        {}
-    )
-
-    return { $set, $unset }
+    const { $unset = {}, ...$set } = body
+    return { $set: nestInDataField($set), $unset: nestInDataField($unset) }
 }
