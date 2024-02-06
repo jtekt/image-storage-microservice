@@ -2,8 +2,8 @@ import multer, { StorageEngine } from 'multer'
 import path from 'path'
 import { create_directory_if_not_exists } from '../utils'
 import { Router } from 'express'
-import { directories } from '../config'
-import { s3Client, S3_BUCKET } from '../s3'
+import { uploadsDirectoryPath } from '../fileStorage/local'
+import { s3Client, S3_BUCKET } from '../fileStorage/s3'
 import multerS3 from 'multer-s3'
 import {
     read_images,
@@ -26,13 +26,13 @@ const diskStorage = multer.diskStorage({
         const { file } = req.body
         if (file) {
             const destinationPath = path.join(
-                directories.uploads,
+                uploadsDirectoryPath,
                 path.dirname(file)
             )
             create_directory_if_not_exists(destinationPath)
             callback(null, destinationPath)
         } else {
-            callback(null, directories.uploads)
+            callback(null, uploadsDirectoryPath)
         }
     },
     filename: (req, { originalname }, callback) => {

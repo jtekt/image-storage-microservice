@@ -10,9 +10,9 @@ import promBundle from 'express-prom-bundle'
 import auth from '@moreillon/express_identification_middleware'
 import group_auth from '@moreillon/express_group_based_authorization_middleware'
 import * as db from './db'
-import { directories } from './config'
 import { create_directory_if_not_exists } from './utils'
-import { S3_BUCKET, S3_ENDPOINT, S3_REGION, s3Client } from './s3'
+import { S3_BUCKET, S3_ENDPOINT, S3_REGION, s3Client } from './fileStorage/s3'
+import { uploadsDirectoryPath, tempDirectoryPath } from './fileStorage/local'
 import swaggerUi from 'swagger-ui-express'
 import swaggerDocument from './swagger-output.json'
 import images_router from './routes/images'
@@ -36,8 +36,8 @@ const corsOptions = {
     exposedHeaders: 'Content-Disposition',
 }
 
-create_directory_if_not_exists(directories.temp)
-create_directory_if_not_exists(directories.uploads)
+create_directory_if_not_exists(uploadsDirectoryPath)
+create_directory_if_not_exists(uploadsDirectoryPath)
 db.connect()
 
 export const app = express()
@@ -62,7 +62,12 @@ app.get('/', (req, res) => {
             authorized_groups: AUTHORIZED_GROUPS,
         },
         storage: {
-            directories: !s3Client ? directories : undefined,
+            directories: !s3Client
+                ? {
+                      uploadsDirectoryPath,
+                      tempDirectoryPath,
+                  }
+                : undefined,
             s3: s3Client
                 ? {
                       bucket: S3_BUCKET,

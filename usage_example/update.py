@@ -2,11 +2,12 @@ import requests
 
 
 STORAGE_SERVCICE_URL = 'http://localhost:7070'
-IMAGE_ID = '63630043e69a96978b2bd2dc'
+IMAGE_ID = '65c2329c32a6620172dc8d58'
 
 api_url = f'{STORAGE_SERVCICE_URL}/images/{IMAGE_ID}'
 
-properties = {"myProperty": "myValue"}
+# properties = {"$unset": {"label": ""}}
+properties = {"label": "123"}
 response = requests.patch(api_url, json=properties)
 
 

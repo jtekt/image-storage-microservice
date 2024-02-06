@@ -51,11 +51,6 @@ export const parse_query = (rawQuery: any) => {
     for (const key in rest) {
         let value = rest[key]
 
-        // Convert numbers into numbers
-        // try {
-        //   value = JSON.parse(value)
-        // } catch (error) { }
-
         if (regex) query[`data.${key}`] = { $regex: value, $options: 'i' }
         else query[`data.${key}`] = value
     }
@@ -73,4 +68,20 @@ export const parse_formdata_fields = (body: { json?: any; data?: any }) => {
     const json_data = body.data || body.json
     const data = json_data ? JSON.parse(json_data) : body
     return data
+}
+
+export const parseUpdateBody = (body: any) => {
+    let { $unset = {}, ...$set } = body
+
+    $set = Object.keys($set).reduce(
+        (acc, key) => ({ ...acc, [`data.${key}`]: $set[key] }),
+        {}
+    )
+
+    $unset = Object.keys($unset).reduce(
+        (acc, key) => ({ ...acc, [`data.${key}`]: $unset[key] }),
+        {}
+    )
+
+    return { $set, $unset }
 }

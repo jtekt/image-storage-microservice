@@ -8,12 +8,9 @@ import { parse_query } from '../utils'
 import { Request, Response } from 'express'
 import IImage from '../interfaces/IImage'
 import { rimraf } from 'rimraf'
-import {
-    directories,
-    mongodb_export_file_name,
-    export_excel_file_name,
-} from '../config'
-import { s3Client } from '../s3'
+import { mongodb_export_file_name, export_excel_file_name } from '../config'
+import { tempDirectoryPath, uploadsDirectoryPath } from '../fileStorage/local'
+import { s3Client } from '../fileStorage/s3'
 
 const generate_excel = (data: IImage[], path: string) => {
     const formatted_data = data.map((item) => {
@@ -51,12 +48,12 @@ export const export_images = async (req: Request, res: Response) => {
     const export_id = uuidv4()
 
     // Create temp directory if it does not exist
-    if (!fs.existsSync(directories.temp)) fs.mkdirSync(directories.temp)
+    if (!fs.existsSync(tempDirectoryPath)) fs.mkdirSync(tempDirectoryPath)
 
     // TODO: Store everything in a dedicated directory
-    const temp_zip_path = path.join(directories.temp, `${export_id}.zip`)
-    const json_file_path = path.join(directories.temp, `${export_id}.json`)
-    const excel_file_path = path.join(directories.temp, `${export_id}.xlsx`)
+    const temp_zip_path = path.join(tempDirectoryPath, `${export_id}.zip`)
+    const json_file_path = path.join(tempDirectoryPath, `${export_id}.json`)
+    const excel_file_path = path.join(tempDirectoryPath, `${export_id}.xlsx`)
 
     // Limiting here because parse_query also used in images controller
     const { query, sort, order, limit = 0, skip } = parse_query(req.query)
@@ -90,10 +87,8 @@ export const export_images = async (req: Request, res: Response) => {
 
     // good practice to catch warnings (ie stat failures and other non-blocking errors)
     archive.on('warning', function (err) {
-        if (err.code === 'ENOENT') {
-            // log warning
-            console.log(err)
-        } else throw err
+        if (err.code === 'ENOENT') console.log(err)
+        else throw err
     })
 
     // good practice to catch this error explicitly
@@ -106,7 +101,7 @@ export const export_images = async (req: Request, res: Response) => {
     archive.pipe(output)
     // Adding files one by one instead of whole folder because query parameters might be used as filters
     images.forEach(({ file }) =>
-        archive.file(path.join(directories.uploads, file), { name: file })
+        archive.file(path.join(uploadsDirectoryPath, file), { name: file })
     )
 
     // Adding excel and json files

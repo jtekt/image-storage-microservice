@@ -1,9 +1,9 @@
 import requests
 
 
-STORAGE_SERVCICE_URL = 'http://localhost:7070'
+STORAGE_SERVICE_URL = 'http://localhost:7070'
 
-api_url = f'{STORAGE_SERVCICE_URL}/images/'
+api_url = f'{STORAGE_SERVICE_URL}/images'
 
 
 # Send the image

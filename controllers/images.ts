@@ -1,9 +1,10 @@
 import Image from '../models/image'
 import createHttpError from 'http-errors'
-import { parse_query } from '../utils'
+import { parseUpdateBody, parse_query } from '../utils'
 import { Request, Response } from 'express'
-import { s3Client, streamFileFromS3, deleteFileFromS3 } from '../s3'
-import { downloadLocalFile, removeLocalFile } from '../localStorage'
+import { s3Client, streamFileFromS3, deleteFileFromS3 } from '../fileStorage/s3'
+import { downloadLocalFile, removeLocalFile } from '../fileStorage/local'
+import { removeImageFiles } from '../fileStorage/common'
 
 interface NewImage {
     _id?: string
@@ -93,77 +94,49 @@ export const read_image_file = async (req: Request, res: Response) => {
 }
 
 export const update_images = async (req: Request, res: Response) => {
-    const { body } = req
-
-    const update = Object.keys(body).reduce(
-        (acc, key) => ({ ...acc, [`data.${key}`]: body[key] }),
-        {}
-    )
-
     const { query } = parse_query(req.query)
+    const { $set, $unset } = parseUpdateBody(req.body)
 
-    const result = await Image.updateMany(query, { $set: update })
+    const result = await Image.updateMany(query, { $set, $unset })
 
     res.send(result)
 }
 
 export const update_image = async (req: Request, res: Response) => {
     const { _id } = req.params
-    const properties = req.body
+    const { $set, $unset } = parseUpdateBody(req.body)
 
-    const image = await Image.findOne({ _id })
-    if (!image) throw createHttpError(404, `Image ${_id} not found`)
+    const updatedDoc = await Image.findByIdAndUpdate(
+        _id,
+        { $set, $unset },
+        { new: true }
+    )
 
-    // Unpack properties into data
-    // WARNING: Nested fields are replaced
-    image.data = { ...image.data, ...properties }
+    if (!updatedDoc) throw createHttpError(404, `Image ${_id} not found`)
 
-    // Deleting properties by setting them to null
-    // WARNING: this makes it imposible to have null properties
-    Object.keys(properties).forEach((k) => {
-        if (properties[k] === null) delete image.data[k]
-    })
-
-    const updated_image = await image.save()
-    res.send(updated_image)
+    res.send(updatedDoc)
 }
 
 export const replace_image_data = async (req: Request, res: Response) => {
     const { _id } = req.params
-    const properties = req.body
+    const data = req.body
 
-    const image = await Image.findOne({ _id })
-    if (!image) throw createHttpError(404, `Image ${_id} not found`)
+    const updated_image = await Image.findByIdAndUpdate(_id, { data })
+    if (!updated_image) throw createHttpError(404, `Image ${_id} not found`)
 
-    // replace all properties
-    image.data = properties
-    const updated_image = await image.save()
     res.send(updated_image)
 }
 
 export const delete_images = async (req: Request, res: Response) => {
-    // Why are sort and order needed?
-    const { query, sort, order, limit = 0, skip } = parse_query(req.query)
+    const { query } = parse_query(req.query)
 
     const items = await Image.find(query)
-        .sort({ [sort]: order })
-        .skip(Number(skip))
-        .limit(Math.max(Number(limit), 0))
 
-    // Delete files
-    const fileDeletePromises = items.map(({ file }) => {
-        if (s3Client) deleteFileFromS3(file)
-        else removeLocalFile(file)
-    })
-    await Promise.all(fileDeletePromises)
+    // Delete files in the background, so omitting await
+    removeImageFiles(items)
 
-    // delete records
-    const recordDeletePromises = items.map(({ _id }) =>
-        Image.deleteOne({ _id })
-    )
-    await Promise.all(recordDeletePromises)
+    await Image.deleteMany(query)
 
-    console.log(`${items.length} images deleted`)
     res.send({ item_count: items.length })
 }
 
@@ -171,7 +144,7 @@ export const delete_image = async (req: Request, res: Response) => {
     const { _id } = req.params
     const image = await Image.findOneAndDelete({ _id })
     if (!image) throw createHttpError(404, `Image ${_id} not found`)
-    if (s3Client) deleteFileFromS3(image.file)
+    if (s3Client) await deleteFileFromS3(image.file)
     else removeLocalFile(image.file)
     res.send({ _id })
 }

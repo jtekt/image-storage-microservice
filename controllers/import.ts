@@ -6,13 +6,10 @@ import unzipper, { File } from 'unzipper' // NOTE: Unzipper is advertized as hav
 import { parse_formdata_fields, create_directory_if_not_exists } from '../utils'
 import { Request, Response } from 'express'
 import IImage from '../interfaces/IImage'
-import {
-    directories,
-    mongodb_export_file_name,
-    export_excel_file_name,
-} from '../config'
+import { mongodb_export_file_name, export_excel_file_name } from '../config'
 import { rimraf } from 'rimraf'
-import { s3Client } from '../s3'
+import { s3Client } from '../fileStorage/s3'
+import { tempDirectoryPath, uploadsDirectoryPath } from '../fileStorage/local'
 
 const mongodb_data_import = (documents: IImage[]) => {
     // TODO: Consider bulkwrite
@@ -31,7 +28,7 @@ const extract_single_file = (file: File, output_directory: string) =>
 
         // Restore folder structure if necessary
         const file_folder = path.join(
-            directories.uploads,
+            uploadsDirectoryPath,
             path.dirname(file_name)
         )
         create_directory_if_not_exists(file_folder)
@@ -61,29 +58,29 @@ export const import_images = async (req: Request, res: Response) => {
 
     console.log(`[Import] Importing archive...`)
 
-    const archive_path = path.join(directories.temp, filename)
+    const archive_path = path.join(tempDirectoryPath, filename)
 
     const directory = await unzipper.Open.file(archive_path)
 
     // Unzip the archive to the uploads directory
     // This is very memory intensive for large archives
-    // await directory.extract({ path: directories.uploads })
+    // await directory.extract({ path: uploadsDirectoryPath })
     // This method is not too memory intensive (about 300Mi for a 3Gi archive)
     // TODO: find way to just unzip without using out too much memory
     for await (const file of directory.files) {
         // TODO: only move images
-        await extract_single_file(file, directories.uploads)
+        await extract_single_file(file, uploadsDirectoryPath)
     }
 
     // The user can pass data for all the images of the zip
     const userDefinedData = parse_formdata_fields(body)
 
     const json_file_path = path.join(
-        directories.uploads,
+        uploadsDirectoryPath,
         mongodb_export_file_name
     )
     const excel_file_path = path.join(
-        directories.uploads,
+        uploadsDirectoryPath,
         export_excel_file_name
     )
 
