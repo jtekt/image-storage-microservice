@@ -5,6 +5,21 @@
 
 A microservice to store and manage image datasets. It allows to store images with their metadata, the latter being stored in a MongoDB database.
 
+## Data model
+
+The metadata for uploaded images is stored in a MongoDB database with the following schema
+
+```ts
+{
+  file: string,
+  time: Date,
+  data: any,
+},
+
+```
+
+`file` and `time` are fixed system fields while `data` is used to store user-provided properties without structural contraints.
+
 ## API
 
 API documentation is available on `/docs`
