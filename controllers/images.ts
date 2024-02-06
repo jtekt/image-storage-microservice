@@ -92,6 +92,21 @@ export const read_image_file = async (req: Request, res: Response) => {
     else downloadLocalFile(res, file)
 }
 
+export const update_images = async (req: Request, res: Response) => {
+    const { body } = req
+
+    const update = Object.keys(body).reduce(
+        (acc, key) => ({ ...acc, [`data.${key}`]: body[key] }),
+        {}
+    )
+
+    const { query } = parse_query(req.query)
+
+    const result = await Image.updateMany(query, { $set: update })
+
+    res.send(result)
+}
+
 export const update_image = async (req: Request, res: Response) => {
     const { _id } = req.params
     const properties = req.body
@@ -127,6 +142,7 @@ export const replace_image_data = async (req: Request, res: Response) => {
 }
 
 export const delete_images = async (req: Request, res: Response) => {
+    // Why are sort and order needed?
     const { query, sort, order, limit = 0, skip } = parse_query(req.query)
 
     const items = await Image.find(query)

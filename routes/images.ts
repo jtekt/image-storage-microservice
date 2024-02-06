@@ -14,6 +14,7 @@ import {
     replace_image_data,
     delete_image,
     delete_images,
+    update_images,
 } from '../controllers/images'
 
 const router = Router({ mergeParams: true })
@@ -62,6 +63,7 @@ router
     .get(read_images)
     .post(upload.single('image'), upload_image)
     .delete(delete_images)
+    .patch(update_images)
 
 router
     .route('/:_id')
