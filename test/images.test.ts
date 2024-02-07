@@ -60,6 +60,14 @@ describe('/images', () => {
             expect(body.total).to.equal(2)
         })
 
+        it('Should allow querying images with list of IDs', async () => {
+            const { status, body } = await request(app).get(
+                `/images?ids=${image_id}`
+            )
+            expect(status).to.equal(200)
+            expect(body.total).to.equal(1)
+        })
+
         it('Should allow querying using filters', async () => {
             const { status, body } = await request(app).get(
                 '/images?test_key=test_value'

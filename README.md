@@ -11,6 +11,7 @@ The metadata for uploaded images is stored in a MongoDB database with the follow
 
 ```ts
 {
+  _id: ObjectId,
   file: string,
   time: Date,
   data: any,

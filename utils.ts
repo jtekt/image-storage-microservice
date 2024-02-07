@@ -1,3 +1,5 @@
+import { Types } from 'mongoose'
+
 export const parse_query = (rawQuery: any) => {
     const {
         skip = 0,
@@ -10,6 +12,7 @@ export const parse_query = (rawQuery: any) => {
         file,
         filter,
         select,
+        ids,
         ...rest
     } = rawQuery
 
@@ -35,6 +38,15 @@ export const parse_query = (rawQuery: any) => {
 
         if (regex) query[`data.${key}`] = { $regex: value, $options: 'i' }
         else query[`data.${key}`] = value
+    }
+
+    if (ids) {
+        const idArray = Array.isArray(ids) ? ids : [ids]
+        query._id = {
+            $in: idArray.map((_id: string) => ({
+                _id: new Types.ObjectId(_id),
+            })),
+        }
     }
 
     // Time filters
