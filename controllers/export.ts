@@ -15,6 +15,7 @@ import {
     tempDirectoryPath,
     uploadsDirectoryPath,
 } from '../fileStorage/local'
+import createHttpError from 'http-errors'
 
 const generate_excel = (data: IImage[], path: string) => {
     const formatted_data = data.map((item) => {
@@ -47,7 +48,8 @@ const generate_json = (data: IImage[], path: string) => {
 }
 
 export const export_images = async (req: Request, res: Response) => {
-    if (s3Client) throw `Export is not supported with S3`
+    if (s3Client) throw createHttpError(400, `Import is not supported with S3`)
+
     // Making zip name unique so as to allow parallel exports
     const export_id = uuidv4()
 

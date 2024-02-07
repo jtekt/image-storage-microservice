@@ -3,6 +3,8 @@ import { expect } from 'chai'
 import { app } from '../index'
 import { get_connected } from '../db'
 
+const { S3_BUCKET } = process.env
+
 const waitForDB = () =>
     new Promise((resolve) => {
         while (!get_connected()) {
@@ -126,7 +128,8 @@ describe('/images', () => {
     describe('GET /export', () => {
         it('Should allow the export of data', async () => {
             const { status } = await request(app).get(`/export`)
-            expect(status).to.equal(200)
+            const expectedCode = S3_BUCKET ? 400 : 200
+            expect(status).to.equal(expectedCode)
         })
     })
 
@@ -136,7 +139,8 @@ describe('/images', () => {
                 .post(`/import`)
                 .attach('archive', 'test/export.zip')
 
-            expect(status).to.equal(200)
+            const expectedCode = S3_BUCKET ? 400 : 200
+            expect(status).to.equal(expectedCode)
         })
     })
 

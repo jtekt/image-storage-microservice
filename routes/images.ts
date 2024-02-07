@@ -1,12 +1,5 @@
-import multer, { StorageEngine } from 'multer'
-import path from 'path'
+import multer from 'multer'
 import { Router } from 'express'
-import {
-    uploadsDirectoryPath,
-    create_directory_if_not_exists,
-} from '../fileStorage/local'
-import { s3Client, S3_BUCKET } from '../fileStorage/s3'
-import multerS3 from 'multer-s3'
 import {
     read_images,
     upload_image,
@@ -18,48 +11,13 @@ import {
     delete_images,
     update_images,
 } from '../controllers/images'
+import { localStorage } from '../fileStorage/local'
+import { s3Storage } from '../fileStorage/s3'
 
 const router = Router({ mergeParams: true })
 
-// Need a special hander because keeping the original file name
-const diskStorage = multer.diskStorage({
-    destination: (req, _, callback) => {
-        // Allowing the user to specify a file name
-        const { file } = req.body
-        if (file) {
-            const destinationPath = path.join(
-                uploadsDirectoryPath,
-                path.dirname(file)
-            )
-            create_directory_if_not_exists(destinationPath)
-            callback(null, destinationPath)
-        } else {
-            create_directory_if_not_exists(uploadsDirectoryPath)
-            callback(null, uploadsDirectoryPath)
-        }
-    },
-    filename: (req, { originalname }, callback) => {
-        const { file } = req.body
-        if (file) {
-            callback(null, path.basename(file))
-        } else {
-            callback(null, originalname)
-        }
-    },
-})
-
-// Consider having that is s3.ts
-let s3Storage: StorageEngine | undefined = undefined
-if (s3Client && S3_BUCKET) {
-    s3Storage = multerS3({
-        s3: s3Client,
-        bucket: S3_BUCKET,
-        contentType: multerS3.AUTO_CONTENT_TYPE,
-        key: (req, file, cb) => cb(null, file.originalname),
-    })
-}
-
-const upload = multer({ storage: s3Storage ? s3Storage : diskStorage })
+const storage = s3Storage || localStorage
+const upload = multer({ storage })
 
 router
     .route('/')
