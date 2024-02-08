@@ -11,7 +11,7 @@ fields = {
     'part_number': '200-004',
     'label': 'golgo13',
     # 'time': '2020-01-01',
-    # 'file': 'golgo/banana.jpg'
+    'file': 'golgo/banana.jpg'
     }
 
 

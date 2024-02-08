@@ -1,5 +1,13 @@
 import { Types } from 'mongoose'
 
+export const parse_post_body = (body: any) => {
+    const { json, data: bodyData, ...bodyRest } = body
+
+    // Check if parseable jsonData
+    const jsonData = json || bodyData
+    return jsonData ? JSON.parse(jsonData) : bodyRest
+}
+
 export const parse_query = (rawQuery: any) => {
     const {
         skip = 0,

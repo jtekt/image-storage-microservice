@@ -7,7 +7,7 @@ import { Request, Response } from 'express'
 import path from 'path'
 import multerS3 from 'multer-s3'
 import { StorageEngine } from 'multer'
-
+import { parse_post_body } from '../utils'
 export const {
     S3_REGION,
     S3_ACCESS_KEY_ID = '',
@@ -36,7 +36,8 @@ if (S3_BUCKET) {
         bucket: S3_BUCKET,
         contentType: multerS3.AUTO_CONTENT_TYPE,
         key: (req: Request, { originalname }, callback) => {
-            const { file: userProvidedFilename } = req.body
+            const { file: userProvidedFilename } = parse_post_body(req.body)
+
             // TODO: allow also JSON.parse(req.body.json).file
             const filename = userProvidedFilename || originalname
             callback(null, filename)

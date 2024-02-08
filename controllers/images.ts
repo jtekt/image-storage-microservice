@@ -1,6 +1,6 @@
 import Image from '../models/image'
 import createHttpError from 'http-errors'
-import { parseUpdateBody, parse_query } from '../utils'
+import { parseUpdateBody, parse_query, parse_post_body } from '../utils'
 import { Request, Response } from 'express'
 import { s3Client, streamFileFromS3, deleteFileFromS3 } from '../fileStorage/s3'
 import { downloadLocalFile, removeLocalFile } from '../fileStorage/local'
@@ -18,24 +18,17 @@ export const upload_image = async (req: Request, res: Response) => {
     if (!req.file) throw createHttpError(400, 'File not provided')
 
     // TODO: Only allow images
-    const {
-        file: { originalname },
-        body,
-    } = req
+
+    const { originalname } = req.file
 
     const {
         _id,
         time,
-        file: filePath,
-        json,
-        data: bodyData,
-        ...bodyRest
-    } = body
+        file: userprovidedFilePath,
+        ...data
+    } = parse_post_body(req.body)
 
-    const jsonData = json || bodyData
-    const data = jsonData ? JSON.parse(jsonData) : bodyRest
-
-    const file = filePath || originalname
+    const file = userprovidedFilePath || originalname
 
     const query = { file }
     const itemProperties: NewImage = {

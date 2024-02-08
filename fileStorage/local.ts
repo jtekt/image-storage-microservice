@@ -3,6 +3,7 @@ import { existsSync, mkdirSync } from 'fs'
 import { Response } from 'express'
 import { rimrafSync } from 'rimraf'
 import { diskStorage } from 'multer'
+import { parse_post_body } from '../utils'
 export const { UPLOADS_DIRECTORY = 'uploads' } = process.env
 
 export const uploadsDirectoryPath = path.resolve(UPLOADS_DIRECTORY)
@@ -23,13 +24,12 @@ export const removeLocalFile = (filename: string) =>
 
 export const localStorage = diskStorage({
     destination: (req, _, callback) => {
-        // Allowing the user to specify a file name
-        const { file } = req.body
-        // TODO: allow also JSON.parse(req.body.json).file
-        if (file) {
+        const { file: userProvidedFilename } = parse_post_body(req.body)
+
+        if (userProvidedFilename) {
             const destinationPath = path.join(
                 uploadsDirectoryPath,
-                path.dirname(file)
+                path.dirname(userProvidedFilename)
             )
             create_directory_if_not_exists(destinationPath)
             callback(null, destinationPath)
@@ -39,11 +39,9 @@ export const localStorage = diskStorage({
         }
     },
     filename: (req, { originalname }, callback) => {
-        const { file } = req.body
-        if (file) {
-            callback(null, path.basename(file))
-        } else {
-            callback(null, originalname)
-        }
+        const { file: userProvidedFilename } = parse_post_body(req.body)
+        if (userProvidedFilename)
+            callback(null, path.basename(userProvidedFilename))
+        else callback(null, originalname)
     },
 })
