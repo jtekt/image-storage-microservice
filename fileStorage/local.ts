@@ -25,6 +25,7 @@ export const localStorage = diskStorage({
     destination: (req, _, callback) => {
         // Allowing the user to specify a file name
         const { file } = req.body
+        // TODO: allow also JSON.parse(req.body.json).file
         if (file) {
             const destinationPath = path.join(
                 uploadsDirectoryPath,

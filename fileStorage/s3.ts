@@ -37,6 +37,7 @@ if (S3_BUCKET) {
         contentType: multerS3.AUTO_CONTENT_TYPE,
         key: (req: Request, { originalname }, callback) => {
             const { file: userProvidedFilename } = req.body
+            // TODO: allow also JSON.parse(req.body.json).file
             const filename = userProvidedFilename || originalname
             callback(null, filename)
         },

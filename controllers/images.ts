@@ -135,9 +135,9 @@ export const delete_images = async (req: Request, res: Response) => {
     // Delete files in the background, so omitting await
     removeImageFiles(items)
 
-    await Image.deleteMany(query)
+    const result = await Image.deleteMany(query)
 
-    res.send({ item_count: items.length })
+    res.send(result)
 }
 
 export const delete_image = async (req: Request, res: Response) => {
