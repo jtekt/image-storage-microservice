@@ -1,5 +1,4 @@
 import { Types } from 'mongoose'
-
 export const parse_post_body = (body: any) => {
     const { json, data: bodyData, ...bodyRest } = body
 
@@ -10,10 +9,10 @@ export const parse_post_body = (body: any) => {
 
 export const parse_query = (rawQuery: any) => {
     const {
-        skip = 0,
-        limit = 10000,
+        skip = '0',
         sort = 'time',
-        order = 1,
+        order = '1',
+        limit, // Do not put default here as set in /imagers and /export
         from,
         to,
         regex = false, // boolean toggling partial text search, not ideal
@@ -63,7 +62,16 @@ export const parse_query = (rawQuery: any) => {
     if (to) query.time.$lt = new Date(to)
     if (from) query.time.$gt = new Date(from)
 
-    return { query, to, from, limit, skip, sort, order, select }
+    return {
+        query,
+        to,
+        from,
+        limit,
+        skip,
+        sort,
+        order,
+        select,
+    }
 }
 
 export const parse_formdata_fields = (body: { json?: any; data?: any }) => {

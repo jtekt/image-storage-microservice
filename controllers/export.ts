@@ -8,7 +8,11 @@ import { parse_query } from '../utils'
 import { Request, Response } from 'express'
 import IImage from '../interfaces/IImage'
 import { rimraf } from 'rimraf'
-import { mongodb_export_file_name, export_excel_file_name } from '../config'
+import {
+    mongodb_export_file_name,
+    export_excel_file_name,
+    maxExportLimit,
+} from '../config'
 import { s3Client } from '../fileStorage/s3'
 import {
     create_directory_if_not_exists,
@@ -61,14 +65,21 @@ export const export_images = async (req: Request, res: Response) => {
     const json_file_path = path.join(tempDirectoryPath, `${export_id}.json`)
     const excel_file_path = path.join(tempDirectoryPath, `${export_id}.xlsx`)
 
-    // Limiting here because parse_query also used in images controller
-    const { query, sort, order, limit = 0, skip } = parse_query(req.query)
+    const {
+        query,
+        sort,
+        order,
+        limit = maxExportLimit,
+        skip,
+    } = parse_query(req.query)
 
-    // const images = await Image.find({})
+    if (limit > maxExportLimit)
+        throw createHttpError(400, `Limit exceeds maximum allowed value`)
+
     const images = await Image.find(query)
         .sort({ [sort]: order })
         .skip(Number(skip))
-        .limit(Math.max(Number(limit), 0))
+        .limit(limit)
 
     const images_json = images.map((i) => i.toJSON()) as IImage[]
 

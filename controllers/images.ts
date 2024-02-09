@@ -5,6 +5,7 @@ import { Request, Response } from 'express'
 import { s3Client, streamFileFromS3, deleteFileFromS3 } from '../fileStorage/s3'
 import { downloadLocalFile, removeLocalFile } from '../fileStorage/local'
 import { removeImageFiles } from '../fileStorage/common'
+import { defaultLimit } from '../config'
 
 interface NewImage {
     _id?: string
@@ -53,7 +54,7 @@ export const read_images = async (req: Request, res: Response) => {
         query,
         sort,
         order,
-        limit = 100,
+        limit = defaultLimit,
         skip,
         select,
     } = parse_query(req.query)
@@ -61,7 +62,7 @@ export const read_images = async (req: Request, res: Response) => {
     const items = await Image.find(query)
         .sort({ [sort]: order })
         .skip(Number(skip))
-        .limit(Math.max(Number(limit), 0))
+        .limit(limit)
         .select(select)
 
     const total = await Image.countDocuments(query)
