@@ -9,7 +9,7 @@
         "start": "node ./build/index.js",
         "test": "mocha -r ts-node/register test/*.ts --timeout 10000 --exit",
         "test-local": "S3_BUCKET= npm run test",
-        "test-s3": "S3_BUCKET=image-storage-service-test npm run test",
+        "test-s3": "S3_BUCKET=jtekt-rnd-nocodb npm run test",
         "test-all": "npm run test-local && npm run test-s3",
         "coverage": "nyc npm run test-all",
         "swagger-autogen": "ts-node swagger.ts"

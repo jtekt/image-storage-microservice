@@ -9,7 +9,7 @@ export const {
     S3_REGION,
     S3_ACCESS_KEY_ID = '',
     S3_SECRET_ACCESS_KEY = '',
-    S3_ENDPOINT,
+    S3_ENDPOINT = 's3.amazonaws.com',
     S3_PORT,
     S3_BUCKET,
     S3_USE_SSL,
@@ -24,9 +24,10 @@ if (S3_BUCKET) {
     s3Client = new Client({
         accessKey: S3_ACCESS_KEY_ID,
         secretKey: S3_SECRET_ACCESS_KEY,
-        endPoint: S3_ENDPOINT || 'localhost',
+        endPoint: S3_ENDPOINT,
         port: Number(S3_PORT),
         useSSL: !!S3_USE_SSL,
+        region: S3_REGION,
     })
 
     s3Storage = multerMinIOStorage({
