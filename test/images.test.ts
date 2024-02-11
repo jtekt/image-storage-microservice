@@ -162,8 +162,6 @@ describe('/images', () => {
                 .patch(`/images?key1=value1`)
                 .send(properties)
 
-            console.log({ body })
-
             expect(status).to.equal(200)
             expect(body.modifiedCount).to.equal(1)
         })

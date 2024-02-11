@@ -66,6 +66,9 @@ test-x86:
             --name tdd-app
             --network ${TEST_NETWORK}
             -e MONGODB_URL=mongodb://${TEST_DB}
+            -e S3_ACCESS_KEY_ID=$S3_ACCESS_KEY_ID
+            -e S3_SECRET_ACCESS_KEY=$S3_SECRET_ACCESS_KEY
+            -e S3_REGION=$S3_REGION
             ${CONTAINER_IMAGE_TEST_X86}
             npm run coverage
 

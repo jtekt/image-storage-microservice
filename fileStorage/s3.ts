@@ -1,44 +1,39 @@
-import {
-    S3Client,
-    GetObjectCommand,
-    DeleteObjectCommand,
-} from '@aws-sdk/client-s3'
 import { Request, Response } from 'express'
 import path from 'path'
-import multerS3 from 'multer-s3'
-import { StorageEngine } from 'multer'
+import { Client } from 'minio'
+// import { MinioStorageEngine } from '@namatery/multer-minio'
+import multerMinIOStorage from 'multer-minio-storage'
 import { parse_post_body } from '../utils'
+import { StorageEngine } from 'multer'
 export const {
     S3_REGION,
     S3_ACCESS_KEY_ID = '',
     S3_SECRET_ACCESS_KEY = '',
     S3_ENDPOINT,
+    S3_PORT,
     S3_BUCKET,
+    S3_USE_SSL,
 } = process.env
 
-export let s3Client: S3Client | undefined
-export let s3Storage: StorageEngine | undefined
+export let s3Client: Client
+export let s3Storage: StorageEngine
 
 if (S3_BUCKET) {
     console.log(`[S3] S3_BUCKET is set, uploading to "${S3_BUCKET}"`)
 
-    s3Client = new S3Client({
-        region: S3_REGION,
-        credentials: {
-            accessKeyId: S3_ACCESS_KEY_ID,
-            secretAccessKey: S3_SECRET_ACCESS_KEY,
-        },
-        endpoint: S3_ENDPOINT,
+    s3Client = new Client({
+        accessKey: S3_ACCESS_KEY_ID,
+        secretKey: S3_SECRET_ACCESS_KEY,
+        endPoint: S3_ENDPOINT || 'localhost',
+        port: Number(S3_PORT),
+        useSSL: !!S3_USE_SSL,
     })
 
-    s3Storage = multerS3({
-        s3: s3Client,
+    s3Storage = multerMinIOStorage({
+        minioClient: s3Client,
         bucket: S3_BUCKET,
-        contentType: multerS3.AUTO_CONTENT_TYPE,
         key: (req: Request, { originalname }, callback) => {
             const { file: userProvidedFilename } = parse_post_body(req.body)
-
-            // TODO: allow also JSON.parse(req.body.json).file
             const filename = userProvidedFilename || originalname
             callback(null, filename)
         },
@@ -50,36 +45,26 @@ if (S3_BUCKET) {
 export const streamFileFromS3 = async (res: Response, Key: string) => {
     if (!S3_BUCKET || !s3Client) throw 'S3 not configured'
 
-    const options = {
-        Bucket: S3_BUCKET,
-        Key,
-    }
-
-    const { base, ext } = path.parse(Key)
-
-    const response = await s3Client.send(new GetObjectCommand(options))
-    if (!response.Body) throw 'No Body'
-    response.Body.transformToWebStream().pipeTo(
-        new WritableStream({
-            start() {
-                // res.setHeader(
-                //     'Content-Disposition',
-                //     `attachment; filename=${encodeURIComponent(base)}`
-                // )
-                res.setHeader('Content-Type', `image/${ext.replace('.', '')}`)
-            },
-            write(chunk) {
-                res.write(chunk)
-            },
-            close() {
-                res.end()
-            },
-        })
-    )
+    const stream = await s3Client.getObject(S3_BUCKET, Key)
+    const { ext } = path.parse(Key)
+    res.setHeader('Content-Type', `image/${ext.replace('.', '')}`)
+    // res.setHeader(
+    //     'Content-Disposition',
+    //     `attachment; filename=${encodeURIComponent(base)}`
+    // )
+    stream.on('data', (chunk) => {
+        res.write(chunk)
+    })
+    stream.on('end', () => {
+        res.end()
+    })
+    stream.on('error', (err) => {
+        res.end()
+    })
 }
 
 export const deleteFileFromS3 = async (Key: string) => {
     if (!S3_BUCKET || !s3Client) throw 'S3 not configured'
     const options = { Key, Bucket: S3_BUCKET }
-    await s3Client.send(new DeleteObjectCommand(options))
+    await s3Client.removeObject(S3_BUCKET, Key)
 }
