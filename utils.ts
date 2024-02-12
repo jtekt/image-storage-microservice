@@ -49,11 +49,7 @@ export const parse_query = (rawQuery: any) => {
 
     if (ids) {
         const idArray = Array.isArray(ids) ? ids : [ids]
-        query._id = {
-            $in: idArray.map((_id: string) => ({
-                _id: new Types.ObjectId(_id),
-            })),
-        }
+        query._id = { $in: idArray }
     }
 
     // Time filters

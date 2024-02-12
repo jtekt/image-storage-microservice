@@ -71,6 +71,7 @@ test-x86:
             -e S3_REGION=ap-northeast-1
             -e S3_ENDPOINT=s3.amazonaws.com
             -e S3_USE_SSL=true
+            -e S3_PORT=443
             ${CONTAINER_IMAGE_TEST_X86}
             npm run coverage
 
