@@ -1,7 +1,6 @@
 import { Request, Response } from 'express'
 import path from 'path'
 import { Client } from 'minio'
-// import { MinioStorageEngine } from '@namatery/multer-minio'
 import multerMinIOStorage from 'multer-minio-storage'
 import { parse_post_body } from '../utils'
 import { StorageEngine } from 'multer'
