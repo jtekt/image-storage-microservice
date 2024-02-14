@@ -1,12 +1,11 @@
 import archiver from 'archiver' // NOTE: Archiver is advertized as having a low memory footprint
-import Image from '../models/image'
+import { Image, IImage } from '../models/image'
 import path from 'path'
 import fs from 'fs'
 import XLSX from 'xlsx'
 import { v4 as uuidv4 } from 'uuid'
 import { parse_query } from '../utils'
 import { Request, Response } from 'express'
-import IImage from '../interfaces/IImage'
 import { rimraf } from 'rimraf'
 import {
     mongodb_export_file_name,

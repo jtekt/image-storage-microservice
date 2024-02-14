@@ -1,4 +1,4 @@
-import Image from '../models/image'
+import { Image } from '../models/image'
 import { parse_query } from '../utils'
 import { Request, Response } from 'express'
 

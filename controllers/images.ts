@@ -1,5 +1,5 @@
-import Image from '../models/image'
 import createHttpError from 'http-errors'
+import { Image } from '../models/image'
 import { parseUpdateBody, parse_query, parse_post_body } from '../utils'
 import { Request, Response } from 'express'
 import { s3Client, streamFileFromS3, deleteFileFromS3 } from '../fileStorage/s3'
