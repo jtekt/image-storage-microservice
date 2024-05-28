@@ -1,5 +1,6 @@
 import dotenv from 'dotenv'
 dotenv.config()
+import os from 'os'
 import { author, name as application_name, version } from './package.json'
 console.log(`Image storage v${version}`)
 
@@ -21,7 +22,6 @@ import fields_router from './routes/fields'
 
 const {
     APP_PORT = 80,
-
     AUTHENTICATION_URL,
     AUTHORIZED_GROUPS,
     GROUP_AUTHORIZATION_URL,
@@ -61,16 +61,16 @@ app.get('/', (req, res) => {
         storage: {
             directories: !s3Client
                 ? {
-                      uploadsDirectoryPath,
-                      tempDirectoryPath,
-                  }
+                    uploadsDirectoryPath,
+                    tempDirectoryPath,
+                }
                 : undefined,
             s3: s3Client
                 ? {
-                      bucket: S3_BUCKET,
-                      endpoint: S3_ENDPOINT,
-                      region: S3_REGION,
-                  }
+                    bucket: S3_BUCKET,
+                    endpoint: S3_ENDPOINT,
+                    region: S3_REGION,
+                }
                 : undefined,
         },
     })
@@ -100,5 +100,6 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
 // Start server
 app.listen(APP_PORT, () => {
+    console.log(`[Express] Working on http://${os.hostname}:${APP_PORT}`);
     console.log(`[Express] Listening on port ${APP_PORT}`)
 })
