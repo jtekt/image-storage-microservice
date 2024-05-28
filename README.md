@@ -5,6 +5,16 @@
 
 A microservice to store and manage image datasets. It allows to store images with their metadata, the latter being stored in a MongoDB database.
 
+```mermaid
+graph LR
+
+client((client))
+mongodb[(MongoDB)]
+client -->|file & metadata|api["API (this microservice)"]-->|metadata|mongodb
+
+api-.->|file|s3
+```
+
 ## Data model
 
 The metadata for uploaded images is stored in a MongoDB database with the following schema
@@ -42,23 +52,31 @@ API documentation is available on `/docs`
 
 | Variable                  | Description                                                                             |
 | ------------------------- | --------------------------------------------------------------------------------------- |
-| APP_PORT                  | Port on which the application listens for requests                                      |
-| MONGODB_CONNECTION_STRING | MongoDB Connection string                                                               |
-| UPLOADS_DIRECTORY         | Uploads directory name, defaults to "uploads". Disabled if S3 is enabled                |
-| S3_BUCKET                 | S3 Bucket to upload images. If set, images are uploaded to S3, otherwise stored locally |
-| S3_ACCESS_KEY_ID          | S3 access key ID                                                                        |
-| S3_SECRET_ACCESS_KEY      | S3 secret access key                                                                    |
-| S3_REGION                 | S3 region                                                                               |
-| S3_ENDPOINT               | S3 Endpoint                                                                             |
+| `APP_PORT`                  | Port on which the application listens for requests                                      |
+| `MONGODB_CONNECTION_STRING` | MongoDB Connection string                                                               |
+| `UPLOADS_DIRECTORY`         | Uploads directory name, defaults to "uploads". Disabled if S3 is enabled                |
+| `S3_BUCKET`                 | S3 Bucket to upload images. If set, images are uploaded to S3, otherwise stored locally |
+| `S3_ACCESS_KEY_ID`          | S3 access key ID                                                                        |
+| `S3_SECRET_ACCESS_KEY`      | S3 secret access key                                                                    |
+| `S3_REGION`                 | S3 region                                                                               |
+| `S3_ENDPOINT`               | S3 Endpoint                                                                             |
 
-## Running in development
+## Installment
 
+### Development
+```bash
+git clone http://10.115.1.14/moreillon_ci/image_storage/storage_microservice.git
+cd storage_microservice
+npm install
+```
+
+run the API in development mode:
 ```
 npm run dev
 ```
 
 ## Docker
-
+run the API with a published Docker image:
 ```
 docker run -e MONGODB_URL=mongodb://localhost -p 8080:80 public.ecr.aws/u6l4m3e5/image-storage-service:3bded0be
 ```
