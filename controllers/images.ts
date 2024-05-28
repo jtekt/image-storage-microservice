@@ -15,6 +15,16 @@ interface NewImage {
 }
 
 export const upload_image = async (req: Request, res: Response) => {
+    // https://swagger-autogen.github.io/docs/swagger-2/parameters/
+    /*
+        #swagger.consumes = ['multipart/form-data']  
+        #swagger.parameters['image'] = {
+            in: 'formData',
+            type: 'file',
+            required: 'true',
+            description: 'Image file',
+    } */
+
     // NOTE: Req.body is multipart form-data
     if (!req.file) throw createHttpError(400, 'File not provided')
 
