@@ -91,6 +91,9 @@ app.use('/export', export_router)
 app.use('/images', images_router)
 app.use('/fields', fields_router)
 
+// additional route for files 
+app.use('/files', images_router)
+
 // Express error handling
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     console.error(err)
@@ -100,6 +103,6 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
 // Start server
 app.listen(APP_PORT, () => {
-    console.log(`[Express] Working on http://${os.hostname}:${APP_PORT}`);
+    console.log(`[Express] Working on http://localhost:${APP_PORT}`);
     console.log(`[Express] Listening on port ${APP_PORT}`)
 })

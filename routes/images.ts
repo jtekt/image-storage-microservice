@@ -35,4 +35,7 @@ router
 
 router.route('/:_id/image').get(read_image_file)
 
+// additional route for general files
+router.route('/:_id/content').get(read_image_file)
+
 export default router
