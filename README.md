@@ -70,6 +70,30 @@ cd storage_microservice
 npm install
 ```
 
+set configs:
+```
+touch .env
+```
+you can write environment variables in the .env file like: 
+```env
+APP_PORT=8080
+```
+
+---
+(option) run MongoDB with docker
+```bash
+docker run --name my-mongo -d -p 27017:27017 mongo:latest
+```
+
+(optional) update swagger document
+```bash
+npm run swagger-autogen
+```
+
+---
+
+
+
 run the API in development mode:
 ```
 npm run dev
@@ -78,5 +102,5 @@ npm run dev
 ## Docker
 run the API with a published Docker image:
 ```
-docker run -e MONGODB_URL=mongodb://localhost -p 8080:80 public.ecr.aws/u6l4m3e5/image-storage-service:3bded0be
+docker run  -p 8080:80 public.ecr.aws/u6l4m3e5/image-storage-service:3bded0be
 ```
