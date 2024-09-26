@@ -8,16 +8,15 @@ api_url = f'{STORAGE_SERVCICE_URL}/images'
 
 # Additional info (not necessary)
 fields = {
-    'part_number': '200-004',
+    'work': '200J004',
     'label': 'golgo13',
-    # 'time': '2020-01-01',
-    'file': 'golgo/banana.jpg'
+    'file': f'laksjdlasdkjjklasd/golgo/{time()}.jpg'
     }
 
 
 
-filename = f'{time()}.jpg'
-files = { 'image' : (filename, open(IMAGE_PATH,'rb').read()) }
+# filename = f'{time()}.jpg'
+files = { 'image' : ('filename', open(IMAGE_PATH,'rb').read()) }
 
 
 # Send the image

@@ -7,7 +7,8 @@ import express, { NextFunction, Request, Response } from 'express'
 import 'express-async-errors'
 import cors from 'cors'
 import promBundle from 'express-prom-bundle'
-import auth from '@moreillon/express_identification_middleware'
+import oidcAuth from '@moreillon/express-oidc'
+import legacyAuth from '@moreillon/express_identification_middleware'
 import group_auth from '@moreillon/express_group_based_authorization_middleware'
 import * as db from './db'
 import { S3_BUCKET, S3_ENDPOINT, S3_REGION, s3Client } from './fileStorage/s3'
@@ -21,8 +22,8 @@ import fields_router from './routes/fields'
 
 const {
     APP_PORT = 80,
-
-    AUTHENTICATION_URL,
+    OIDC_JWKS_URI,
+    IDENTICATION_URL,
     AUTHORIZED_GROUPS,
     GROUP_AUTHORIZATION_URL,
     TZ,
@@ -54,7 +55,8 @@ app.get('/', (req, res) => {
             connected: db.get_connected(),
         },
         auth: {
-            authentication_url: AUTHENTICATION_URL,
+            oidc_jwks_uri: OIDC_JWKS_URI,
+            legacy_auth_url: IDENTICATION_URL,
             group_authorization_url: GROUP_AUTHORIZATION_URL,
             authorized_groups: AUTHORIZED_GROUPS,
         },
@@ -75,8 +77,8 @@ app.get('/', (req, res) => {
         },
     })
 })
-
-if (AUTHENTICATION_URL) app.use(auth({ url: AUTHENTICATION_URL }))
+if (OIDC_JWKS_URI) app.use(oidcAuth({ jwksUri: OIDC_JWKS_URI }))
+else if (IDENTICATION_URL) app.use(legacyAuth({ url: IDENTICATION_URL }))
 if (AUTHORIZED_GROUPS && GROUP_AUTHORIZATION_URL) {
     console.log(`Enabling group-based authorization`)
     const group_auth_options = {
