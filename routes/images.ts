@@ -34,5 +34,6 @@ router
     .put(replace_image_data)
 
 router.route('/:_id/image').get(read_image_file)
+router.route('/:_id/file').get(read_image_file)
 
 export default router
