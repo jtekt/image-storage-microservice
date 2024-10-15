@@ -54,9 +54,9 @@ export const parse_query = (rawQuery: any) => {
 
     // Time filters
     // Using $gt and $lt instead of $gte and $lte for annotation tool
-    if (to || from) query.time = {}
-    if (to) query.time.$lt = new Date(to)
-    if (from) query.time.$gt = new Date(from)
+    if (isValidValue(to) || isValidValue(from)) query.time = {}
+    if (isValidValue(to)) query.time.$lt = new Date(to)
+    if (isValidValue(from)) query.time.$gt = new Date(from)
 
     return {
         query,
@@ -69,6 +69,9 @@ export const parse_query = (rawQuery: any) => {
         select,
     }
 }
+
+const isValidValue = (value: any) =>
+    value !== undefined && value !== 'undefined'
 
 export const parse_formdata_fields = (body: { json?: any; data?: any }) => {
     const json_data = body.data || body.json
