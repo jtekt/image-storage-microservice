@@ -11,7 +11,7 @@
         "test-local": "S3_BUCKET= npm run test",
         "test-s3": "S3_BUCKET=jtekt-moreillon npm run test",
         "test-all": "npm run test-local && npm run test-s3",
-        "coverage": "nyc npm run test-all",
+        "coverage": "nyc npm run test-local",
         "swagger-autogen": "ts-node swagger.ts"
     },
     "dependencies": {
