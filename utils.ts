@@ -54,11 +54,6 @@ export const parse_query = (rawQuery: any) => {
 
     // Time filters
     // Using $gt and $lt instead of $gte and $lte for annotation tool
-
-    console.log({
-        to,
-        from,
-    })
     if (isValidValue(to) || isValidValue(from)) query.time = {}
     if (isValidValue(to)) query.time.$lt = new Date(to)
     if (isValidValue(from)) query.time.$gt = new Date(from)
