@@ -1,4 +1,3 @@
-import { Types } from 'mongoose'
 export const parse_post_body = (body: any) => {
     const { json, data: bodyData, ...bodyRest } = body
 
@@ -6,6 +5,8 @@ export const parse_post_body = (body: any) => {
     const jsonData = json || bodyData
     return jsonData ? JSON.parse(jsonData) : bodyRest
 }
+
+const isNotUndefined = (value: any) => value && value !== 'undefined'
 
 export const parse_query = (rawQuery: any) => {
     const {
@@ -54,9 +55,9 @@ export const parse_query = (rawQuery: any) => {
 
     // Time filters
     // Using $gt and $lt instead of $gte and $lte for annotation tool
-    if (isValidValue(to) || isValidValue(from)) query.time = {}
-    if (isValidValue(to)) query.time.$lt = new Date(to)
-    if (isValidValue(from)) query.time.$gt = new Date(from)
+    if (isNotUndefined(to) || isNotUndefined(from)) query.time = {}
+    if (isNotUndefined(to)) query.time.$lt = new Date(to)
+    if (isNotUndefined(from)) query.time.$gt = new Date(from)
 
     return {
         query,
@@ -69,8 +70,6 @@ export const parse_query = (rawQuery: any) => {
         select,
     }
 }
-
-const isValidValue = (value: any) => value && value !== 'undefined'
 
 export const parse_formdata_fields = (body: { json?: any; data?: any }) => {
     const json_data = body.data || body.json
