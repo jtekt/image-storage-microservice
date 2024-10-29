@@ -1,3 +1,4 @@
+import createHttpError from 'http-errors'
 export const parse_post_body = (body: any) => {
     const { json, data: bodyData, ...bodyRest } = body
 
@@ -7,6 +8,7 @@ export const parse_post_body = (body: any) => {
 }
 
 const isNotUndefined = (value: any) => value && value !== 'undefined'
+const stringIsValidDate = (s: string) => !isNaN(new Date(s).getTime())
 
 export const parse_query = (rawQuery: any) => {
     const {
@@ -29,7 +31,7 @@ export const parse_query = (rawQuery: any) => {
     let query: any = {}
 
     if (file) {
-        if (regex) query.file = { $regex: file, $options: 'i' }
+        if (isNotUndefined(regex)) query.file = { $regex: file, $options: 'i' }
         else query.file = file
     }
 
@@ -37,14 +39,14 @@ export const parse_query = (rawQuery: any) => {
         try {
             query = { ...query, ...JSON.parse(filter) }
         } catch (error) {
-            throw 'Malformed filter'
+            throw createHttpError(400, 'Malformed filter')
         }
     }
 
     for (const key in rest) {
-        let value = rest[key]
-
-        if (regex) query[`data.${key}`] = { $regex: value, $options: 'i' }
+        const value = rest[key]
+        if (isNotUndefined(regex))
+            query[`data.${key}`] = { $regex: value, $options: 'i' }
         else query[`data.${key}`] = value
     }
 
@@ -56,8 +58,16 @@ export const parse_query = (rawQuery: any) => {
     // Time filters
     // Using $gt and $lt instead of $gte and $lte for annotation tool
     if (isNotUndefined(to) || isNotUndefined(from)) query.time = {}
-    if (isNotUndefined(to)) query.time.$lt = new Date(to)
-    if (isNotUndefined(from)) query.time.$gt = new Date(from)
+    if (isNotUndefined(to)) {
+        if (!stringIsValidDate(to))
+            throw createHttpError(400, 'Parameter "to" is not a valid date')
+        query.time.$lt = new Date(to)
+    }
+    if (isNotUndefined(from)) {
+        if (!stringIsValidDate(from))
+            throw createHttpError(400, 'Parameter "from" is not a valid date')
+        query.time.$gt = new Date(from)
+    }
 
     return {
         query,
@@ -82,6 +92,7 @@ const nestInDataField = (obj: any) =>
         (acc, key) => ({ ...acc, [`data.${key}`]: obj[key] }),
         {}
     )
+
 export const parseUpdateBody = (body: any) => {
     const { $unset = {}, ...$set } = body
     return { $set: nestInDataField($set), $unset: nestInDataField($unset) }
