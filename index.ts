@@ -27,6 +27,7 @@ const {
     AUTHORIZED_GROUPS,
     GROUP_AUTHORIZATION_URL,
     TZ,
+    IMAGE_SCOPE,
 } = process.env
 
 process.env.TZ = TZ || 'Asia/Tokyo'
@@ -75,10 +76,17 @@ app.get('/', (req, res) => {
                   }
                 : undefined,
         },
+        image_scope: IMAGE_SCOPE,
     })
 })
-if (OIDC_JWKS_URI) app.use(oidcAuth({ jwksUri: OIDC_JWKS_URI }))
-else if (IDENTICATION_URL) app.use(legacyAuth({ url: IDENTICATION_URL }))
+
+if (OIDC_JWKS_URI) {
+    console.log(`Enabling OIDC authentication`)
+    app.use(oidcAuth({ jwksUri: OIDC_JWKS_URI }))
+} else if (IDENTICATION_URL) {
+    console.log(`Enabling legacy authentication`)
+    app.use(legacyAuth({ url: IDENTICATION_URL }))
+}
 if (AUTHORIZED_GROUPS && GROUP_AUTHORIZATION_URL) {
     console.log(`Enabling group-based authorization`)
     const group_auth_options = {

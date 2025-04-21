@@ -13,6 +13,7 @@ import {
     uploadsDirectoryPath,
     create_directory_if_not_exists,
 } from '../fileStorage/local'
+import { getUserId } from '../utils/user'
 
 const mongodb_data_import = (documents: IImage[]) => {
     // TODO: Consider bulkwrite
@@ -87,6 +88,15 @@ export const import_images = async (req: Request, res: Response) => {
         export_excel_file_name
     )
 
+    let userId: string | undefined = undefined
+    if (process.env.IMAGE_SCOPE === 'user') {
+        const id = getUserId(res.locals.user)
+
+        // If no id found, throw an error
+        if (!id) throw createHttpError(401, 'User ID not provided')
+        userId = id
+    }
+
     const json_file_exists = directory.files.some(
         ({ path }) => path === mongodb_export_file_name
     )
@@ -103,6 +113,9 @@ export const import_images = async (req: Request, res: Response) => {
 
         mongodbData.forEach((document: IImage) => {
             document.data = { ...document.data, ...userDefinedData }
+            if (userId) {
+                document.userId = userId
+            }
         })
 
         await mongodb_data_import(mongodbData)
@@ -112,6 +125,7 @@ export const import_images = async (req: Request, res: Response) => {
         const mongodbData: IImage[] = directory.files.map((f) => ({
             file: f.path,
             data: userDefinedData,
+            ...(userId ? { userId } : {}),
         }))
         await mongodb_data_import(mongodbData)
     }
