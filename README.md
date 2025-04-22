@@ -41,19 +41,19 @@ API documentation is available on `/docs`
 
 ## Environment variables
 
-| Variable                    | Description                                                                                                   | Default     | Required |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------- | ----------- | -------- |
-| `APP_PORT`                  | Port on which the application listens for incoming requests                                                   | `3000`      | No       |
-| `MONGODB_CONNECTION_STRING` | MongoDB connection string used to connect to the database                                                     | —           | Yes      |
-| `UPLOADS_DIRECTORY`         | Local directory to store uploaded files. Disabled if S3 is used                                               | `"uploads"` | No       |
-| `S3_BUCKET`                 | Name of the S3 bucket where images will be uploaded. If unset, local storage is used                          | —           | No       |
-| `S3_ACCESS_KEY_ID`          | Access key ID for connecting to the S3-compatible storage provider                                            | —           | No       |
-| `S3_SECRET_ACCESS_KEY`      | Secret access key for connecting to the S3-compatible storage provider                                        | —           | No       |
-| `S3_REGION`                 | AWS region of the S3 bucket                                                                                   | —           | No       |
-| `S3_ENDPOINT`               | Custom S3-compatible endpoint (e.g., for MinIO)                                                               | —           | No       |
-| `OIDC_JWKS_URI`             | JWKS URI of the OIDC authentication provider. If provided, users must be authenticated to access the storage. | —           | No       |
-| `IMAGE_SCOPE`               | Logical scope of the images, e.g., user-specific . Enables scoped access control. Avowed values [`user`]      | —           | No       |
-| `USER_IDENTIFIER`           | Field name used to extract the user ID from the authentication token. Only used if `IMAGE_SCOPE` is set.      | —           | No       |
+| Variable                    | Description                                                                                                   | Default                | Required |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------- | -------- |
+| `APP_PORT`                  | Port on which the application listens for incoming requests                                                   | `3000`                 | No       |
+| `MONGODB_CONNECTION_STRING` | MongoDB connection string used to connect to the database                                                     | —                      | Yes      |
+| `UPLOADS_DIRECTORY`         | Local directory to store uploaded files. Disabled if S3 is used                                               | `"uploads"`            | No       |
+| `S3_BUCKET`                 | Name of the S3 bucket where images will be uploaded. If unset, local storage is used                          | —                      | No       |
+| `S3_ACCESS_KEY_ID`          | Access key ID for connecting to the S3-compatible storage provider                                            | —                      | No       |
+| `S3_SECRET_ACCESS_KEY`      | Secret access key for connecting to the S3-compatible storage provider                                        | —                      | No       |
+| `S3_REGION`                 | AWS region of the S3 bucket                                                                                   | —                      | No       |
+| `S3_ENDPOINT`               | Custom S3-compatible endpoint (e.g., for MinIO)                                                               | —                      | No       |
+| `OIDC_JWKS_URI`             | JWKS URI of the OIDC authentication provider. If provided, users must be authenticated to access the storage. | —                      | No       |
+| `IMAGE_SCOPE`               | Logical scope of the images, e.g., user-specific . Enables scoped access control. Avowed values [`user`]      | —                      | No       |
+| `USER_IDENTIFIER`           | Field name used to extract the user ID from the authentication token. Only used if `IMAGE_SCOPE` is set.      | `"preferred_username"` | No       |
 
 ## Running in development
 

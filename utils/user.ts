@@ -14,7 +14,14 @@ export const getUserId = (user: UserLike): string | undefined => {
         userId = user[identifier]
     }
 
-    userId = user.sub || user._id || user.id || user.username
+    if (!userId) {
+        userId =
+            user.preferred_username ||
+            user.sub ||
+            user._id ||
+            user.id ||
+            user.username
+    }
 
     return userId?.split(':').pop() || userId
 }
