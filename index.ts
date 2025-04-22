@@ -19,6 +19,7 @@ import images_router from './routes/images'
 import import_router from './routes/import'
 import export_router from './routes/export'
 import fields_router from './routes/fields'
+import { bindUserToRequestMiddleware } from './middleware/bindUserToRequestMiddleware'
 
 const {
     APP_PORT = 80,
@@ -87,6 +88,10 @@ if (OIDC_JWKS_URI) {
     console.log(`Enabling legacy authentication`)
     app.use(legacyAuth({ url: IDENTICATION_URL }))
 }
+
+// Add user information from the authentication middleware to the request
+app.use(bindUserToRequestMiddleware())
+
 if (AUTHORIZED_GROUPS && GROUP_AUTHORIZATION_URL) {
     console.log(`Enabling group-based authorization`)
     const group_auth_options = {

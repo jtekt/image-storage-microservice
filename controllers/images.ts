@@ -1,5 +1,5 @@
 import createHttpError from 'http-errors'
-import { Image } from '../models/image'
+import { IImage, Image } from '../models/image'
 import { parseUpdateBody, parse_query, parse_post_body } from '../utils'
 import { Request, Response } from 'express'
 import { s3Client, streamFileFromS3, deleteFileFromS3 } from '../fileStorage/s3'
@@ -8,11 +8,8 @@ import { removeImageFiles } from '../fileStorage/common'
 import { defaultLimit } from '../config'
 import { getUserId } from '../utils/user'
 
-interface NewImage {
-    _id?: string
+interface NewImage extends IImage {
     time: Date
-    file: string
-    data: any
 }
 
 export const upload_image = async (req: Request, res: Response) => {
@@ -47,6 +44,7 @@ export const upload_image = async (req: Request, res: Response) => {
         time: time ? new Date(time) : new Date(),
         file,
         data,
+        userId,
     }
 
     const options = { upsert: true, new: true }

@@ -9,9 +9,12 @@ type UserLike = {
 export const getUserId = (user: UserLike): string | undefined => {
     const identifier = process.env.USER_IDENTIFIER
 
+    let userId: string | undefined
     if (identifier && user[identifier]) {
-        return user[identifier]
+        userId = user[identifier]
     }
 
-    return user.sub || user._id || user.id || user.username
+    userId = user.sub || user._id || user.id || user.username
+
+    return userId?.split(':').pop() || userId
 }
