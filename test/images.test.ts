@@ -2,6 +2,7 @@ import request from 'supertest'
 import { expect } from 'chai'
 import { app } from '../index'
 import { get_connected } from '../db'
+import { describe, it } from 'mocha'
 
 const { S3_BUCKET } = process.env
 

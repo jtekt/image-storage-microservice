@@ -3,7 +3,7 @@ dotenv.config()
 import { author, name as application_name, version } from './package.json'
 console.log(`Image storage v${version}`)
 
-import express, { NextFunction, Request, Response } from 'express'
+import express, { Request, Response } from 'express'
 import 'express-async-errors'
 import cors from 'cors'
 import promBundle from 'express-prom-bundle'
@@ -19,7 +19,6 @@ import images_router from './routes/images'
 import import_router from './routes/import'
 import export_router from './routes/export'
 import fields_router from './routes/fields'
-import { bindUserToRequestMiddleware } from './middleware/bindUserToRequestMiddleware'
 
 const {
     APP_PORT = 80,
@@ -46,7 +45,7 @@ app.use(cors(corsOptions))
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 app.use(promBundle(promOptions))
 
-app.get('/', (req, res) => {
+app.get('/', (_, res) => {
     res.send({
         application_name,
         author,
@@ -89,9 +88,6 @@ if (OIDC_JWKS_URI) {
     app.use(legacyAuth({ url: IDENTICATION_URL }))
 }
 
-// Add user information from the authentication middleware to the request
-app.use(bindUserToRequestMiddleware())
-
 if (AUTHORIZED_GROUPS && GROUP_AUTHORIZATION_URL) {
     console.log(`Enabling group-based authorization`)
     const group_auth_options = {
@@ -107,7 +103,7 @@ app.use('/images', images_router)
 app.use('/fields', fields_router)
 
 // Express error handling
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+app.use((err: any, _: Request, res: Response) => {
     console.error(err)
     const { statusCode = 500, message } = err
     res.status(statusCode).send(message)
