@@ -36,7 +36,18 @@ export const localStorage = diskStorage({
             )
         }
 
+        if (req.user && process.env.IMAGE_SCOPE === 'user') {
+            const userId = getUserId(req.user)
+
+            if (!userId) {
+                throw new Error('User ID not found')
+            }
+
+            destinationPath = path.join(destinationPath, userId)
+        }
+
         create_directory_if_not_exists(destinationPath)
+
         callback(null, destinationPath)
     },
     filename: (req, { originalname }, callback) => {
@@ -47,6 +58,15 @@ export const localStorage = diskStorage({
             filename = path.basename(userProvidedFilename)
         }
 
+        // Decode the filename
+        try {
+            const decoder = new TextDecoder('utf-8')
+            filename = decoder.decode(Buffer.from(filename, 'latin1'))
+        } catch (error) {
+            console.error('Failed to decode filename:', error)
+            // Fallback to original name
+        }
+
         if (req.user && process.env.IMAGE_SCOPE === 'user') {
             const userId = getUserId(req.user)
 
@@ -54,10 +74,7 @@ export const localStorage = diskStorage({
                 throw new Error('User ID not found')
             }
 
-            filename = path.join(userId, filename)
-
-            // Update the request filename
-            req.body.file = filename
+            req.body.file = path.join(userId, filename)
         }
 
         // If the user provided a filename, we need to use it

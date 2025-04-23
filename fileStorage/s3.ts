@@ -38,6 +38,15 @@ if (S3_BUCKET) {
 
             let filename = userProvidedFilename || originalname
 
+            // Decode the filename
+            try {
+                const decoder = new TextDecoder('utf-8')
+                filename = decoder.decode(Buffer.from(filename, 'latin1'))
+            } catch (error) {
+                console.error('Failed to decode filename:', error)
+                // Fallback to original name
+            }
+
             if (req.user && process.env.IMAGE_SCOPE === 'user') {
                 const userId = getUserId(req.user)
 
