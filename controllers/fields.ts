@@ -6,22 +6,20 @@ import { getUserId } from '../utils/user'
 import { PipelineStage } from 'mongoose'
 
 export const read_fields = async (_: Request, res: Response) => {
-    const pipeline: PipelineStage[] = []
+    const pipeline: PipelineStage[] = [
+        { $sample: { size: 100000 } },
+        { $project: { arrayofkeyvalue: { $objectToArray: '$$ROOT.data' } } },
+        { $unwind: '$arrayofkeyvalue' },
+        { $group: { _id: null, fields: { $addToSet: '$arrayofkeyvalue.k' } } },
+    ]
 
     if (process.env.IMAGE_SCOPE === 'user') {
         const id = getUserId(res.locals.user)
 
         if (!id) throw createHttpError(401, 'User ID not provided')
 
-        pipeline.push({ $match: { userId: id } })
+        pipeline.unshift({ $match: { userId: id } })
     }
-
-    pipeline.push(
-        { $sample: { size: 100000 } },
-        { $project: { arrayofkeyvalue: { $objectToArray: '$$ROOT.data' } } },
-        { $unwind: '$arrayofkeyvalue' },
-        { $group: { _id: null, fields: { $addToSet: '$arrayofkeyvalue.k' } } }
-    )
 
     const [result] = await Image.aggregate(pipeline)
 
