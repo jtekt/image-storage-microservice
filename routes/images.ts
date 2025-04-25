@@ -13,11 +13,18 @@ import {
 } from '../controllers/images'
 import { localStorage } from '../fileStorage/local'
 import { s3Storage } from '../fileStorage/s3'
+import { multerImageFilter } from '../fileStorage/common'
 
 const router = Router({ mergeParams: true })
 
 const storage = s3Storage || localStorage
-const upload = multer({ storage })
+const upload = multer({
+    storage,
+    limits: {
+        files: 1,
+    },
+    fileFilter: multerImageFilter,
+})
 
 router
     .route('/')

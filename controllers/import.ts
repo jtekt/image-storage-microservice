@@ -14,15 +14,19 @@ import {
     create_directory_if_not_exists,
 } from '../fileStorage/local'
 
-const mongodb_data_import = (documents: IImage[]) => {
-    // TODO: Consider bulkwrite
-    // Querying by file because unique and imports without mongodb data do not have an ID
-    const promises = documents.map((document) =>
-        Image.findOneAndUpdate({ file: document.file }, document, {
-            upsert: true,
-        })
-    )
-    return Promise.all(promises)
+const mongodb_data_import = async (documents: IImage[]) => {
+    const operations = documents.map((doc) => {
+        const { _id, ...docWithoutId } = doc
+        return {
+            updateOne: {
+                filter: { file: doc.file },
+                update: { $set: docWithoutId as Omit<IImage, '_id'> },
+                upsert: true,
+            },
+        }
+    })
+
+    return await Image.bulkWrite(operations, { ordered: false })
 }
 
 const extract_single_file = (file: File, output_directory: string) =>
@@ -45,19 +49,11 @@ const extract_single_file = (file: File, output_directory: string) =>
 
 export const import_images = async (req: Request, res: Response) => {
     if (s3Client) throw createHttpError(400, `Import is not supported with S3`)
+
     const { file, body } = req
 
     if (!file) throw createHttpError(400, 'File not provided')
-    const { mimetype, filename } = file
-
-    const allowed_mimetypes = [
-        'application/x-zip-compressed',
-        'application/zip',
-        'application/octet-stream',
-    ]
-
-    if (!allowed_mimetypes.includes(mimetype))
-        throw createHttpError(400, `Mimetype ${mimetype} is not allowed`)
+    const { filename } = file
 
     console.log(`[Import] Importing archive...`)
 

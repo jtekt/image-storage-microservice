@@ -18,8 +18,6 @@ export const upload_image = async (req: Request, res: Response) => {
     // NOTE: Req.body is multipart form-data
     if (!req.file) throw createHttpError(400, 'File not provided')
 
-    // TODO: Only allow images
-
     const { originalname } = req.file
 
     const {

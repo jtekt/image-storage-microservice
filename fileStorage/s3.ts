@@ -48,10 +48,7 @@ export const streamFileFromS3 = async (res: Response, Key: string) => {
     const stream = await s3Client.getObject(S3_BUCKET, Key)
     const { ext } = path.parse(Key)
     res.setHeader('Content-Type', `image/${ext.replace('.', '')}`)
-    // res.setHeader(
-    //     'Content-Disposition',
-    //     `attachment; filename=${encodeURIComponent(base)}`
-    // )
+
     stream.on('data', (chunk) => {
         res.write(chunk)
     })
@@ -65,6 +62,6 @@ export const streamFileFromS3 = async (res: Response, Key: string) => {
 
 export const deleteFileFromS3 = async (Key: string) => {
     if (!S3_BUCKET || !s3Client) throw 'S3 not configured'
-    const options = { Key, Bucket: S3_BUCKET }
+
     await s3Client.removeObject(S3_BUCKET, Key)
 }
