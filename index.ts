@@ -3,7 +3,7 @@ dotenv.config()
 import { author, name as application_name, version } from './package.json'
 console.log(`Image storage v${version}`)
 
-import express, { NextFunction, Request, Response } from 'express'
+import express, { Request, Response } from 'express'
 import 'express-async-errors'
 import cors from 'cors'
 import promBundle from 'express-prom-bundle'
@@ -27,6 +27,7 @@ const {
     AUTHORIZED_GROUPS,
     GROUP_AUTHORIZATION_URL,
     TZ,
+    IMAGE_SCOPE,
 } = process.env
 
 process.env.TZ = TZ || 'Asia/Tokyo'
@@ -44,7 +45,7 @@ app.use(cors(corsOptions))
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 app.use(promBundle(promOptions))
 
-app.get('/', (req, res) => {
+app.get('/', (_, res) => {
     res.send({
         application_name,
         author,
@@ -75,10 +76,18 @@ app.get('/', (req, res) => {
                   }
                 : undefined,
         },
+        image_scope: IMAGE_SCOPE,
     })
 })
-if (OIDC_JWKS_URI) app.use(oidcAuth({ jwksUri: OIDC_JWKS_URI }))
-else if (IDENTICATION_URL) app.use(legacyAuth({ url: IDENTICATION_URL }))
+
+if (OIDC_JWKS_URI) {
+    console.log(`Enabling OIDC authentication`)
+    app.use(oidcAuth({ jwksUri: OIDC_JWKS_URI }))
+} else if (IDENTICATION_URL) {
+    console.log(`Enabling legacy authentication`)
+    app.use(legacyAuth({ url: IDENTICATION_URL }))
+}
+
 if (AUTHORIZED_GROUPS && GROUP_AUTHORIZATION_URL) {
     console.log(`Enabling group-based authorization`)
     const group_auth_options = {
@@ -94,7 +103,7 @@ app.use('/images', images_router)
 app.use('/fields', fields_router)
 
 // Express error handling
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+app.use((err: any, _: Request, res: Response) => {
     console.error(err)
     const { statusCode = 500, message } = err
     res.status(statusCode).send(message)

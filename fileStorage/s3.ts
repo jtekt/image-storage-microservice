@@ -4,6 +4,7 @@ import { Client } from 'minio'
 import multerMinIOStorage from 'multer-minio-storage'
 import { parse_post_body } from '../utils'
 import { StorageEngine } from 'multer'
+import { getUserId } from '../utils/user'
 export const {
     S3_REGION,
     S3_ACCESS_KEY_ID = '',
@@ -34,7 +35,31 @@ if (S3_BUCKET) {
         bucket: S3_BUCKET,
         key: (req: Request, { originalname }, callback) => {
             const { file: userProvidedFilename } = parse_post_body(req.body)
-            const filename = userProvidedFilename || originalname
+
+            let filename = userProvidedFilename || originalname
+
+            // Decode the filename
+            try {
+                const decoder = new TextDecoder('utf-8')
+                filename = decoder.decode(Buffer.from(filename, 'latin1'))
+            } catch (error) {
+                console.error('Failed to decode filename:', error)
+                // Fallback to original name
+            }
+
+            if (req.user && process.env.IMAGE_SCOPE === 'user') {
+                const userId = getUserId(req.user)
+
+                if (!userId) {
+                    throw new Error('User ID not found')
+                }
+
+                filename = path.join(userId, filename)
+
+                // Update the request filename
+                req.body.file = filename
+            }
+
             callback(null, filename)
         },
     })

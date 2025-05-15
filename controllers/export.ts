@@ -19,6 +19,7 @@ import {
     uploadsDirectoryPath,
 } from '../fileStorage/local'
 import createHttpError from 'http-errors'
+import { getUserId } from '../utils/user'
 
 const generate_excel = (data: IImage[], path: string) => {
     const formatted_data = data.map((item) => {
@@ -71,6 +72,14 @@ export const export_images = async (req: Request, res: Response) => {
         limit = maxExportLimit,
         skip,
     } = parse_query(req.query)
+
+    if (process.env.IMAGE_SCOPE && process.env.IMAGE_SCOPE === 'user') {
+        const id = getUserId(res.locals.user)
+
+        if (!id) throw createHttpError(401, 'User ID not provided')
+
+        query.userId = id
+    }
 
     if (limit > maxExportLimit)
         throw createHttpError(400, `Limit exceeds maximum allowed value`)

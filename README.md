@@ -15,11 +15,12 @@ The metadata for uploaded images is stored in a MongoDB database with the follow
   file: string,
   time: Date,
   data: any,
+  userId?: string
 },
 
 ```
 
-`file` and `time` are fixed system fields while `data` is used to store user-provided properties without structural contraints.
+`file` and `time` are fixed system fields while `data` is used to store user-provided properties without structural constraints.
 
 ## API
 
@@ -40,16 +41,19 @@ API documentation is available on `/docs`
 
 ## Environment variables
 
-| Variable                  | Description                                                                             |
-| ------------------------- | --------------------------------------------------------------------------------------- |
-| APP_PORT                  | Port on which the application listens for requests                                      |
-| MONGODB_CONNECTION_STRING | MongoDB Connection string                                                               |
-| UPLOADS_DIRECTORY         | Uploads directory name, defaults to "uploads". Disabled if S3 is enabled                |
-| S3_BUCKET                 | S3 Bucket to upload images. If set, images are uploaded to S3, otherwise stored locally |
-| S3_ACCESS_KEY_ID          | S3 access key ID                                                                        |
-| S3_SECRET_ACCESS_KEY      | S3 secret access key                                                                    |
-| S3_REGION                 | S3 region                                                                               |
-| S3_ENDPOINT               | S3 Endpoint                                                                             |
+| Variable                    | Description                                                                                                   | Default                | Required |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------- | -------- |
+| `APP_PORT`                  | Port on which the application listens for incoming requests                                                   | `3000`                 | No       |
+| `MONGODB_CONNECTION_STRING` | MongoDB connection string used to connect to the database                                                     | —                      | Yes      |
+| `UPLOADS_DIRECTORY`         | Local directory to store uploaded files. Disabled if S3 is used                                               | `"uploads"`            | No       |
+| `S3_BUCKET`                 | Name of the S3 bucket where images will be uploaded. If unset, local storage is used                          | —                      | No       |
+| `S3_ACCESS_KEY_ID`          | Access key ID for connecting to the S3-compatible storage provider                                            | —                      | No       |
+| `S3_SECRET_ACCESS_KEY`      | Secret access key for connecting to the S3-compatible storage provider                                        | —                      | No       |
+| `S3_REGION`                 | AWS region of the S3 bucket                                                                                   | —                      | No       |
+| `S3_ENDPOINT`               | Custom S3-compatible endpoint (e.g., for MinIO)                                                               | —                      | No       |
+| `OIDC_JWKS_URI`             | JWKS URI of the OIDC authentication provider. If provided, users must be authenticated to access the storage. | —                      | No       |
+| `IMAGE_SCOPE`               | Logical scope of the images, e.g., user-specific . Enables scoped access control. Avowed values [`user`]      | —                      | No       |
+| `USER_IDENTIFIER`           | Field name used to extract the user ID from the authentication token. Only used if `IMAGE_SCOPE` is set.      | `"preferred_username"` | No       |
 
 ## Running in development
 
