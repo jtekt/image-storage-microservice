@@ -207,8 +207,7 @@ describe('/images', () => {
                 .post(`/import`)
                 .attach('archive', 'test/export.zip')
 
-            const expectedCode = S3_BUCKET ? 400 : 200
-            expect(status).to.equal(expectedCode)
+            expect(status).to.equal(200)
         })
     })
 

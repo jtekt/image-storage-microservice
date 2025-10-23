@@ -7,7 +7,7 @@ import { parse_formdata_fields } from '../utils'
 import { Request, Response } from 'express'
 import { mongodb_export_file_name, export_excel_file_name } from '../config'
 import { rimraf } from 'rimraf'
-import { s3Client } from '../fileStorage/s3'
+import { S3_BUCKET, s3Client } from '../fileStorage/s3'
 import {
     tempDirectoryPath,
     uploadsDirectoryPath,
@@ -45,7 +45,6 @@ const extract_single_file = (file: File, output_directory: string) =>
     })
 
 export const import_images = async (req: Request, res: Response) => {
-    if (s3Client) throw createHttpError(400, `Import is not supported with S3`)
     const { file, body } = req
 
     if (!file) throw createHttpError(400, 'File not provided')
@@ -63,79 +62,64 @@ export const import_images = async (req: Request, res: Response) => {
     console.log(`[Import] Importing archive...`)
 
     const archive_path = path.join(tempDirectoryPath, filename)
-
-    const directory = await unzipper.Open.file(archive_path)
+    const archive = await unzipper.Open.file(archive_path)
 
     // Unzip the archive to the uploads directory
     // This is very memory intensive for large archives
     // await directory.extract({ path: uploadsDirectoryPath })
     // This method is not too memory intensive (about 300Mi for a 3Gi archive)
     // TODO: find way to just unzip without using out too much memory
-    for await (const file of directory.files) {
-        // TODO: only move images
-        await extract_single_file(file, uploadsDirectoryPath)
+    const ignoredFiles = [mongodb_export_file_name, export_excel_file_name]
+    const filteredFiles = archive.files.filter(
+        (f) => !ignoredFiles.includes(f.path)
+    )
+
+    for (const file of filteredFiles) {
+        if (s3Client && S3_BUCKET)
+            await s3Client.putObject(S3_BUCKET, file.path, file.stream())
+        else await extract_single_file(file, uploadsDirectoryPath)
     }
 
     // The user can pass data for all the images of the zip
     const userDefinedData = parse_formdata_fields(body)
 
-    const json_file_path = path.join(
-        uploadsDirectoryPath,
-        mongodb_export_file_name
-    )
-    const excel_file_path = path.join(
-        uploadsDirectoryPath,
-        export_excel_file_name
-    )
-
-    let userId: string | undefined = undefined
+    let userId: string
     if (process.env.IMAGE_SCOPE === 'user') {
         const id = getUserId(res.locals.user)
-
-        // If no id found, throw an error
         if (!id) throw createHttpError(401, 'User ID not provided')
         userId = id
     }
 
-    const json_file_exists = directory.files.some(
+    const json_file = archive.files.find(
         ({ path }) => path === mongodb_export_file_name
     )
 
-    if (json_file_exists) {
+    if (json_file) {
         // Restore DB records MonggoDB backup
         console.log(`[Import] importing and restoring MongDB data`)
-        // TODO: Read file directly from archive
 
-        const jsonFileDataBuffer = fs.readFileSync(json_file_path)
-        // TODO: check if this is really an error
-        // @ts-ignore
-        const mongodbData = JSON.parse(jsonFileDataBuffer)
+        const jsonBuffer = await json_file.buffer()
+        const mongodbData = JSON.parse(jsonBuffer.toString('utf-8'))
 
         mongodbData.forEach((document: IImage) => {
             document.data = { ...document.data, ...userDefinedData }
-            if (userId) {
-                document.userId = userId
-            }
+            if (userId) document.userId = userId
         })
 
         await mongodb_data_import(mongodbData)
     } else {
         // No backup is provided
         console.log(`[Import] importing without restoring MongoDB data`)
-        const mongodbData: IImage[] = directory.files.map((f) => ({
+        const mongodbData: IImage[] = filteredFiles.map((f) => ({
             file: f.path,
             data: userDefinedData,
-            ...(userId ? { userId } : {}),
+            ...(userId ? { userId } : {}), // TODO: this feels weird
         }))
         await mongodb_data_import(mongodbData)
     }
 
     // Remove the archive when done extracting
     await rimraf(archive_path)
-
-    // remove excel and json (will not be needed if only copying images from archive)
-    if (fs.existsSync(excel_file_path)) rimraf(excel_file_path)
-    if (fs.existsSync(json_file_path)) rimraf(json_file_path)
 
     console.log(`[Import] Images from archive ${filename} imported`)
     res.send({ file: filename })
