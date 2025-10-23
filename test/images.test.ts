@@ -197,8 +197,7 @@ describe('/images', () => {
     describe('GET /export', () => {
         it('Should allow the export of data', async () => {
             const { status } = await request(app).get(`/export`)
-            const expectedCode = S3_BUCKET ? 400 : 200
-            expect(status).to.equal(expectedCode)
+            expect(status).to.equal(200)
         })
     })
 
