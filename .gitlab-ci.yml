@@ -32,19 +32,19 @@ build-x86:
         - docker build -t ${CONTAINER_IMAGE_TEST_X86} .
         - docker push ${CONTAINER_IMAGE_TEST_X86}
 
-build-aarch64:
-    stage: build
-    tags:
-        - aarch64
-    only:
-        - tags
-    before_script:
-        - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ECR_PUBLIC_URL}
-    script:
-        - docker build -f Dockerfile-aarch64 -t ${CONTAINER_IMAGE_TEST_AARCH64} .
-        - docker push ${CONTAINER_IMAGE_TEST_AARCH64}
+# build-aarch64:
+#     stage: build
+#     tags:
+#         - aarch64
+#     only:
+#         - tags
+#     before_script:
+#         - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ECR_PUBLIC_URL}
+#     script:
+#         - docker build -f Dockerfile-aarch64 -t ${CONTAINER_IMAGE_TEST_AARCH64} .
+#         - docker push ${CONTAINER_IMAGE_TEST_AARCH64}
 
-test-x86:
+test:
     stage: test
     coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
     only:
@@ -89,16 +89,15 @@ release-x86:
         - docker tag ${CONTAINER_IMAGE_TEST_X86} ${CONTAINER_IMAGE_TAGGED_X86}
         - docker push ${CONTAINER_IMAGE}
         - docker push ${CONTAINER_IMAGE_TAGGED_X86}
-
-release-aarch64:
-    stage: release
-    only:
-        - tags
-    tags:
-        - dind
-    before_script:
-        - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ECR_PUBLIC_URL}
-    script:
-        - docker pull ${CONTAINER_IMAGE_TEST_AARCH64}
-        - docker tag ${CONTAINER_IMAGE_TEST_AARCH64} ${CONTAINER_IMAGE_TAGGED_AARCH64}
-        - docker push ${CONTAINER_IMAGE_TAGGED_AARCH64}
+# release-aarch64:
+#     stage: release
+#     only:
+#         - tags
+#     tags:
+#         - dind
+#     before_script:
+#         - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ECR_PUBLIC_URL}
+#     script:
+#         - docker pull ${CONTAINER_IMAGE_TEST_AARCH64}
+#         - docker tag ${CONTAINER_IMAGE_TEST_AARCH64} ${CONTAINER_IMAGE_TAGGED_AARCH64}
+#         - docker push ${CONTAINER_IMAGE_TAGGED_AARCH64}
