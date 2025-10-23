@@ -1,10 +1,8 @@
-import dotenv from 'dotenv'
-dotenv.config()
+import 'dotenv/config'
 import { author, name as application_name, version } from './package.json'
 console.log(`Image storage v${version}`)
 
 import express, { Request, Response } from 'express'
-import 'express-async-errors'
 import cors from 'cors'
 import promBundle from 'express-prom-bundle'
 import oidcAuth from '@moreillon/express-oidc'
