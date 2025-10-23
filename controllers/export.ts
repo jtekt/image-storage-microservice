@@ -12,7 +12,7 @@ import {
     export_excel_file_name,
     maxExportLimit,
 } from '../config'
-import { s3Client } from '../fileStorage/s3'
+import { S3_BUCKET, s3Client } from '../fileStorage/s3'
 import {
     create_directory_if_not_exists,
     tempDirectoryPath,
@@ -52,8 +52,6 @@ const generate_json = (data: IImage[], path: string) => {
 }
 
 export const export_images = async (req: Request, res: Response) => {
-    if (s3Client) throw createHttpError(400, `Import is not supported with S3`)
-
     // Making zip name unique so as to allow parallel exports
     const export_id = uuidv4()
 
@@ -75,9 +73,7 @@ export const export_images = async (req: Request, res: Response) => {
 
     if (process.env.IMAGE_SCOPE && process.env.IMAGE_SCOPE === 'user') {
         const id = getUserId(res.locals.user)
-
         if (!id) throw createHttpError(401, 'User ID not provided')
-
         query.userId = id
     }
 
@@ -125,9 +121,17 @@ export const export_images = async (req: Request, res: Response) => {
 
     archive.pipe(output)
     // Adding files one by one instead of whole folder because query parameters might be used as filters
-    images.forEach(({ file }) =>
-        archive.file(path.join(uploadsDirectoryPath, file), { name: file })
-    )
+
+    for (const { file } of images) {
+        if (s3Client && S3_BUCKET) {
+            console.log('EXPORTING WITH S3')
+            const objectStream = await s3Client.getObject(S3_BUCKET, file)
+            const fileName = path.basename(file)
+            archive.append(objectStream, { name: fileName })
+        } else {
+            archive.file(path.join(uploadsDirectoryPath, file), { name: file })
+        }
+    }
 
     // Adding excel and json files
     archive.file(json_file_path, { name: mongodb_export_file_name })
