@@ -41,7 +41,7 @@ const extract_single_file = (file: File, output_directory: string) =>
         file.stream()
             .pipe(fs.createWriteStream(output_path))
             .on('error', reject)
-            .on('finish', resolve)
+            .on('finish', () => resolve(0))
     })
 
 export const import_images = async (req: Request, res: Response) => {
