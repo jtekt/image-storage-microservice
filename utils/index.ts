@@ -22,7 +22,9 @@ export const parse_query = (rawQuery: any) => {
         file,
         filter,
         select,
+        // Multiple way to accept ids
         ids,
+        ['ids[]']: idsBrackets, // For Express v5
         ...rest
     } = rawQuery
 
@@ -50,8 +52,13 @@ export const parse_query = (rawQuery: any) => {
         else query[`data.${key}`] = value
     }
 
-    if (ids) {
-        const idArray = Array.isArray(ids) ? ids : [ids]
+    const idQueryParam = ids || idsBrackets
+
+    if (idQueryParam) {
+        // Make it an array if not already
+        const idArray = Array.isArray(idQueryParam)
+            ? idQueryParam
+            : [idQueryParam]
         query._id = { $in: idArray }
     }
 
