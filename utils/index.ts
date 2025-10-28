@@ -11,7 +11,7 @@ const isNotUndefined = (value: any) => value && value !== 'undefined'
 const stringIsValidDate = (s: string) => !isNaN(new Date(s).getTime())
 
 export const parse_query = (rawQuery: any) => {
-    const {
+    let {
         skip = '0',
         sort = 'time',
         order = '1',
@@ -47,6 +47,8 @@ export const parse_query = (rawQuery: any) => {
         const value = rest[key]
         if (isNotUndefined(regex))
             query[`data.${key}`] = { $regex: value, $options: 'i' }
+        // Had to add this validation for issue #8
+        else if(key === "ids[]") ids = value
         else query[`data.${key}`] = value
     }
 
@@ -93,7 +95,7 @@ const nestInDataField = (obj: any) =>
         {}
     )
 
-export const parseUpdateBody = (body: any) => {
+    export const parseUpdateBody = (body: any) => {
     const { $unset = {}, ...$set } = body
     return { $set: nestInDataField($set), $unset: nestInDataField($unset) }
 }
