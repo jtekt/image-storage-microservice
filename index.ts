@@ -38,6 +38,7 @@ const corsOptions = {
 db.connect()
 
 export const app = express()
+app.set('query parser', 'extended')
 app.use(express.json())
 app.use(cors(corsOptions))
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
