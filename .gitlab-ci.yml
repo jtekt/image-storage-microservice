@@ -110,8 +110,7 @@ release-x86:
 deploy:
     stage: deploy
     only:
-        - master
-        - main
+        - tags
     tags:
         - internal
     script:
