@@ -60,8 +60,7 @@ export const read_images = async (req: Request, res: Response) => {
     // Limiting here because parse_query also used in export
     const {
         query,
-        sort,
-        order,
+        sortStatement,
         limit = defaultLimit,
         skip,
         select,
@@ -76,7 +75,7 @@ export const read_images = async (req: Request, res: Response) => {
     }
 
     const items = await Image.find(query)
-        .sort({ [sort]: order })
+        .sort(sortStatement)
         .skip(Number(skip))
         .limit(limit)
         .select(select)

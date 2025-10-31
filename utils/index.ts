@@ -11,9 +11,10 @@ const isNotUndefined = (value: any) => value && value !== 'undefined'
 const stringIsValidDate = (s: string) => !isNaN(new Date(s).getTime())
 
 export const parse_query = (rawQuery: any) => {
+    // TODO: using zod would be helpful
     const {
         skip = '0',
-        sort = 'time',
+        sort,
         order = '1',
         limit, // Do not put default here as set in /images and /export
         from,
@@ -70,15 +71,16 @@ export const parse_query = (rawQuery: any) => {
         query.time.$gt = new Date(from)
     }
 
+    const sortStatement = sort ? { [sort]: order } : undefined
+
     return {
         query,
         to,
         from,
         limit,
         skip,
-        sort,
-        order,
         select,
+        sortStatement,
     }
 }
 

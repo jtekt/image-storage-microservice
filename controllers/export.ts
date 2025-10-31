@@ -65,8 +65,7 @@ export const export_images = async (req: Request, res: Response) => {
 
     const {
         query,
-        sort,
-        order,
+        sortStatement,
         limit = maxExportLimit,
         skip,
     } = parse_query(req.query)
@@ -81,7 +80,7 @@ export const export_images = async (req: Request, res: Response) => {
         throw createHttpError(400, `Limit exceeds maximum allowed value`)
 
     const images = await Image.find(query)
-        .sort({ [sort]: order })
+        .sort(sortStatement)
         .skip(Number(skip))
         .limit(limit)
 
