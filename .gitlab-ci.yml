@@ -21,7 +21,7 @@ variables:
     TEST_NETWORK: tdd
     TEST_DB: tdd-db
 
-    K8S_NODEPORT: 30011
+    K8S_NODEPORT: 30010
     K8S_NAMESPACE: iss
 
 build-x86:
