@@ -20,6 +20,9 @@ variables:
     TEST_NETWORK: tdd
     TEST_DB: tdd-db
 
+    K8S_NODEPORT: 30011
+    K8S_NAMESPACE: iss
+
 build-x86:
     stage: build
     only:
@@ -89,6 +92,7 @@ release-x86:
         - docker tag ${CONTAINER_IMAGE_TEST_X86} ${CONTAINER_IMAGE_TAGGED_X86}
         - docker push ${CONTAINER_IMAGE}
         - docker push ${CONTAINER_IMAGE_TAGGED_X86}
+
 # release-aarch64:
 #     stage: release
 #     only:
@@ -101,3 +105,17 @@ release-x86:
 #         - docker pull ${CONTAINER_IMAGE_TEST_AARCH64}
 #         - docker tag ${CONTAINER_IMAGE_TEST_AARCH64} ${CONTAINER_IMAGE_TAGGED_AARCH64}
 #         - docker push ${CONTAINER_IMAGE_TAGGED_AARCH64}
+
+deploy:
+    stage: deploy
+    only:
+        - master
+        - main
+    tags:
+        - internal
+    script:
+        - envsubst < kubernetes_manifest.yml | kubectl apply -f -
+    environment:
+        name: gpu
+        kubernetes:
+            namespace: ${K8S_NAMESPACE}
