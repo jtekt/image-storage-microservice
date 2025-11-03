@@ -21,7 +21,11 @@ spec:
                           cpu: 10m
                       limits:
                           memory: 1Gi
-                          cpu: 10000m
+                          cpu: 1000m
+                  envFrom:
+                      - secretRef:
+                            name: iss-env
+
 ---
 apiVersion: v1
 kind: Service
