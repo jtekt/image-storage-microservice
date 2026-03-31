@@ -14,7 +14,7 @@ spec:
         spec:
             containers:
                 - name: ${APPLICATION_NAME}
-                  image: ${CONTAINER_IMAGE}
+                  image: ${CONTAINER_IMAGE_TAGGED_X86}
                   resources:
                       requests:
                           memory: 25Mi
