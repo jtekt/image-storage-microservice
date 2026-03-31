@@ -58,12 +58,11 @@ export const parse_query = (rawQuery: any) => {
     }
 
     // Time filters
-    // Using $gt and $lt instead of $gte and $lte for annotation tool
     if (isNotUndefined(to) || isNotUndefined(from)) query.time = {}
     if (isNotUndefined(to)) {
         if (!stringIsValidDate(to))
             throw createHttpError(400, 'Parameter "to" is not a valid date')
-        query.time.$lt = new Date(to)
+        query.time.$lte = new Date(to)
     }
     if (isNotUndefined(from)) {
         if (!stringIsValidDate(from))
