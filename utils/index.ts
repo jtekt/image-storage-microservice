@@ -67,7 +67,7 @@ export const parse_query = (rawQuery: any) => {
     if (isNotUndefined(from)) {
         if (!stringIsValidDate(from))
             throw createHttpError(400, 'Parameter "from" is not a valid date')
-        query.time.$gt = new Date(from)
+        query.time.$gte = new Date(from)
     }
 
     const sortStatement = sort ? { [sort]: order } : undefined
