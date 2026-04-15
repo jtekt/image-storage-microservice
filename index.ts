@@ -17,6 +17,7 @@ import images_router from './routes/images'
 import import_router from './routes/import'
 import export_router from './routes/export'
 import fields_router from './routes/fields'
+import { createAuthMiddleware } from './auth'
 
 const {
     APP_PORT = 80,
@@ -79,13 +80,8 @@ app.get('/', (_, res) => {
     })
 })
 
-if (OIDC_JWKS_URI) {
-    console.log(`Enabling OIDC authentication`)
-    app.use(oidcAuth({ jwksUri: OIDC_JWKS_URI }))
-} else if (IDENTICATION_URL) {
-    console.log(`Enabling legacy authentication`)
-    app.use(legacyAuth({ url: IDENTICATION_URL }))
-}
+// plug in the middleware
+app.use(createAuthMiddleware())
 
 if (AUTHORIZED_GROUPS && GROUP_AUTHORIZATION_URL) {
     console.log(`Enabling group-based authorization`)
