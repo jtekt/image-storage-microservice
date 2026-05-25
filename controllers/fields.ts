@@ -26,6 +26,7 @@ export const read_fields = async (_: Request, res: Response) => {
     if (!result) return res.send([])
 
     const { fields } = result
+    fields.sort((a: string, b: string) => a.localeCompare(b))
 
     res.send(fields)
 }
