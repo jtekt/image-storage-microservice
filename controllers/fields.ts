@@ -42,8 +42,19 @@ export const read_field_unique_values = async (req: Request, res: Response) => {
 
         query.userId = id
     }
+    const fieldPath = `data.${field_name}`
+    const distinctQuery = {
+        ...query,
+        [fieldPath]: {
+            ...(query[fieldPath] && typeof query[fieldPath] === 'object'
+                ? query[fieldPath]
+                : {}),
+            $ne: null,
+            $exists: true,
+        },
+    }
 
-    const items = await Image.distinct(`data.${field_name}`, query)
+    const items = await Image.distinct(fieldPath, distinctQuery)
 
     res.send(items)
 }
