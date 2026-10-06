@@ -1,6 +1,5 @@
 import 'dotenv/config'
-import { author, name as application_name, version } from './package.json'
-console.log(`Image storage v${version}`)
+import { author, name as application_name } from './package.json'
 
 import express, { Request, Response } from 'express'
 import cors from 'cors'
@@ -27,6 +26,7 @@ const {
     GROUP_AUTHORIZATION_URL,
     TZ,
     IMAGE_SCOPE,
+    APP_VERSION = 'dev',
 } = process.env
 
 process.env.TZ = TZ || 'Asia/Tokyo'
@@ -49,7 +49,7 @@ app.get('/', (_, res) => {
     res.send({
         application_name,
         author,
-        version,
+        version: APP_VERSION,
         timeZone: process.env.TZ,
         mongodb: {
             connection_string: db.redactedConnectionString,
