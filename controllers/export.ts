@@ -58,15 +58,13 @@ export const export_images = async (req: Request, res: Response) => {
     // Create temp directory if it does not exist
     create_directory_if_not_exists(tempDirectoryPath)
 
-    // TODO: Store everything in a dedicated directory
-    const temp_zip_path = path.join(tempDirectoryPath, `${export_id}.zip`)
     const json_file_path = path.join(tempDirectoryPath, `${export_id}.json`)
     const excel_file_path = path.join(tempDirectoryPath, `${export_id}.xlsx`)
 
     const {
         query,
         sortStatement,
-        limit = maxExportLimit,
+        limit: requestedLimit,
         skip,
     } = parse_query(req.query)
 
@@ -76,9 +74,22 @@ export const export_images = async (req: Request, res: Response) => {
         query.userId = id
     }
 
-    if (limit > maxExportLimit)
-        throw createHttpError(400, `Limit exceeds maximum allowed value`)
+    // Reject if explicit limit exceeds max
+    if (requestedLimit !== undefined && requestedLimit > maxExportLimit)
+        throw createHttpError(
+            400,
+            `Export limit exceeds maximum of ${maxExportLimit}. Please add filters to reduce the selection or export in batches.`
+        )
 
+    // Reject if the matching result set exceeds the max, so the user knows to filter or batch
+    const totalCount = await Image.countDocuments(query)
+    if (totalCount > maxExportLimit)
+        throw createHttpError(
+            400,
+            `Query matches ${totalCount} images which exceeds the export limit of ${maxExportLimit}. Please add filters to reduce the selection or export in batches.`
+        )
+
+    const limit = Math.min(requestedLimit ?? maxExportLimit, totalCount)
     const images = await Image.find(query)
         .sort(sortStatement)
         .skip(Number(skip))
@@ -89,36 +100,31 @@ export const export_images = async (req: Request, res: Response) => {
     generate_excel(images_json, excel_file_path)
     generate_json(images_json, json_file_path)
 
-    const output = fs.createWriteStream(temp_zip_path)
-    const archiver_options = { zlib: { level: 9 } }
-    const archive = archiver('zip', archiver_options)
+    // Set headers upfront so the browser starts the download immediately
+    res.setHeader('Content-Type', 'application/zip')
+    res.setHeader('Content-Disposition', 'attachment; filename="export.zip"')
 
-    // TODO: use async await
-    output.on('close', async () => {
-        res.download(temp_zip_path)
+    const archive = archiver('zip', { zlib: { level: 9 } })
 
-        // Cleanup of generated files
-        await rimraf(excel_file_path)
-        await rimraf(json_file_path)
-        await rimraf(temp_zip_path)
-
-        console.log(`[Export] Images exported`)
-    })
-
-    // good practice to catch warnings (ie stat failures and other non-blocking errors)
-    archive.on('warning', function (err) {
+    archive.on('warning', (err) => {
         if (err.code === 'ENOENT') console.log(err)
         else throw err
     })
 
-    // good practice to catch this error explicitly
-    archive.on('error', function (err) {
+    archive.on('error', (err) => {
         throw err
+    })
+
+    archive.on('finish', async () => {
+        await rimraf(excel_file_path)
+        await rimraf(json_file_path)
+        console.log(`[Export] Images exported`)
     })
 
     console.log(`[Export] Exporting started`)
 
-    archive.pipe(output)
+    // Pipe directly to response — browser download starts immediately without waiting for zip to complete
+    archive.pipe(res)
     // Adding files one by one instead of whole folder because query parameters might be used as filters
 
     for (const { file } of images) {
