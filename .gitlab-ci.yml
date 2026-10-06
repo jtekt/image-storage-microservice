@@ -4,10 +4,6 @@ stages:
     - release
     - deploy
 
-image: moreillon/tdd-dind
-services:
-    - name: docker:24.0.7-dind
-
 variables:
     APPLICATION_NAME: image-storage-service
     AWS_ECR_PUBLIC_URL: public.ecr.aws/u6l4m3e5
@@ -26,10 +22,8 @@ variables:
 
 build-x86:
     stage: build
-    only:
-        - tags
-    tags:
-        - dind
+    rules:
+        - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/
     before_script:
         - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ECR_PUBLIC_URL}
     script:
@@ -51,10 +45,8 @@ build-x86:
 test:
     stage: test
     coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
-    only:
-        - tags
-    tags:
-        - dind
+    rules:
+        - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/
     before_script:
         - docker network create ${TEST_NETWORK}
         - >
@@ -76,10 +68,8 @@ test:
 
 release-x86:
     stage: release
-    only:
-        - tags
-    tags:
-        - dind
+    rules:
+        - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/
     before_script:
         - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ECR_PUBLIC_URL}
     script:
@@ -104,13 +94,11 @@ release-x86:
 
 deploy:
     stage: deploy
-    only:
-        - tags
+    rules:
+        - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/
     tags:
         - internal
     script:
-        - envsubst < kubernetes_manifest.yml | kubectl apply -f -
-    environment:
-        name: gpu
-        kubernetes:
-            namespace: ${K8S_NAMESPACE}
+        - kubectl config use-context on-premise-gpu-k8s-cluster/gitlab-agent-for-kubernetes:gpu-microk8s
+        - kubectl config set-context --current --namespace=${K8S_NAMESPACE}
+          - envsubst < kubernetes_manifest.yml | kubectl apply -f -
