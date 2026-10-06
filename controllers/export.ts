@@ -131,8 +131,7 @@ export const export_images = async (req: Request, res: Response) => {
         if (s3Client && S3_BUCKET) {
             console.log('EXPORTING WITH S3')
             const objectStream = await s3Client.getObject(S3_BUCKET, file)
-            const fileName = path.basename(file)
-            archive.append(objectStream, { name: fileName })
+            archive.append(objectStream, { name: file })
         } else {
             archive.file(path.join(uploadsDirectoryPath, file), { name: file })
         }
