@@ -25,9 +25,13 @@ build-x86:
     rules:
         - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/
     before_script:
-        - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ECR_PUBLIC_URL}
+        # - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ECR_PUBLIC_URL}
+        # Create repository in ECR if it does not exist yet
+        - >
+            aws ecr-public create-repository --region us-east-1 --repository-name ${APPLICATION_NAME}
+            || echo "Repository might have already existed"
     script:
-        - docker build -t ${CONTAINER_IMAGE_TEST_X86} .
+        - docker build --build-arg APP_VERSION=${CI_COMMIT_TAG} -t ${CONTAINER_IMAGE_TEST_X86} .
         - docker push ${CONTAINER_IMAGE_TEST_X86}
 
 # build-aarch64:
@@ -39,7 +43,7 @@ build-x86:
 #     before_script:
 #         - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ECR_PUBLIC_URL}
 #     script:
-#         - docker build -f Dockerfile-aarch64 -t ${CONTAINER_IMAGE_TEST_AARCH64} .
+#         - docker build --build-arg APP_VERSION=${CI_COMMIT_TAG} -f Dockerfile-aarch64 -t ${CONTAINER_IMAGE_TEST_AARCH64} .
 #         - docker push ${CONTAINER_IMAGE_TEST_AARCH64}
 
 test:
@@ -70,8 +74,8 @@ release-x86:
     stage: release
     rules:
         - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/
-    before_script:
-        - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ECR_PUBLIC_URL}
+    # before_script:
+    #     - aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${AWS_ECR_PUBLIC_URL}
     script:
         - docker pull ${CONTAINER_IMAGE_TEST_X86}
         - docker tag ${CONTAINER_IMAGE_TEST_X86} ${CONTAINER_IMAGE}
@@ -101,4 +105,4 @@ deploy:
     script:
         - kubectl config use-context on-premise-gpu-k8s-cluster/gitlab-agent-for-kubernetes:gpu-microk8s
         - kubectl config set-context --current --namespace=${K8S_NAMESPACE}
-          - envsubst < kubernetes_manifest.yml | kubectl apply -f -
+        - envsubst < kubernetes_manifest.yml | kubectl apply -f -

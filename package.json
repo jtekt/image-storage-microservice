@@ -1,17 +1,13 @@
 {
     "name": "image_storage_microservice",
-    "version": "1.20.3",
     "description": "A microservice to store images and their metadata",
     "main": "index.ts",
     "scripts": {
         "dev": "nodemon index.ts --ignore ./uploads --ignore ./temp",
         "build": "tsc --outdir ./build -p . ",
         "start": "node ./build/index.js",
-        "test": "mocha -r ts-node/register test/*.ts --timeout 10000 --exit",
-        "test-local": "S3_BUCKET= npm run test",
-        "test-s3": "S3_BUCKET=jtekt-moreillon npm run test",
-        "test-all": "npm run test-local && npm run test-s3",
-        "coverage": "nyc npm run test-all",
+        "test": "mocha -r ts-node/register test/images.test.ts --timeout 10000 --exit",
+        "coverage": "nyc npm run test",
         "swagger-autogen": "ts-node swagger.ts"
     },
     "dependencies": {
