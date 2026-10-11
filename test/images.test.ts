@@ -307,6 +307,76 @@ describe('Image Storage API', () => {
 
             expect(status).to.equal(400)
         })
+
+        it('returns 400 for a disallowed operator in the JSON filter', async () => {
+            const filter = JSON.stringify({ $where: 'true' })
+            const { status } = await request(app).get(
+                `/images?filter=${encodeURIComponent(filter)}`
+            )
+
+            expect(status).to.equal(400)
+        })
+
+        it('returns 400 for a disallowed operator nested in the JSON filter', async () => {
+            const filter = JSON.stringify({
+                $or: [{ 'data.key1': 'value1' }, { $expr: { $eq: [1, 1] } }],
+            })
+            const { status } = await request(app).get(
+                `/images?filter=${encodeURIComponent(filter)}`
+            )
+
+            expect(status).to.equal(400)
+        })
+
+        it('returns 400 for a disallowed operator in a query parameter', async () => {
+            const { status } = await request(app).get(
+                '/images?data[key3][$where]=true'
+            )
+
+            expect(status).to.equal(400)
+        })
+
+        it('returns 400 for a field path containing an operator', async () => {
+            const filter = JSON.stringify({ 'data.$where': 'true' })
+            const { status } = await request(app).get(
+                `/images?filter=${encodeURIComponent(filter)}`
+            )
+
+            expect(status).to.equal(400)
+        })
+
+        it('accepts allowed operators in the JSON filter', async () => {
+            const filter = JSON.stringify({
+                $or: [
+                    { 'data.key1': { $in: ['value1'] } },
+                    { 'data.key4': { $exists: true } },
+                ],
+            })
+            const { status, body } = await request(app).get(
+                `/images?filter=${encodeURIComponent(filter)}`
+            )
+
+            expect(status).to.equal(200)
+            expect(body.total).to.equal(2)
+        })
+
+        it('accepts allowed operators in a query parameter', async () => {
+            const { status, body } = await request(app).get(
+                '/images?data[key3][$ne]=value3'
+            )
+
+            expect(status).to.equal(200)
+            expect(body.total).to.equal(1)
+        })
+
+        it('still supports partial matching with regex=true', async () => {
+            const { status, body } = await request(app).get(
+                '/images?data.key3=VALUE&regex=true'
+            )
+
+            expect(status).to.equal(200)
+            expect(body.total).to.equal(2)
+        })
     })
 
     // -----------------------------------------------------------------------
@@ -590,6 +660,18 @@ describe('Image Storage API', () => {
             expect(status).to.equal(200)
             expect(body.deletedCount).to.equal(0)
 
+            expect(await Image.countDocuments({})).to.equal(1)
+        })
+
+        it('returns 400 and deletes nothing for a disallowed operator', async () => {
+            await insertImage({ x: 'a' }, 'nodelete.jpg')
+
+            const filter = JSON.stringify({ $where: 'true' })
+            const { status } = await request(app).delete(
+                `/images?filter=${encodeURIComponent(filter)}`
+            )
+
+            expect(status).to.equal(400)
             expect(await Image.countDocuments({})).to.equal(1)
         })
     })
