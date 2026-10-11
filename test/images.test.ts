@@ -219,6 +219,38 @@ describe('Image Storage API', () => {
             expect(body.total).to.equal(2)
         })
 
+        it('filters images by dot notation (data.key)', async () => {
+            const { status, body } = await request(app).get(
+                '/images?data.key3=value3'
+            )
+
+            expect(status).to.equal(200)
+            expect(body.total).to.equal(2)
+        })
+
+        it('filters images by bracket notation (data[key])', async () => {
+            const { status, body } = await request(app).get(
+                '/images?data[key3]=value3'
+            )
+
+            expect(status).to.equal(200)
+            expect(body.total).to.equal(2)
+        })
+
+        it('filters images by nested bracket notation (data[parentKey][nestedKey])', async () => {
+            await insertImage(
+                { parentKey: { nestedKey1: 'nestedValue1' } },
+                'nested.jpg'
+            )
+
+            const { status, body } = await request(app).get(
+                '/images?data[parentKey][nestedKey1]=nestedValue1'
+            )
+
+            expect(status).to.equal(200)
+            expect(body.total).to.equal(1)
+        })
+
         it('returns zero results for a filter that matches nothing', async () => {
             const { status, body } = await request(app).get(
                 '/images?key1=no_such_value'

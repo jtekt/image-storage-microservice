@@ -8,6 +8,33 @@ export const parse_post_body = (body: any) => {
 }
 
 const isNotUndefined = (value: any) => value && value !== 'undefined'
+
+const isPlainObject = (v: any) =>
+    v !== null && typeof v === 'object' && !Array.isArray(v)
+
+const isNestedPath = (key: string) => !key.startsWith('$')
+
+const flattenPaths = (obj: any, prefix = ''): Record<string, any> =>
+    Object.entries(obj).reduce((acc, [k, v]) => {
+        const path = prefix ? `${prefix}.${k}` : k
+        if (isPlainObject(v) && isNestedPath(k))
+            return { ...acc, ...flattenPaths(v, path) }
+        return { ...acc, [path]: v }
+    }, {})
+
+const dataFilters = (rest: Record<string, any>): Record<string, any> =>
+    Object.entries(rest).reduce((acc, [key, value]) => {
+        if (key.startsWith('data.') || key.startsWith('data[')) {
+            // explicit data.<key> or data[key] — flatten nested objects
+            const normalized = key.replace(/\[([^\]]+)\]/g, '.$1')
+            if (isPlainObject(value))
+                return { ...acc, ...flattenPaths(value, normalized) }
+            return { ...acc, [normalized]: value }
+        }
+        // bare key=value — nest under data (deprecated path)
+        return { ...acc, [`data.${key}`]: value }
+    }, {})
+
 const stringIsValidDate = (s: string) => !isNaN(new Date(s).getTime())
 
 export const parse_query = (rawQuery: any) => {
@@ -44,11 +71,10 @@ export const parse_query = (rawQuery: any) => {
         }
     }
 
-    for (const key in rest) {
-        const value = rest[key]
+    for (const [key, value] of Object.entries(dataFilters(rest))) {
         if (isNotUndefined(regex))
-            query[`data.${key}`] = { $regex: value, $options: 'i' }
-        else query[`data.${key}`] = value
+            query[key] = { $regex: value, $options: 'i' }
+        else query[key] = value
     }
 
     if (ids) {
