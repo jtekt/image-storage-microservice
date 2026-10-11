@@ -5,6 +5,7 @@ import multerMinIOStorage from 'multer-minio-storage'
 import { parse_post_body } from '../utils'
 import { StorageEngine } from 'multer'
 import { getUserId } from '../utils/user'
+import { assertSafeFilePath } from './paths'
 export const {
     S3_REGION,
     S3_ACCESS_KEY_ID = '',
@@ -60,6 +61,12 @@ if (S3_BUCKET) {
                 req.body.file = filename
             }
 
+            try {
+                assertSafeFilePath(filename)
+            } catch (error) {
+                return callback(error)
+            }
+
             callback(null, filename)
         },
     })
@@ -70,7 +77,7 @@ if (S3_BUCKET) {
 export const streamFileFromS3 = async (res: Response, Key: string) => {
     if (!S3_BUCKET || !s3Client) throw 'S3 not configured'
 
-    const stream = await s3Client.getObject(S3_BUCKET, Key)
+    const stream = await s3Client.getObject(S3_BUCKET, assertSafeFilePath(Key))
     const { ext } = path.parse(Key)
     res.setHeader('Content-Type', `image/${ext.replace('.', '')}`)
     // res.setHeader(
@@ -91,5 +98,5 @@ export const streamFileFromS3 = async (res: Response, Key: string) => {
 export const deleteFileFromS3 = async (Key: string) => {
     if (!S3_BUCKET || !s3Client) throw 'S3 not configured'
     const options = { Key, Bucket: S3_BUCKET }
-    await s3Client.removeObject(S3_BUCKET, Key)
+    await s3Client.removeObject(S3_BUCKET, assertSafeFilePath(Key))
 }

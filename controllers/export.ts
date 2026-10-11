@@ -20,6 +20,7 @@ import {
 } from '../fileStorage/local'
 import createHttpError from 'http-errors'
 import { getUserId } from '../utils/user'
+import { assertSafeFilePath, resolveInside } from '../fileStorage/paths'
 
 const generate_excel = (data: IImage[], path: string) => {
     const formatted_data = data.map((item) => {
@@ -128,12 +129,21 @@ export const export_images = async (req: Request, res: Response) => {
     // Adding files one by one instead of whole folder because query parameters might be used as filters
 
     for (const { file } of images) {
+        try {
+            assertSafeFilePath(file)
+        } catch (error) {
+            console.error(`[Export] Skipping ${file}: invalid file path`)
+            continue
+        }
+
         if (s3Client && S3_BUCKET) {
             console.log('EXPORTING WITH S3')
             const objectStream = await s3Client.getObject(S3_BUCKET, file)
             archive.append(objectStream, { name: file })
         } else {
-            archive.file(path.join(uploadsDirectoryPath, file), { name: file })
+            archive.file(resolveInside(uploadsDirectoryPath, file), {
+                name: file,
+            })
         }
     }
 

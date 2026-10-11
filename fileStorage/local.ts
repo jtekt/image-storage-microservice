@@ -1,10 +1,10 @@
 import path from 'path'
-import { existsSync, mkdirSync } from 'fs'
+import { existsSync, mkdirSync, rmSync } from 'fs'
 import { Response } from 'express'
-import { rimrafSync } from 'rimraf'
 import { diskStorage } from 'multer'
 import { parse_post_body } from '../utils'
 import { getUserId } from '../utils/user'
+import { assertSafeFilePath, resolveInside } from './paths'
 
 export const { UPLOADS_DIRECTORY = 'uploads' } = process.env
 
@@ -16,13 +16,14 @@ export const create_directory_if_not_exists = (target: string) => {
 }
 
 export const downloadLocalFile = (res: Response, file: string) => {
-    const file_absolute_path = path.join(uploadsDirectoryPath, file)
+    const file_absolute_path = resolveInside(uploadsDirectoryPath, file)
     // Second argument is filename
     res.download(file_absolute_path, file)
 }
 
+// Not recursive: an image record only ever points to a single file
 export const removeLocalFile = (filename: string) =>
-    rimrafSync(path.join(uploadsDirectoryPath, filename))
+    rmSync(resolveInside(uploadsDirectoryPath, filename), { force: true })
 
 export const localStorage = diskStorage({
     destination: (req, _, callback) => {
@@ -30,6 +31,11 @@ export const localStorage = diskStorage({
 
         let destinationPath = uploadsDirectoryPath
         if (userProvidedFilename) {
+            try {
+                assertSafeFilePath(userProvidedFilename)
+            } catch (error) {
+                return callback(error as Error, '')
+            }
             destinationPath = path.join(
                 uploadsDirectoryPath,
                 path.dirname(userProvidedFilename)
@@ -75,6 +81,12 @@ export const localStorage = diskStorage({
             }
 
             req.body.file = path.join(userId, filename)
+        }
+
+        try {
+            assertSafeFilePath(filename)
+        } catch (error) {
+            return callback(error as Error, '')
         }
 
         // If the user provided a filename, we need to use it

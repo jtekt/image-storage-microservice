@@ -5,6 +5,7 @@ import { Request, Response } from 'express'
 import { s3Client, streamFileFromS3, deleteFileFromS3 } from '../fileStorage/s3'
 import { downloadLocalFile, removeLocalFile } from '../fileStorage/local'
 import { removeImageFiles } from '../fileStorage/common'
+import { assertSafeFilePath } from '../fileStorage/paths'
 import { defaultLimit } from '../config'
 import { getUserId } from '../utils/user'
 
@@ -36,7 +37,7 @@ export const upload_image = async (req: Request, res: Response) => {
         ...data
     } = parse_post_body(req.body)
 
-    const file = userProvidedFilePath || originalname
+    const file = assertSafeFilePath(userProvidedFilePath || originalname)
 
     const query = { file, userId }
     const itemProperties: NewImage = {
