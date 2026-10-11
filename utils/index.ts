@@ -12,22 +12,28 @@ const isNotUndefined = (value: any) => value && value !== 'undefined'
 const isPlainObject = (v: any) =>
     v !== null && typeof v === 'object' && !Array.isArray(v)
 
-const isNestedPath = (key: string) => !key.startsWith('$')
+// { $ne: 'x' } is an operator expression, not a nested path
+const isOperatorObject = (v: any) =>
+    Object.keys(v).some((k) => k.startsWith('$'))
 
 const flattenPaths = (obj: any, prefix = ''): Record<string, any> =>
     Object.entries(obj).reduce((acc, [k, v]) => {
         const path = prefix ? `${prefix}.${k}` : k
-        if (isPlainObject(v) && isNestedPath(k))
+        if (isPlainObject(v) && !isOperatorObject(v))
             return { ...acc, ...flattenPaths(v, path) }
         return { ...acc, [path]: v }
     }, {})
 
 const dataFilters = (rest: Record<string, any>): Record<string, any> =>
     Object.entries(rest).reduce((acc, [key, value]) => {
+        // data[key]=value, already parsed into { data: { key: value } } by
+        // the extended query parser
+        if (key === 'data' && isPlainObject(value))
+            return { ...acc, ...flattenPaths(value, 'data') }
         if (key.startsWith('data.') || key.startsWith('data[')) {
             // explicit data.<key> or data[key] — flatten nested objects
             const normalized = key.replace(/\[([^\]]+)\]/g, '.$1')
-            if (isPlainObject(value))
+            if (isPlainObject(value) && !isOperatorObject(value))
                 return { ...acc, ...flattenPaths(value, normalized) }
             return { ...acc, [normalized]: value }
         }
