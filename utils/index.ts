@@ -43,6 +43,44 @@ const dataFilters = (rest: Record<string, any>): Record<string, any> =>
 
 const stringIsValidDate = (s: string) => !isNaN(new Date(s).getTime())
 
+// Query operators clients may use, in `filter` or as object values of other
+// query parameters. Anything else (e.g. $where, $expr, $function) is rejected
+const ALLOWED_OPERATORS = new Set([
+    '$eq',
+    '$ne',
+    '$gt',
+    '$gte',
+    '$lt',
+    '$lte',
+    '$in',
+    '$nin',
+    '$and',
+    '$or',
+    '$nor',
+    '$not',
+    '$exists',
+    '$type',
+    '$regex',
+    '$options',
+    '$all',
+    '$elemMatch',
+    '$size',
+])
+
+const assertSafeQuery = (value: any): void => {
+    if (Array.isArray(value)) return value.forEach(assertSafeQuery)
+    if (!isPlainObject(value)) return
+
+    for (const [key, nested] of Object.entries(value)) {
+        if (key.startsWith('$')) {
+            if (!ALLOWED_OPERATORS.has(key))
+                throw createHttpError(400, `Operator ${key} is not allowed`)
+        } else if (key.split('.').some((segment) => segment.startsWith('$')))
+            throw createHttpError(400, `Field path ${key} is not allowed`)
+        assertSafeQuery(nested)
+    }
+}
+
 export const parse_query = (rawQuery: any) => {
     // TODO: using zod would be helpful
     const {
@@ -101,6 +139,8 @@ export const parse_query = (rawQuery: any) => {
             throw createHttpError(400, 'Parameter "from" is not a valid date')
         query.time.$gte = new Date(from)
     }
+
+    assertSafeQuery(query)
 
     const sortStatement = sort ? { [sort]: order } : undefined
 
