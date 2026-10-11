@@ -1,6 +1,6 @@
 import createHttpError from 'http-errors'
 import { Image } from '../models/image'
-import { parse_query } from '../utils'
+import { parse_query } from '../utils/query'
 import { Request, Response } from 'express'
 import { getUserId } from '../utils/user'
 import { PipelineStage } from 'mongoose'
