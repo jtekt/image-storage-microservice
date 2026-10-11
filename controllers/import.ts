@@ -14,6 +14,7 @@ import {
     create_directory_if_not_exists,
 } from '../fileStorage/local'
 import { getUserId } from '../utils/user'
+import { assertSafeFilePath, resolveInside } from '../fileStorage/paths'
 
 const mongodb_data_import = (documents: IImage[]) => {
     const operations = documents.map((document) => ({
@@ -111,11 +112,16 @@ export const import_images = async (req: Request, res: Response) => {
                 )
             }
 
+            mongodbData.forEach(({ file }) => assertSafeFilePath(file))
+
             // Map basename -> full path (e.g. "image.jpg" -> "folder/image.jpg")
             filePathMap = new Map(
                 mongodbData.map((doc) => [path.basename(doc.file), doc.file])
             )
         }
+
+        // Validate every path before extracting anything
+        filteredFiles.forEach(({ path }) => assertSafeFilePath(path))
 
         // Extract all files in parallel, resolving destination path from JSON metadata if available
         await Promise.all(
@@ -133,7 +139,7 @@ export const import_images = async (req: Request, res: Response) => {
                 else
                     return extract_single_file(
                         file,
-                        path.join(uploadsDirectoryPath, resolvedPath)
+                        resolveInside(uploadsDirectoryPath, resolvedPath)
                     )
             })
         )

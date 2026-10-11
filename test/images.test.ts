@@ -6,6 +6,9 @@ import { Image } from '../models/image'
 import { describe, it, before, after, afterEach } from 'mocha'
 import path from 'path'
 import fs from 'fs'
+import os from 'os'
+import archiver from 'archiver'
+import unzipper from 'unzipper'
 
 // ---------------------------------------------------------------------------
 // Storage stub
@@ -16,6 +19,7 @@ import fs from 'fs'
 // ---------------------------------------------------------------------------
 
 import * as localModule from '../fileStorage/local'
+import { uploadsDirectoryPath } from '../fileStorage/local'
 import * as s3Module from '../fileStorage/s3'
 import { StorageEngine } from 'multer'
 
@@ -801,6 +805,143 @@ describe('Image Storage API', () => {
             const { status } = await request(app).post('/import')
 
             expect(status).to.equal(400)
+        })
+    })
+
+    // -----------------------------------------------------------------------
+    // Path traversal
+    // -----------------------------------------------------------------------
+
+    describe('Path traversal', () => {
+        // A file outside the uploads directory that must never be read,
+        // written or deleted through the API
+        const outsideDir = fs.mkdtempSync(path.join(os.tmpdir(), 'iss-test-'))
+        const outsideFile = path.join(outsideDir, 'outside.txt')
+        const outsideRelative = path.relative(uploadsDirectoryPath, outsideFile)
+
+        beforeEach(() => fs.writeFileSync(outsideFile, 'do not touch'))
+        after(() => fs.rmSync(outsideDir, { recursive: true, force: true }))
+
+        /** Zip archive built in memory; archiver strips "../" from entry
+         *  names, so "@@/" is swapped for "../" in the raw bytes */
+        async function buildZip(entries: Record<string, string>) {
+            const archive = archiver('zip', { store: true })
+            const chunks: Buffer[] = []
+            archive.on('data', (chunk: Buffer) => chunks.push(chunk))
+            const done = new Promise((resolve) => archive.on('end', resolve))
+            for (const [name, content] of Object.entries(entries))
+                archive.append(content, { name })
+            await archive.finalize()
+            await done
+            const zip = Buffer.concat(chunks)
+            for (let i = zip.indexOf('@@/'); i !== -1; i = zip.indexOf('@@/', i))
+                zip.write('../', i)
+            return zip
+        }
+
+        it('rejects an upload with a file path containing ..', async () => {
+            const { status } = await uploadImage({ file: '../evil.jpg' })
+
+            expect(status).to.equal(400)
+            expect(await Image.countDocuments({})).to.equal(0)
+        })
+
+        it('rejects an upload with an absolute file path', async () => {
+            const { status } = await uploadImage({ file: '/tmp/evil.jpg' })
+
+            expect(status).to.equal(400)
+            expect(await Image.countDocuments({})).to.equal(0)
+        })
+
+        it('still accepts an upload into a subfolder', async () => {
+            const { status, body } = await uploadImage({
+                file: 'folder/ok.jpg',
+            })
+
+            expect(status).to.equal(200)
+            expect(body.file).to.equal('folder/ok.jpg')
+        })
+
+        it('refuses to download a file outside the uploads directory', async () => {
+            const doc = await insertImage({}, outsideRelative)
+
+            const { status, text } = await request(app).get(
+                `/images/${doc._id}/image`
+            )
+
+            expect(status).to.equal(400)
+            expect(text).not.to.include('do not touch')
+        })
+
+        it('does not delete a file outside the uploads directory', async () => {
+            const doc = await insertImage({}, outsideRelative)
+
+            await request(app).delete(`/images/${doc._id}`)
+
+            expect(fs.existsSync(outsideFile)).to.equal(true)
+        })
+
+        it('does not delete files outside the uploads directory in bulk', async () => {
+            await insertImage({ bulk: 'yes' }, outsideRelative)
+
+            await request(app).delete('/images?bulk=yes')
+            // Files are removed in the background
+            await new Promise((resolve) => setTimeout(resolve, 200))
+
+            expect(fs.existsSync(outsideFile)).to.equal(true)
+        })
+
+        it('skips files outside the uploads directory on export', async () => {
+            await insertImage({}, outsideRelative)
+
+            const { status, body } = await request(app)
+                .get('/export')
+                .buffer(true)
+                .parse((res, callback) => {
+                    const chunks: Buffer[] = []
+                    res.on('data', (chunk: Buffer) => chunks.push(chunk))
+                    res.on('end', () => callback(null, Buffer.concat(chunks)))
+                })
+
+            expect(status).to.equal(200)
+            const archive = await unzipper.Open.buffer(body)
+            const names = archive.files.map((f) => f.path)
+            expect(names.some((name) => name.includes('outside.txt'))).to.equal(false)
+        })
+
+        it('rejects an import archive with a .. entry', async () => {
+            const zip = await buildZip({ '@@/evil.txt': 'evil' })
+
+            const { status } = await request(app)
+                .post('/import')
+                .attach('archive', zip, {
+                    filename: 'evil.zip',
+                    contentType: 'application/zip',
+                })
+
+            expect(status).to.equal(400)
+            expect(fs.existsSync(path.resolve(uploadsDirectoryPath, '../evil.txt'))).to.equal(false)
+            expect(await Image.countDocuments({})).to.equal(0)
+        })
+
+        it('rejects an import whose MongoDB data has a .. file path', async () => {
+            const zip = await buildZip({
+                'outside.txt': 'overwritten',
+                'mongodb_data.json': JSON.stringify([
+                    { file: outsideRelative, data: {} },
+                ]),
+            })
+
+            const { status } = await request(app)
+                .post('/import')
+                .attach('archive', zip, {
+                    filename: 'evil.zip',
+                    contentType: 'application/zip',
+                })
+
+            expect(status).to.equal(400)
+            expect(fs.readFileSync(outsideFile, 'utf-8')).to.equal('do not touch')
+            expect(await Image.countDocuments({})).to.equal(0)
         })
     })
 
