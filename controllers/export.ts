@@ -4,7 +4,7 @@ import path from 'path'
 import fs from 'fs'
 import XLSX from 'xlsx'
 import { v4 as uuidv4 } from 'uuid'
-import { parse_query } from '../utils'
+import { parse_query } from '../utils/query'
 import { Request, Response } from 'express'
 import { rimraf } from 'rimraf'
 import {

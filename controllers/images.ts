@@ -1,6 +1,7 @@
 import createHttpError from 'http-errors'
 import { IImage, Image } from '../models/image'
-import { parseUpdateBody, parse_query, parse_post_body } from '../utils'
+import { parseUpdateBody, parse_post_body } from '../utils'
+import { parse_query } from '../utils/query'
 import { Request, Response } from 'express'
 import { s3Client, streamFileFromS3, deleteFileFromS3 } from '../fileStorage/s3'
 import { downloadLocalFile, removeLocalFile } from '../fileStorage/local'
