@@ -4,9 +4,6 @@ import { author, name as application_name } from './package.json'
 import express, { Request, Response } from 'express'
 import cors from 'cors'
 import promBundle from 'express-prom-bundle'
-import oidcAuth from '@moreillon/express-oidc'
-import legacyAuth from '@moreillon/express_identification_middleware'
-import group_auth from '@moreillon/express_group_based_authorization_middleware'
 import * as db from './db'
 import { S3_BUCKET, S3_ENDPOINT, S3_REGION, s3Client } from './fileStorage/s3'
 import { uploadsDirectoryPath, tempDirectoryPath } from './fileStorage/local'
@@ -16,12 +13,15 @@ import images_router from './routes/images'
 import import_router from './routes/import'
 import export_router from './routes/export'
 import fields_router from './routes/fields'
-import { createAuthMiddleware } from './auth'
+import middleware, {
+    type Options,
+} from '@jtekt/express-authentication-middleware'
+import groupAuth from './group-auth'
 
 const {
     APP_PORT = 80,
     OIDC_JWKS_URI,
-    IDENTICATION_URL,
+    IDENTIFICATION_URL,
     AUTHORIZED_GROUPS,
     GROUP_AUTHORIZATION_URL,
     TZ,
@@ -57,7 +57,7 @@ app.get('/', (_, res) => {
         },
         auth: {
             oidc_jwks_uri: OIDC_JWKS_URI,
-            legacy_auth_url: IDENTICATION_URL,
+            legacy_auth_url: IDENTIFICATION_URL,
             group_authorization_url: GROUP_AUTHORIZATION_URL,
             authorized_groups: AUTHORIZED_GROUPS,
         },
@@ -81,15 +81,33 @@ app.get('/', (_, res) => {
 })
 
 // plug in the middleware
-app.use(createAuthMiddleware())
+const options: Options = {
+    strategies: {},
+    identifierFieldName: '_id',
+}
+
+if (IDENTIFICATION_URL) {
+    options.strategies.identification = {
+        url: IDENTIFICATION_URL,
+        identifierField: '_id',
+    }
+}
+
+if (OIDC_JWKS_URI) {
+    options.strategies.local = {
+        secret: OIDC_JWKS_URI,
+        identifierField: 'user_id',
+    }
+}
+if (IDENTIFICATION_URL || OIDC_JWKS_URI) app.use(middleware(options))
 
 if (AUTHORIZED_GROUPS && GROUP_AUTHORIZATION_URL) {
     console.log(`Enabling group-based authorization`)
-    const group_auth_options = {
+    const groupAuthOptions = {
         url: GROUP_AUTHORIZATION_URL,
-        groups: AUTHORIZED_GROUPS.split(','),
+        groupIds: AUTHORIZED_GROUPS.split(','),
     }
-    app.use(group_auth(group_auth_options))
+    app.use(groupAuth(groupAuthOptions))
 }
 
 app.use('/import', import_router)
