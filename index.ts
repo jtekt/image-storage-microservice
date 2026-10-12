@@ -14,13 +14,11 @@ import import_router from './routes/import'
 import export_router from './routes/export'
 import fields_router from './routes/fields'
 import { auth } from 'express-oauth2-jwt-bearer'
-import groupAuth from './group-auth'
 
 const {
     APP_PORT = 80,
     OIDC_ISSUER_BASE_URL,
-    AUTHORIZED_GROUPS,
-    GROUP_AUTHORIZATION_URL,
+    USER_IDENTIFIER,
     TZ,
     IMAGE_SCOPE,
     APP_VERSION = 'dev',
@@ -54,8 +52,7 @@ app.get('/', (_, res) => {
         },
         auth: {
             oidc_issuer_base_url: OIDC_ISSUER_BASE_URL,
-            group_authorization_url: GROUP_AUTHORIZATION_URL,
-            authorized_groups: AUTHORIZED_GROUPS,
+            user_identifier: USER_IDENTIFIER,
         },
         storage: {
             directories: !s3Client
@@ -84,15 +81,6 @@ if (OIDC_ISSUER_BASE_URL) {
     })
 
     app.use(jwtCheck)
-}
-
-if (AUTHORIZED_GROUPS && GROUP_AUTHORIZATION_URL) {
-    console.log(`Enabling group-based authorization`)
-    const groupAuthOptions = {
-        url: GROUP_AUTHORIZATION_URL,
-        groupIds: AUTHORIZED_GROUPS.split(','),
-    }
-    app.use(groupAuth(groupAuthOptions))
 }
 
 app.use('/import', import_router)
