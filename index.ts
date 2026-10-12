@@ -13,15 +13,12 @@ import images_router from './routes/images'
 import import_router from './routes/import'
 import export_router from './routes/export'
 import fields_router from './routes/fields'
-import middleware, {
-    type Options,
-} from '@jtekt/express-authentication-middleware'
+import { auth } from 'express-oauth2-jwt-bearer'
 import groupAuth from './group-auth'
 
 const {
     APP_PORT = 80,
-    OIDC_JWKS_URI,
-    IDENTIFICATION_URL,
+    OIDC_ISSUER_BASE_URL,
     AUTHORIZED_GROUPS,
     GROUP_AUTHORIZATION_URL,
     TZ,
@@ -56,8 +53,7 @@ app.get('/', (_, res) => {
             connected: db.get_connected(),
         },
         auth: {
-            oidc_jwks_uri: OIDC_JWKS_URI,
-            legacy_auth_url: IDENTIFICATION_URL,
+            oidc_issuer_base_url: OIDC_ISSUER_BASE_URL,
             group_authorization_url: GROUP_AUTHORIZATION_URL,
             authorized_groups: AUTHORIZED_GROUPS,
         },
@@ -81,25 +77,14 @@ app.get('/', (_, res) => {
 })
 
 // plug in the middleware
-const options: Options = {
-    strategies: {},
-    identifierFieldName: '_id',
-}
+if (OIDC_ISSUER_BASE_URL) {
+    const jwtCheck = auth({
+        issuerBaseURL: OIDC_ISSUER_BASE_URL,
+        audience: ['account', 'my-client-id'],
+    })
 
-if (IDENTIFICATION_URL) {
-    options.strategies.identification = {
-        url: IDENTIFICATION_URL,
-        identifierField: '_id',
-    }
+    app.use(jwtCheck)
 }
-
-if (OIDC_JWKS_URI) {
-    options.strategies.local = {
-        secret: OIDC_JWKS_URI,
-        identifierField: 'user_id',
-    }
-}
-if (IDENTIFICATION_URL || OIDC_JWKS_URI) app.use(middleware(options))
 
 if (AUTHORIZED_GROUPS && GROUP_AUTHORIZATION_URL) {
     console.log(`Enabling group-based authorization`)

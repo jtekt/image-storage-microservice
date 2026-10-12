@@ -12,11 +12,11 @@
     },
     "dependencies": {
         "@aws-sdk/client-s3": "^3.504.0",
-        "@jtekt/express-authentication-middleware": "^0.2.2",
         "archiver": "^5.3.1",
         "cors": "^2.8.5",
         "dotenv": "^17.2.3",
         "express": "^5.1.0",
+        "express-oauth2-jwt-bearer": "^1.10.0",
         "express-prom-bundle": "^6.6.0",
         "http-errors": "^2.0.0",
         "minio": "^7.1.3",
