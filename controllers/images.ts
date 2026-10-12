@@ -22,7 +22,7 @@ export const upload_image = async (req: Request, res: Response) => {
 
     let userId: string | undefined = undefined
     if (process.env.IMAGE_SCOPE === 'user') {
-        const id = getUserId(res.locals.user)
+        const id = getUserId(req.auth?.payload)
 
         // If no id found, throw an error
         if (!id) throw createHttpError(401, 'User ID not provided')
@@ -69,7 +69,7 @@ export const read_images = async (req: Request, res: Response) => {
     } = parse_query(req.query)
 
     if (process.env.IMAGE_SCOPE === 'user') {
-        const id = getUserId(res.locals.user)
+        const id = getUserId(req.auth?.payload)
 
         if (!id) throw createHttpError(401, 'User ID not provided')
 
@@ -93,7 +93,7 @@ export const read_image = async (req: Request, res: Response) => {
     const query: Record<string, string> = { _id }
 
     if (process.env.IMAGE_SCOPE === 'user') {
-        const id = getUserId(res.locals.user)
+        const id = getUserId(req.auth?.payload)
 
         if (!id) throw createHttpError(401, 'User ID not provided')
 
@@ -113,7 +113,7 @@ export const read_image_file = async (req: Request, res: Response) => {
     const query: Record<string, string> = { _id }
 
     if (process.env.IMAGE_SCOPE === 'user') {
-        const id = getUserId(res.locals.user)
+        const id = getUserId(req.auth?.payload)
 
         if (!id) throw createHttpError(401, 'User ID not provided')
 
@@ -135,7 +135,7 @@ export const update_images = async (req: Request, res: Response) => {
     const { $set, $unset } = parseUpdateBody(req.body)
 
     if (process.env.IMAGE_SCOPE === 'user') {
-        const id = getUserId(res.locals.user)
+        const id = getUserId(req.auth?.payload)
 
         if (!id) throw createHttpError(401, 'User ID not provided')
 
@@ -154,7 +154,7 @@ export const update_image = async (req: Request, res: Response) => {
     const query: Record<string, string> = { _id }
 
     if (process.env.IMAGE_SCOPE === 'user') {
-        const id = getUserId(res.locals.user)
+        const id = getUserId(req.auth?.payload)
 
         if (!id) throw createHttpError(401, 'User ID not provided')
 
@@ -179,7 +179,7 @@ export const replace_image_data = async (req: Request, res: Response) => {
     const query: Record<string, string> = { _id }
 
     if (process.env.IMAGE_SCOPE === 'user') {
-        const id = getUserId(res.locals.user)
+        const id = getUserId(req.auth?.payload)
 
         if (!id) throw createHttpError(401, 'User ID not provided')
 
@@ -197,7 +197,7 @@ export const delete_images = async (req: Request, res: Response) => {
     const { query } = parse_query(req.query)
 
     if (process.env.IMAGE_SCOPE === 'user') {
-        const id = getUserId(res.locals.user)
+        const id = getUserId(req.auth?.payload)
 
         if (!id) throw createHttpError(401, 'User ID not provided')
 
@@ -220,7 +220,7 @@ export const delete_image = async (req: Request, res: Response) => {
     const query: Record<string, string> = { _id }
 
     if (process.env.IMAGE_SCOPE === 'user') {
-        const id = getUserId(res.locals.user)
+        const id = getUserId(req.auth?.payload)
 
         if (!id) throw createHttpError(401, 'User ID not provided')
 

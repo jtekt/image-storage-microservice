@@ -70,7 +70,7 @@ export const export_images = async (req: Request, res: Response) => {
     } = parse_query(req.query)
 
     if (process.env.IMAGE_SCOPE && process.env.IMAGE_SCOPE === 'user') {
-        const id = getUserId(res.locals.user)
+        const id = getUserId(req.auth?.payload)
         if (!id) throw createHttpError(401, 'User ID not provided')
         query.userId = id
     }

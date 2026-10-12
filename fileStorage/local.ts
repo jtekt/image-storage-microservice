@@ -42,8 +42,8 @@ export const localStorage = diskStorage({
             )
         }
 
-        if (req.user && process.env.IMAGE_SCOPE === 'user') {
-            const userId = getUserId(req.user)
+        if (req.auth?.payload && process.env.IMAGE_SCOPE === 'user') {
+            const userId = getUserId(req.auth?.payload)
 
             if (!userId) {
                 throw new Error('User ID not found')
@@ -73,8 +73,8 @@ export const localStorage = diskStorage({
             // Fallback to original name
         }
 
-        if (req.user && process.env.IMAGE_SCOPE === 'user') {
-            const userId = getUserId(req.user)
+        if (req.auth?.payload && process.env.IMAGE_SCOPE === 'user') {
+            const userId = getUserId(req.auth?.payload)
 
             if (!userId) {
                 throw new Error('User ID not found')

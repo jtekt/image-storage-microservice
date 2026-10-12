@@ -82,7 +82,7 @@ export const import_images = async (req: Request, res: Response) => {
 
         let userId: string
         if (process.env.IMAGE_SCOPE === 'user') {
-            const id = getUserId(res.locals.user)
+            const id = getUserId(req.auth?.payload)
             if (!id) throw createHttpError(401, 'User ID not provided')
             userId = id
         }

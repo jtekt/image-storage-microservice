@@ -5,7 +5,7 @@ import { Request, Response } from 'express'
 import { getUserId } from '../utils/user'
 import { PipelineStage } from 'mongoose'
 
-export const read_fields = async (_: Request, res: Response) => {
+export const read_fields = async (req: Request, res: Response) => {
     const pipeline: PipelineStage[] = [
         { $sample: { size: 100000 } },
         { $project: { arrayofkeyvalue: { $objectToArray: '$$ROOT.data' } } },
@@ -14,7 +14,7 @@ export const read_fields = async (_: Request, res: Response) => {
     ]
 
     if (process.env.IMAGE_SCOPE === 'user') {
-        const id = getUserId(res.locals.user)
+        const id = getUserId(req.auth?.payload)
 
         if (!id) throw createHttpError(401, 'User ID not provided')
 
@@ -36,7 +36,7 @@ export const read_field_unique_values = async (req: Request, res: Response) => {
     const { query } = parse_query(req.query)
 
     if (process.env.IMAGE_SCOPE === 'user') {
-        const id = getUserId(res.locals.user)
+        const id = getUserId(req.auth?.payload)
 
         if (!id) throw createHttpError(401, 'User ID not provided')
 

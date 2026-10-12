@@ -6,7 +6,8 @@ type UserLike = {
     username?: string
 }
 
-export const getUserId = (user: UserLike): string | undefined => {
+export const getUserId = (user: UserLike | undefined): string | undefined => {
+    if (!user) return undefined
     const identifier = process.env.USER_IDENTIFIER
 
     let userId: string | undefined
