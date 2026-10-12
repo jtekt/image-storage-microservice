@@ -1,4 +1,5 @@
 import createHttpError from 'http-errors'
+import type { SortOrder } from 'mongoose'
 
 const isNotUndefined = (value: any) => value && value !== 'undefined'
 
@@ -109,8 +110,7 @@ export const parse_query = (rawQuery: any) => {
     }
 
     for (const [key, value] of Object.entries(dataFilters(rest))) {
-        if (isNotUndefined(regex))
-            query[key] = { $regex: value, $options: 'i' }
+        if (isNotUndefined(regex)) query[key] = { $regex: value, $options: 'i' }
         else query[key] = value
     }
 
@@ -135,7 +135,9 @@ export const parse_query = (rawQuery: any) => {
 
     assertSafeQuery(query)
 
-    const sortStatement = sort ? { [sort]: order } : undefined
+    const sortStatement: { [key: string]: SortOrder } | undefined = sort
+        ? { [String(sort)]: Number(order) as SortOrder }
+        : undefined
 
     return {
         query,
