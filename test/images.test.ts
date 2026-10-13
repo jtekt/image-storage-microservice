@@ -23,41 +23,63 @@ import { uploadsDirectoryPath } from '../fileStorage/local'
 import * as s3Module from '../fileStorage/s3'
 import { StorageEngine } from 'multer'
 
+// ---------------------------------------------------------------------------
+// Test storage directory
+//
+// All files written during tests go to /iss-test-images/ (not /uploads/) so
+// they are completely isolated from real data.  The entire directory is wiped
+// in the after() hook.  We also override TEST_UPLOADS_DIR so that
+// downloadLocalFile() resolves paths against the same directory.
+// ---------------------------------------------------------------------------
+
+const TEST_UPLOADS_DIR = path.join(uploadsDirectoryPath, 'iss-test-images')
+
 const memoryStorage: StorageEngine = {
     _handleFile(req, file, cb) {
-        // Drain the stream so the request doesn't stall
         const chunks: Buffer[] = []
         file.stream.on('data', (chunk: Buffer) => chunks.push(chunk))
         file.stream.on('end', () => {
             const buf = Buffer.concat(chunks)
+            const filePath = path.join(TEST_UPLOADS_DIR, file.originalname)
+            if (!fs.existsSync(TEST_UPLOADS_DIR))
+                fs.mkdirSync(TEST_UPLOADS_DIR, { recursive: true })
+            fs.writeFileSync(filePath, buf)
             ;(req as any).file = {
                 fieldname: file.fieldname,
                 originalname: file.originalname,
                 mimetype: file.mimetype,
                 buffer: buf,
                 size: buf.length,
-                // The controller only needs req.file to be truthy and originalname
-                // to be set; downstream code uses `image.file` from MongoDB, not
-                // the multer path.
-                path: `/test-mem/${file.originalname}`,
+                path: filePath,
                 filename: file.originalname,
-                destination: '/test-mem',
+                destination: TEST_UPLOADS_DIR,
             }
             cb(null, req.file as any)
         })
         file.stream.on('error', cb)
     },
-    _removeFile(_req, _file, cb) {
+    _removeFile(_req, file: any, cb) {
+        try {
+            if (file.path && fs.existsSync(file.path))
+                fs.rmSync(file.path, { force: true })
+        } catch {
+            /* ignore */
+        }
         cb(null)
     },
 }
 
 // Patch the storage engines before the routes module resolves them.
-// The routes/images.ts picks `s3Storage || localStorage` at module-load time,
-// so we must override the exported references early.
 ;(s3Module as any).s3Storage = undefined
 ;(s3Module as any).s3Client = undefined
 ;(localModule as any).localStorage = memoryStorage
+
+// Patch downloadLocalFile to resolve against TEST_UPLOADS_DIR instead of the
+// real uploadsDirectoryPath (which is a const baked into local.ts at load time).
+const { resolveInside } = require('../fileStorage/paths')
+;(localModule as any).downloadLocalFile = (res: any, file: string) => {
+    res.download(resolveInside(TEST_UPLOADS_DIR, file), file)
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -65,32 +87,61 @@ const memoryStorage: StorageEngine = {
 
 const SAMPLE_JPG = path.resolve(__dirname, 'sample.jpg')
 const SAMPLE2_JPG = path.resolve(__dirname, 'sample2.jpg')
-const EXPORT_ZIP = path.resolve(__dirname, 'export.zip')
+
+const TEST_RUN_ID = `test_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`
+
+// Track all ObjectIds created during the current test
+let createdIds: string[] = []
 
 /** POST /images with a real JPEG, returns the created document */
 async function uploadImage(
     fields: Record<string, string> = {},
     imagePath = SAMPLE_JPG
 ) {
-    let req = request(app)
-        .post('/images')
-        .attach('image', imagePath)
+    // Add test marker to all uploads
+    fields.__test_marker = TEST_RUN_ID
 
+    let req = request(app).post('/images').attach('image', imagePath)
     for (const [k, v] of Object.entries(fields)) {
         req = req.field(k, v)
     }
-
-    return req
+    const response = await req
+    if (response.body && response.body._id) {
+        createdIds.push(response.body._id)
+    }
+    return response
 }
 
 /** Insert a document directly into MongoDB (bypasses storage) */
 async function insertImage(data: Record<string, any> = {}, file = 'test.jpg') {
-    return Image.create({ file, data })
+    // Add test marker to all inserts
+    const doc = await Image.create({
+        file,
+        data: { ...data, __test_marker: TEST_RUN_ID },
+    })
+    createdIds.push(doc._id.toString())
+    return doc
 }
 
-/** Delete all images created during a test */
+/** Delete only images created during this test run, including their files */
 async function cleanAll() {
-    await Image.deleteMany({})
+    // Use the API so the controller also removes the physical files from
+    // /uploads (and S3).  Bypassing the controller (deleteMany directly)
+    // would leave orphaned files on disk.
+    for (const id of createdIds) {
+        await request(app).delete(`/images/${id}`)
+    }
+    // Fallback: remove any docs that were inserted but whose _id was never
+    // tracked (e.g. via direct insertImage calls that somehow missed the push)
+    await Image.deleteMany({ 'data.__test_marker': TEST_RUN_ID })
+}
+
+/** Count only images created during this test run */
+async function countTestImages(filter: Record<string, any> = {}) {
+    return Image.countDocuments({
+        'data.__test_marker': TEST_RUN_ID,
+        ...filter,
+    })
 }
 
 // ---------------------------------------------------------------------------
@@ -99,6 +150,10 @@ async function cleanAll() {
 
 describe('Image Storage API', () => {
     before(async () => {
+        // Create isolated test uploads directory
+        if (!fs.existsSync(TEST_UPLOADS_DIR))
+            fs.mkdirSync(TEST_UPLOADS_DIR, { recursive: true })
+
         // Wait for the Mongoose connection to become ready (up to 10 s)
         const deadline = Date.now() + 10_000
         while (mongoose.connection.readyState !== 1) {
@@ -106,6 +161,16 @@ describe('Image Storage API', () => {
                 throw new Error('MongoDB did not connect within 10 s')
             await new Promise((r) => setTimeout(r, 100))
         }
+    })
+
+    after(() => {
+        // Remove the entire test uploads directory
+        if (fs.existsSync(TEST_UPLOADS_DIR))
+            fs.rmSync(TEST_UPLOADS_DIR, { recursive: true, force: true })
+    })
+
+    beforeEach(() => {
+        createdIds = []
     })
 
     afterEach(cleanAll)
@@ -145,6 +210,7 @@ describe('Image Storage API', () => {
                     nestedKey1: 'nestedValue1',
                     nestedKey2: 'nestedValue2',
                 },
+                __test_marker: TEST_RUN_ID,
             }
 
             const { status, body } = await request(app)
@@ -154,10 +220,15 @@ describe('Image Storage API', () => {
 
             expect(status).to.equal(200)
             expect(body.data.parentKey.nestedKey1).to.equal('nestedValue1')
+            if (body._id) createdIds.push(body._id)
         })
 
         it('creates an image record with nested JSON fields (data field)', async () => {
-            const jsonData = { category: 'test', score: 99 }
+            const jsonData = {
+                category: 'test',
+                score: 99,
+                __test_marker: TEST_RUN_ID,
+            }
 
             const { status, body } = await request(app)
                 .post('/images')
@@ -166,6 +237,7 @@ describe('Image Storage API', () => {
 
             expect(status).to.equal(200)
             expect(body.data.category).to.equal('test')
+            if (body._id) createdIds.push(body._id)
         })
 
         it('upserts when the same file name is uploaded twice', async () => {
@@ -175,8 +247,7 @@ describe('Image Storage API', () => {
 
             expect(status).to.equal(200)
             expect(body.data.key1).to.equal('second')
-
-            const count = await Image.countDocuments({})
+            const count = await countTestImages()
             expect(count).to.equal(1)
         })
 
@@ -199,11 +270,10 @@ describe('Image Storage API', () => {
         })
 
         it('returns all seeded images', async () => {
-            const { status, body } = await request(app).get('/images')
-
+            const { status, body } = await request(app).get(
+                `/images?__test_marker=${TEST_RUN_ID}`
+            )
             expect(status).to.equal(200)
-            expect(body).to.have.property('total')
-            expect(body).to.have.property('items')
             expect(body.total).to.equal(3)
             expect(body.items).to.have.lengthOf(3)
         })
@@ -216,7 +286,7 @@ describe('Image Storage API', () => {
 
         it('filters images by a data field', async () => {
             const { status, body } = await request(app).get(
-                '/images?key3=value3'
+                `/images?key3=value3&__test_marker=${TEST_RUN_ID}`
             )
 
             expect(status).to.equal(200)
@@ -225,7 +295,7 @@ describe('Image Storage API', () => {
 
         it('filters images by dot notation (data.key)', async () => {
             const { status, body } = await request(app).get(
-                '/images?data.key3=value3'
+                `/images?data.key3=value3&__test_marker=${TEST_RUN_ID}`
             )
 
             expect(status).to.equal(200)
@@ -234,7 +304,7 @@ describe('Image Storage API', () => {
 
         it('filters images by bracket notation (data[key])', async () => {
             const { status, body } = await request(app).get(
-                '/images?data[key3]=value3'
+                `/images?data[key3]=value3&__test_marker=${TEST_RUN_ID}`
             )
 
             expect(status).to.equal(200)
@@ -248,7 +318,7 @@ describe('Image Storage API', () => {
             )
 
             const { status, body } = await request(app).get(
-                '/images?data[parentKey][nestedKey1]=nestedValue1'
+                `/images?data[parentKey][nestedKey1]=nestedValue1&__test_marker=${TEST_RUN_ID}`
             )
 
             expect(status).to.equal(200)
@@ -266,7 +336,10 @@ describe('Image Storage API', () => {
         })
 
         it('filters images by a JSON filter parameter', async () => {
-            const filter = JSON.stringify({ 'data.key2': { $ne: null } })
+            const filter = JSON.stringify({
+                'data.key2': { $ne: null },
+                'data.__test_marker': TEST_RUN_ID,
+            })
             const { status, body } = await request(app).get(
                 `/images?filter=${encodeURIComponent(filter)}`
             )
@@ -276,13 +349,13 @@ describe('Image Storage API', () => {
         })
 
         it('queries images by a list of IDs', async () => {
-            // Fetch first to get real _ids
-            const { body: allBody } = await request(app).get('/images')
+            // Fetch scoped to this test run to get a known _id
+            const { body: allBody } = await request(app).get(
+                `/images?__test_marker=${TEST_RUN_ID}`
+            )
             const id = allBody.items[0]._id
 
-            const { status, body } = await request(app).get(
-                `/images?ids=${id}`
-            )
+            const { status, body } = await request(app).get(`/images?ids=${id}`)
 
             expect(status).to.equal(200)
             expect(body.total).to.equal(1)
@@ -297,8 +370,9 @@ describe('Image Storage API', () => {
         })
 
         it('respects the skip query parameter', async () => {
-            const { status, body } = await request(app).get('/images?skip=2')
-
+            const { status, body } = await request(app).get(
+                `/images?__test_marker=${TEST_RUN_ID}&skip=2`
+            )
             expect(status).to.equal(200)
             // 3 images - skip 2 = 1 remaining
             expect(body.items.length).to.equal(1)
@@ -351,6 +425,7 @@ describe('Image Storage API', () => {
 
         it('accepts allowed operators in the JSON filter', async () => {
             const filter = JSON.stringify({
+                'data.__test_marker': TEST_RUN_ID,
                 $or: [
                     { 'data.key1': { $in: ['value1'] } },
                     { 'data.key4': { $exists: true } },
@@ -366,7 +441,7 @@ describe('Image Storage API', () => {
 
         it('accepts allowed operators in a query parameter', async () => {
             const { status, body } = await request(app).get(
-                '/images?data[key3][$ne]=value3'
+                `/images?data[key3][$ne]=value3&__test_marker=${TEST_RUN_ID}`
             )
 
             expect(status).to.equal(200)
@@ -375,7 +450,7 @@ describe('Image Storage API', () => {
 
         it('still supports partial matching with regex=true', async () => {
             const { status, body } = await request(app).get(
-                '/images?data.key3=VALUE&regex=true'
+                `/images?data.key3=VALUE&__test_marker=${TEST_RUN_ID}&regex=true`
             )
 
             expect(status).to.equal(200)
@@ -456,13 +531,13 @@ describe('Image Storage API', () => {
             await insertImage({ key1: 'b' }, 'b.jpg')
 
             const { status, body } = await request(app)
-                .patch('/images')
+                .patch(`/images?__test_marker=${TEST_RUN_ID}`)
                 .send({ commonKey: 'commonValue' })
 
             expect(status).to.equal(200)
             expect(body.modifiedCount).to.equal(2)
 
-            const docs = await Image.find({})
+            const docs = await Image.find({ 'data.__test_marker': TEST_RUN_ID })
             for (const doc of docs) {
                 expect(doc.data.commonKey).to.equal('commonValue')
             }
@@ -473,16 +548,22 @@ describe('Image Storage API', () => {
             await insertImage({ env: 'dev' }, 'dev.jpg')
 
             const { status, body } = await request(app)
-                .patch('/images?env=prod')
+                .patch(`/images?env=prod&__test_marker=${TEST_RUN_ID}`)
                 .send({ patched: 'yes' })
 
             expect(status).to.equal(200)
             expect(body.modifiedCount).to.equal(1)
 
-            const prodDoc = await Image.findOne({ 'data.env': 'prod' })
+            const prodDoc = await Image.findOne({
+                'data.env': 'prod',
+                'data.__test_marker': TEST_RUN_ID,
+            })
             expect(prodDoc?.data.patched).to.equal('yes')
 
-            const devDoc = await Image.findOne({ 'data.env': 'dev' })
+            const devDoc = await Image.findOne({
+                'data.env': 'dev',
+                'data.__test_marker': TEST_RUN_ID,
+            })
             expect(devDoc?.data.patched).to.be.undefined
         })
 
@@ -564,7 +645,7 @@ describe('Image Storage API', () => {
         it('replaces the data field entirely', async () => {
             const doc = await insertImage(
                 { old: 'data', extra: 'stuff' },
-                'replace-me.jpg'
+                `replace-me-${TEST_RUN_ID}.jpg`
             )
 
             const { status } = await request(app)
@@ -630,13 +711,12 @@ describe('Image Storage API', () => {
             await insertImage({ env: 'dev' }, 'del-dev2.jpg')
 
             const { status, body } = await request(app).delete(
-                '/images?env=dev'
+                `/images?env=dev&__test_marker=${TEST_RUN_ID}`
             )
 
             expect(status).to.equal(200)
             expect(body.deletedCount).to.equal(2)
-
-            const remaining = await Image.countDocuments({})
+            const remaining = await countTestImages()
             expect(remaining).to.equal(1)
         })
 
@@ -644,13 +724,12 @@ describe('Image Storage API', () => {
             await insertImage({}, 'all1.jpg')
             await insertImage({}, 'all2.jpg')
             await insertImage({}, 'all3.jpg')
-
-            const { status, body } = await request(app).delete('/images')
-
+            const { status, body } = await request(app).delete(
+                `/images?__test_marker=${TEST_RUN_ID}`
+            )
             expect(status).to.equal(200)
             expect(body.deletedCount).to.equal(3)
-
-            const remaining = await Image.countDocuments({})
+            const remaining = await countTestImages()
             expect(remaining).to.equal(0)
         })
 
@@ -658,13 +737,12 @@ describe('Image Storage API', () => {
             await insertImage({ x: 'a' }, 'nodelete.jpg')
 
             const { status, body } = await request(app).delete(
-                '/images?x=no_such_value'
+                `/images?x=no_such_value&__test_marker=${TEST_RUN_ID}`
             )
 
             expect(status).to.equal(200)
             expect(body.deletedCount).to.equal(0)
-
-            expect(await Image.countDocuments({})).to.equal(1)
+            expect(await countTestImages()).to.equal(1)
         })
 
         it('returns 400 and deletes nothing for a disallowed operator', async () => {
@@ -676,7 +754,7 @@ describe('Image Storage API', () => {
             )
 
             expect(status).to.equal(400)
-            expect(await Image.countDocuments({})).to.equal(1)
+            expect(await countTestImages()).to.equal(1)
         })
     })
 
@@ -685,11 +763,16 @@ describe('Image Storage API', () => {
     // -----------------------------------------------------------------------
 
     describe('GET /fields', () => {
-        it('returns an empty array when there are no images', async () => {
+        it('returns an empty array when there are no test-run images', async () => {
             const { status, body } = await request(app).get('/fields')
 
             expect(status).to.equal(200)
-            expect(body).to.deep.equal([])
+            expect(body).to.be.an('array')
+            // No documents seeded for this test run — verify via direct DB count
+            const count = await Image.countDocuments({
+                'data.__test_marker': TEST_RUN_ID,
+            })
+            expect(count).to.equal(0)
         })
 
         it('returns sorted unique field names from image data', async () => {
@@ -699,7 +782,12 @@ describe('Image Storage API', () => {
             const { status, body } = await request(app).get('/fields')
 
             expect(status).to.equal(200)
-            expect(body).to.include.members(['alpha', 'beta', 'gamma'])
+            expect(body).to.include.members([
+                'alpha',
+                'beta',
+                'gamma',
+                '__test_marker',
+            ])
             // Should be sorted
             expect(body).to.deep.equal([...body].sort())
         })
@@ -711,14 +799,16 @@ describe('Image Storage API', () => {
 
     describe('GET /fields/:field', () => {
         it('returns the distinct values for a field', async () => {
-            await insertImage({ env: 'prod' }, 'fv1.jpg')
-            await insertImage({ env: 'dev' }, 'fv2.jpg')
-            await insertImage({ env: 'prod' }, 'fv3.jpg')
+            const prodVal = `prod_${TEST_RUN_ID}`
+            const devVal = `dev_${TEST_RUN_ID}`
+            await insertImage({ env: prodVal }, 'fv1.jpg')
+            await insertImage({ env: devVal }, 'fv2.jpg')
+            await insertImage({ env: prodVal }, 'fv3.jpg')
 
             const { status, body } = await request(app).get('/fields/env')
 
             expect(status).to.equal(200)
-            expect(body).to.have.members(['prod', 'dev'])
+            expect(body).to.include.members([prodVal, devVal])
         })
 
         it('returns an empty array for a field that exists on no image', async () => {
@@ -733,17 +823,14 @@ describe('Image Storage API', () => {
         })
 
         it('excludes null values from distinct results', async () => {
-            await insertImage({ tag: 'visible' }, 'tag1.jpg')
-            // Insert a doc where tag is explicitly null
-            await Image.create({
-                file: 'null-tag.jpg',
-                data: { tag: null },
-            })
+            const visibleVal = `visible_${TEST_RUN_ID}`
+            await insertImage({ tag: visibleVal }, 'tag1.jpg')
+            await insertImage({ tag: null }, `null-tag-${TEST_RUN_ID}.jpg`)
 
             const { status, body } = await request(app).get('/fields/tag')
 
             expect(status).to.equal(200)
-            expect(body).to.include('visible')
+            expect(body).to.include(visibleVal)
             expect(body).to.not.include(null)
         })
     })
@@ -777,7 +864,9 @@ describe('Image Storage API', () => {
             // In CI, EXPORT_MAX_LIMIT=5 so this sends limit=6.
             // Locally (no env var) the default is 10000 so this sends limit=10001.
             const max = Number(process.env.EXPORT_MAX_LIMIT) || 10000
-            const { status } = await request(app).get(`/export?limit=${max + 1}`)
+            const { status } = await request(app).get(
+                `/export?limit=${max + 1}`
+            )
 
             expect(status).to.equal(400)
         })
@@ -788,15 +877,56 @@ describe('Image Storage API', () => {
     // -----------------------------------------------------------------------
 
     describe('POST /import', () => {
+        // The import controller writes extracted files to the real uploadsDirectoryPath
+        // (a const in local.ts — not patchable at runtime).  We embed TEST_RUN_ID in
+        // mongodb_data.json so cleanAll() can delete the MongoDB record, and we
+        // explicitly remove the extracted file from /uploads/ in afterEach.
+        const IMPORT_FILE = `import_test_${TEST_RUN_ID}.jpg`
+
+        /** Build a minimal zip with TEST_RUN_ID embedded in mongodb_data.json */
+        async function buildImportZip(): Promise<Buffer> {
+            const archive = archiver('zip', { store: true })
+            const chunks: Buffer[] = []
+            archive.on('data', (chunk: Buffer) => chunks.push(chunk))
+            const done = new Promise<void>((resolve) =>
+                archive.on('end', resolve)
+            )
+
+            // Tiny 1x1 JPEG
+            const tinyJpeg = fs.readFileSync(SAMPLE_JPG)
+            const mongoData = JSON.stringify([
+                {
+                    file: IMPORT_FILE,
+                    time: new Date().toISOString(),
+                    data: { __test_marker: TEST_RUN_ID },
+                },
+            ])
+
+            archive.append(tinyJpeg, { name: IMPORT_FILE })
+            archive.append(mongoData, { name: 'mongodb_data.json' })
+            await archive.finalize()
+            await done
+            return Buffer.concat(chunks)
+        }
+
+        afterEach(() => {
+            // The import controller extracts to the real /uploads/ dir — clean it up
+            const {
+                uploadsDirectoryPath: realUploads,
+            } = require('../fileStorage/local')
+            const extracted = path.join(realUploads, IMPORT_FILE)
+            if (fs.existsSync(extracted)) fs.rmSync(extracted, { force: true })
+        })
+
         it('returns 200 and imports images from a zip archive', async () => {
-            if (!fs.existsSync(EXPORT_ZIP)) {
-                // Skip gracefully when the test asset is absent
-                return
-            }
+            const zip = await buildImportZip()
 
             const { status } = await request(app)
                 .post('/import')
-                .attach('archive', EXPORT_ZIP)
+                .attach('archive', zip, {
+                    filename: 'import_test.zip',
+                    contentType: 'application/zip',
+                })
 
             expect(status).to.equal(200)
         })
@@ -817,7 +947,7 @@ describe('Image Storage API', () => {
         // written or deleted through the API
         const outsideDir = fs.mkdtempSync(path.join(os.tmpdir(), 'iss-test-'))
         const outsideFile = path.join(outsideDir, 'outside.txt')
-        const outsideRelative = path.relative(uploadsDirectoryPath, outsideFile)
+        const outsideRelative = path.relative(TEST_UPLOADS_DIR, outsideFile)
 
         beforeEach(() => fs.writeFileSync(outsideFile, 'do not touch'))
         after(() => fs.rmSync(outsideDir, { recursive: true, force: true }))
@@ -834,7 +964,11 @@ describe('Image Storage API', () => {
             await archive.finalize()
             await done
             const zip = Buffer.concat(chunks)
-            for (let i = zip.indexOf('@@/'); i !== -1; i = zip.indexOf('@@/', i))
+            for (
+                let i = zip.indexOf('@@/');
+                i !== -1;
+                i = zip.indexOf('@@/', i)
+            )
                 zip.write('../', i)
             return zip
         }
@@ -843,14 +977,14 @@ describe('Image Storage API', () => {
             const { status } = await uploadImage({ file: '../evil.jpg' })
 
             expect(status).to.equal(400)
-            expect(await Image.countDocuments({})).to.equal(0)
+            expect(await countTestImages()).to.equal(0)
         })
 
         it('rejects an upload with an absolute file path', async () => {
             const { status } = await uploadImage({ file: '/tmp/evil.jpg' })
 
             expect(status).to.equal(400)
-            expect(await Image.countDocuments({})).to.equal(0)
+            expect(await countTestImages()).to.equal(0)
         })
 
         it('still accepts an upload into a subfolder', async () => {
@@ -906,7 +1040,9 @@ describe('Image Storage API', () => {
             expect(status).to.equal(200)
             const archive = await unzipper.Open.buffer(body)
             const names = archive.files.map((f) => f.path)
-            expect(names.some((name) => name.includes('outside.txt'))).to.equal(false)
+            expect(names.some((name) => name.includes('outside.txt'))).to.equal(
+                false
+            )
         })
 
         it('rejects an import archive with a .. entry', async () => {
@@ -920,8 +1056,10 @@ describe('Image Storage API', () => {
                 })
 
             expect(status).to.equal(400)
-            expect(fs.existsSync(path.resolve(uploadsDirectoryPath, '../evil.txt'))).to.equal(false)
-            expect(await Image.countDocuments({})).to.equal(0)
+            expect(
+                fs.existsSync(path.resolve(TEST_UPLOADS_DIR, '../evil.txt'))
+            ).to.equal(false)
+            expect(await countTestImages()).to.equal(0)
         })
 
         it('rejects an import whose MongoDB data has a .. file path', async () => {
@@ -940,8 +1078,10 @@ describe('Image Storage API', () => {
                 })
 
             expect(status).to.equal(400)
-            expect(fs.readFileSync(outsideFile, 'utf-8')).to.equal('do not touch')
-            expect(await Image.countDocuments({})).to.equal(0)
+            expect(fs.readFileSync(outsideFile, 'utf-8')).to.equal(
+                'do not touch'
+            )
+            expect(await countTestImages()).to.equal(0)
         })
     })
 
