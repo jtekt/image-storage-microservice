@@ -18,9 +18,8 @@ import { auth } from 'express-oauth2-jwt-bearer'
 const {
     APP_PORT = 80,
     OIDC_ISSUER_BASE_URL,
-    USER_IDENTIFIER,
+    OIDC_AUDIENCE = 'account',
     TZ,
-    IMAGE_SCOPE,
     APP_VERSION = 'dev',
 } = process.env
 
@@ -52,7 +51,7 @@ app.get('/', (_, res) => {
         },
         auth: {
             oidc_issuer_base_url: OIDC_ISSUER_BASE_URL,
-            user_identifier: USER_IDENTIFIER,
+            oidc_audience: OIDC_AUDIENCE,
         },
         storage: {
             directories: !s3Client
@@ -69,7 +68,6 @@ app.get('/', (_, res) => {
                   }
                 : undefined,
         },
-        image_scope: IMAGE_SCOPE,
     })
 })
 
@@ -77,7 +75,7 @@ app.get('/', (_, res) => {
 if (OIDC_ISSUER_BASE_URL) {
     const jwtCheck = auth({
         issuerBaseURL: OIDC_ISSUER_BASE_URL,
-        audience: ['account', 'my-client-id'],
+        audience: OIDC_AUDIENCE.split(','),
     })
 
     app.use(jwtCheck)

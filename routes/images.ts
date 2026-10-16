@@ -16,8 +16,8 @@ import { s3Storage } from '../fileStorage/s3'
 
 const router = Router({ mergeParams: true })
 
-const storage = s3Storage || localStorage
-const upload = multer({ storage })
+const getStorage = () => s3Storage || localStorage
+const upload = multer({ storage: { _handleFile: (req, file, cb) => getStorage()._handleFile(req, file, cb), _removeFile: (req, file, cb) => getStorage()._removeFile(req, file, cb) } })
 
 router
     .route('/')

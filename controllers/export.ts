@@ -19,7 +19,6 @@ import {
     uploadsDirectoryPath,
 } from '../fileStorage/local'
 import createHttpError from 'http-errors'
-import { getUserId } from '../utils/user'
 import { assertSafeFilePath, resolveInside } from '../fileStorage/paths'
 
 const generate_excel = (data: IImage[], path: string) => {
@@ -28,17 +27,22 @@ const generate_excel = (data: IImage[], path: string) => {
 
         // Important: create a copy so as to not affect original data
         const { data, ...baseMetaData } = item
-
-        const output = {
+        const output: Record<string, any> = {
             ...baseMetaData,
             _id: baseMetaData._id ? baseMetaData._id.toString() : undefined,
         }
 
         for (let key in data) {
-            // @ts-ignore
-            if (data[key]) output[key] = data[key].toString()
+            if (data[key] !== null && data[key] !== undefined) {
+                const value = data[key]
+                // Only convert objects to JSON, let XLSX handle primitives
+                if (typeof value === 'object') {
+                    output[key] = JSON.stringify(value)
+                } else {
+                    output[key] = value
+                }
+            }
         }
-
         return output
     })
 
@@ -68,12 +72,6 @@ export const export_images = async (req: Request, res: Response) => {
         limit: requestedLimit,
         skip,
     } = parse_query(req.query)
-
-    if (process.env.IMAGE_SCOPE && process.env.IMAGE_SCOPE === 'user') {
-        const id = getUserId(req.auth?.payload)
-        if (!id) throw createHttpError(401, 'User ID not provided')
-        query.userId = id
-    }
 
     // Reject if explicit limit exceeds max
     if (requestedLimit !== undefined && requestedLimit > maxExportLimit)

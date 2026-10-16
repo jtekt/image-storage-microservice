@@ -4,7 +4,6 @@ import { Client } from 'minio'
 import multerMinIOStorage from 'multer-minio-storage'
 import { parse_post_body } from '../utils'
 import { StorageEngine } from 'multer'
-import { getUserId } from '../utils/user'
 import { assertSafeFilePath } from './paths'
 export const {
     S3_REGION,
@@ -46,19 +45,6 @@ if (S3_BUCKET) {
             } catch (error) {
                 console.error('Failed to decode filename:', error)
                 // Fallback to original name
-            }
-
-            if (req.auth?.payload && process.env.IMAGE_SCOPE === 'user') {
-                const userId = getUserId(req.auth?.payload)
-
-                if (!userId) {
-                    throw new Error('User ID not found')
-                }
-
-                filename = path.join(userId, filename)
-
-                // Update the request filename
-                req.body.file = filename
             }
 
             try {

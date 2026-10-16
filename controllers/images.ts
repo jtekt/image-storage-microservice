@@ -8,7 +8,6 @@ import { downloadLocalFile, removeLocalFile } from '../fileStorage/local'
 import { removeImageFiles } from '../fileStorage/common'
 import { assertSafeFilePath } from '../fileStorage/paths'
 import { defaultLimit } from '../config'
-import { getUserId } from '../utils/user'
 
 interface NewImage extends IImage {
     time: Date
@@ -19,15 +18,6 @@ export const upload_image = async (req: Request, res: Response) => {
     if (!req.file) throw createHttpError(400, 'File not provided')
 
     // TODO: Only allow images
-
-    let userId: string | undefined = undefined
-    if (process.env.IMAGE_SCOPE === 'user') {
-        const id = getUserId(req.auth?.payload)
-
-        // If no id found, throw an error
-        if (!id) throw createHttpError(401, 'User ID not provided')
-        userId = id
-    }
 
     const { originalname } = req.file
 
@@ -40,13 +30,12 @@ export const upload_image = async (req: Request, res: Response) => {
 
     const file = assertSafeFilePath(userProvidedFilePath || originalname)
 
-    const query = { file, userId }
+    const query = { file }
     const itemProperties: NewImage = {
         _id,
         time: time ? new Date(time) : new Date(),
         file,
         data,
-        userId,
     }
 
     const options = { upsert: true, new: true }
@@ -68,14 +57,6 @@ export const read_images = async (req: Request, res: Response) => {
         select,
     } = parse_query(req.query)
 
-    if (process.env.IMAGE_SCOPE === 'user') {
-        const id = getUserId(req.auth?.payload)
-
-        if (!id) throw createHttpError(401, 'User ID not provided')
-
-        query.userId = id
-    }
-
     const items = await Image.find(query)
         .sort(sortStatement)
         .skip(Number(skip))
@@ -92,14 +73,6 @@ export const read_image = async (req: Request, res: Response) => {
 
     const query: Record<string, string> = { _id }
 
-    if (process.env.IMAGE_SCOPE === 'user') {
-        const id = getUserId(req.auth?.payload)
-
-        if (!id) throw createHttpError(401, 'User ID not provided')
-
-        query.userId = id
-    }
-
     const image = await Image.findOne(query)
 
     if (!image) throw createHttpError(404, `Image ${_id} not found`)
@@ -111,14 +84,6 @@ export const read_image_file = async (req: Request, res: Response) => {
     const { _id } = req.params
 
     const query: Record<string, string> = { _id }
-
-    if (process.env.IMAGE_SCOPE === 'user') {
-        const id = getUserId(req.auth?.payload)
-
-        if (!id) throw createHttpError(401, 'User ID not provided')
-
-        query.userId = id
-    }
 
     const image = await Image.findOne(query)
 
@@ -134,14 +99,6 @@ export const update_images = async (req: Request, res: Response) => {
     const { query } = parse_query(req.query)
     const { $set, $unset } = parseUpdateBody(req.body)
 
-    if (process.env.IMAGE_SCOPE === 'user') {
-        const id = getUserId(req.auth?.payload)
-
-        if (!id) throw createHttpError(401, 'User ID not provided')
-
-        query.userId = id
-    }
-
     const result = await Image.updateMany(query, { $set, $unset })
 
     res.send(result)
@@ -152,14 +109,6 @@ export const update_image = async (req: Request, res: Response) => {
     const { $set, $unset } = parseUpdateBody(req.body)
 
     const query: Record<string, string> = { _id }
-
-    if (process.env.IMAGE_SCOPE === 'user') {
-        const id = getUserId(req.auth?.payload)
-
-        if (!id) throw createHttpError(401, 'User ID not provided')
-
-        query.userId = id
-    }
 
     const updatedDoc = await Image.findOneAndUpdate(
         query,
@@ -178,14 +127,6 @@ export const replace_image_data = async (req: Request, res: Response) => {
 
     const query: Record<string, string> = { _id }
 
-    if (process.env.IMAGE_SCOPE === 'user') {
-        const id = getUserId(req.auth?.payload)
-
-        if (!id) throw createHttpError(401, 'User ID not provided')
-
-        query.userId = id
-    }
-
     const updated_image = await Image.findOneAndUpdate(query, { data })
 
     if (!updated_image) throw createHttpError(404, `Image ${_id} not found`)
@@ -195,14 +136,6 @@ export const replace_image_data = async (req: Request, res: Response) => {
 
 export const delete_images = async (req: Request, res: Response) => {
     const { query } = parse_query(req.query)
-
-    if (process.env.IMAGE_SCOPE === 'user') {
-        const id = getUserId(req.auth?.payload)
-
-        if (!id) throw createHttpError(401, 'User ID not provided')
-
-        query.userId = id
-    }
 
     const items = await Image.find(query)
 
@@ -218,14 +151,6 @@ export const delete_image = async (req: Request, res: Response) => {
     const { _id } = req.params
 
     const query: Record<string, string> = { _id }
-
-    if (process.env.IMAGE_SCOPE === 'user') {
-        const id = getUserId(req.auth?.payload)
-
-        if (!id) throw createHttpError(401, 'User ID not provided')
-
-        query.userId = id
-    }
 
     const image = await Image.findOneAndDelete(query)
 
