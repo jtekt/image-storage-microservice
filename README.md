@@ -40,17 +40,18 @@ API documentation is available on `/docs`
 
 ## Environment variables
 
-| Variable                    | Description                                                                                                   | Default                | Required |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------- | -------- |
-| `APP_PORT`                  | Port on which the application listens for incoming requests                                                   | `3000`                 | No       |
-| `MONGODB_CONNECTION_STRING` | MongoDB connection string used to connect to the database                                                     | —                      | Yes      |
-| `UPLOADS_DIRECTORY`         | Local directory to store uploaded files. Disabled if S3 is used                                               | `"uploads"`            | No       |
-| `S3_BUCKET`                 | Name of the S3 bucket where images will be uploaded. If unset, local storage is used                          | —                      | No       |
-| `S3_ACCESS_KEY_ID`          | Access key ID for connecting to the S3-compatible storage provider                                            | —                      | No       |
-| `S3_SECRET_ACCESS_KEY`      | Secret access key for connecting to the S3-compatible storage provider                                        | —                      | No       |
-| `S3_REGION`                 | AWS region of the S3 bucket                                                                                   | —                      | No       |
-| `S3_ENDPOINT`               | Custom S3-compatible endpoint (e.g., for MinIO)                                                               | —                      | No       |
-| `OIDC_JWKS_URI`             | JWKS URI of the OIDC authentication provider. If provided, users must be authenticated to access the storage. | —                      | No       |
+| Variable                    | Description                                                                                               | Default                | Required |
+| --------------------------- | --------------------------------------------------------------------------------------------------------- | ---------------------- | -------- |
+| `APP_PORT`                  | Port on which the application listens for incoming requests                                               | `3000`                 | No       |
+| `MONGODB_CONNECTION_STRING` | MongoDB connection string used to connect to the database                                                 | —                      | Yes      |
+| `UPLOADS_DIRECTORY`         | Local directory to store uploaded files. Disabled if S3 is used                                           | `"uploads"`            | No       |
+| `S3_BUCKET`                 | Name of the S3 bucket where images will be uploaded. If unset, local storage is used                      | —                      | No       |
+| `S3_ACCESS_KEY_ID`          | Access key ID for connecting to the S3-compatible storage provider                                        | —                      | No       |
+| `S3_SECRET_ACCESS_KEY`      | Secret access key for connecting to the S3-compatible storage provider                                    | —                      | No       |
+| `S3_REGION`                 | AWS region of the S3 bucket                                                                               | —                      | No       |
+| `S3_ENDPOINT`               | Custom S3-compatible endpoint (e.g., for MinIO)                                                           | —                      | No       |
+| `OIDC_ISSUER_BASE_URL`      | Base URL of OIDC authentication provider. If provided, users must be authenticated to access the storage. | —                      | No       |
+| `OIDC_AUDIENCE`             | Comma-separated accepted token audiences (`aud` claim). Only used if `OIDC_ISSUER_BASE_URL` is set.       | `"account"`            | No       |
 
 ## Running in development
 
