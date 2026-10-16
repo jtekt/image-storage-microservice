@@ -1,8 +1,6 @@
-import createHttpError from 'http-errors'
 import { Image } from '../models/image'
 import { parse_query } from '../utils/query'
 import { Request, Response } from 'express'
-import { getUserId } from '../utils/user'
 import { PipelineStage } from 'mongoose'
 
 export const read_fields = async (_: Request, res: Response) => {
@@ -12,14 +10,6 @@ export const read_fields = async (_: Request, res: Response) => {
         { $unwind: '$arrayofkeyvalue' },
         { $group: { _id: null, fields: { $addToSet: '$arrayofkeyvalue.k' } } },
     ]
-
-    if (process.env.IMAGE_SCOPE === 'user') {
-        const id = getUserId(res.locals.user)
-
-        if (!id) throw createHttpError(401, 'User ID not provided')
-
-        pipeline.unshift({ $match: { userId: id } })
-    }
 
     const [result] = await Image.aggregate(pipeline)
 
@@ -35,13 +25,6 @@ export const read_field_unique_values = async (req: Request, res: Response) => {
     const { field_name } = req.params
     const { query } = parse_query(req.query)
 
-    if (process.env.IMAGE_SCOPE === 'user') {
-        const id = getUserId(res.locals.user)
-
-        if (!id) throw createHttpError(401, 'User ID not provided')
-
-        query.userId = id
-    }
     const fieldPath = `data.${field_name}`
     const distinctQuery = {
         ...query,

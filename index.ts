@@ -25,7 +25,6 @@ const {
     AUTHORIZED_GROUPS,
     GROUP_AUTHORIZATION_URL,
     TZ,
-    IMAGE_SCOPE,
     APP_VERSION = 'dev',
 } = process.env
 
@@ -76,7 +75,6 @@ app.get('/', (_, res) => {
                   }
                 : undefined,
         },
-        image_scope: IMAGE_SCOPE,
     })
 })
 

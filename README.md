@@ -14,8 +14,7 @@ The metadata for uploaded images is stored in a MongoDB database with the follow
   _id: ObjectId,
   file: string,
   time: Date,
-  data: any,
-  userId?: string
+  data: any
 },
 
 ```
@@ -52,8 +51,6 @@ API documentation is available on `/docs`
 | `S3_REGION`                 | AWS region of the S3 bucket                                                                                   | —                      | No       |
 | `S3_ENDPOINT`               | Custom S3-compatible endpoint (e.g., for MinIO)                                                               | —                      | No       |
 | `OIDC_JWKS_URI`             | JWKS URI of the OIDC authentication provider. If provided, users must be authenticated to access the storage. | —                      | No       |
-| `IMAGE_SCOPE`               | Logical scope of the images, e.g., user-specific . Enables scoped access control. Avowed values [`user`]      | —                      | No       |
-| `USER_IDENTIFIER`           | Field name used to extract the user ID from the authentication token. Only used if `IMAGE_SCOPE` is set.      | `"preferred_username"` | No       |
 
 ## Running in development
 

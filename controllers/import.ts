@@ -13,7 +13,6 @@ import {
     uploadsDirectoryPath,
     create_directory_if_not_exists,
 } from '../fileStorage/local'
-import { getUserId } from '../utils/user'
 import { assertSafeFilePath, resolveInside } from '../fileStorage/paths'
 
 const mongodb_data_import = (documents: IImage[]) => {
@@ -80,13 +79,6 @@ export const import_images = async (req: Request, res: Response) => {
         // The user can pass data for all the images of the zip
         const userDefinedData = parse_formdata_fields(body)
 
-        let userId: string
-        if (process.env.IMAGE_SCOPE === 'user') {
-            const id = getUserId(res.locals.user)
-            if (!id) throw createHttpError(401, 'User ID not provided')
-            userId = id
-        }
-
         const json_file = archive.files.find(
             ({ path }) => path === mongodb_export_file_name
         )
@@ -147,7 +139,6 @@ export const import_images = async (req: Request, res: Response) => {
         if (mongodbData) {
             mongodbData.forEach((document: IImage) => {
                 document.data = { ...document.data, ...userDefinedData }
-                if (userId) document.userId = userId
             })
 
             await mongodb_data_import(mongodbData)
@@ -157,7 +148,6 @@ export const import_images = async (req: Request, res: Response) => {
             const mongodbData: IImage[] = filteredFiles.map((f) => ({
                 file: f.path,
                 data: userDefinedData,
-                ...(userId ? { userId } : {}),
             }))
             await mongodb_data_import(mongodbData)
         }

@@ -3,7 +3,6 @@ import { existsSync, mkdirSync, rmSync } from 'fs'
 import { Response } from 'express'
 import { diskStorage } from 'multer'
 import { parse_post_body } from '../utils'
-import { getUserId } from '../utils/user'
 import { assertSafeFilePath, resolveInside } from './paths'
 
 export const { UPLOADS_DIRECTORY = 'uploads' } = process.env
@@ -42,16 +41,6 @@ export const localStorage = diskStorage({
             )
         }
 
-        if (req.user && process.env.IMAGE_SCOPE === 'user') {
-            const userId = getUserId(req.user)
-
-            if (!userId) {
-                throw new Error('User ID not found')
-            }
-
-            destinationPath = path.join(destinationPath, userId)
-        }
-
         create_directory_if_not_exists(destinationPath)
 
         callback(null, destinationPath)
@@ -71,16 +60,6 @@ export const localStorage = diskStorage({
         } catch (error) {
             console.error('Failed to decode filename:', error)
             // Fallback to original name
-        }
-
-        if (req.user && process.env.IMAGE_SCOPE === 'user') {
-            const userId = getUserId(req.user)
-
-            if (!userId) {
-                throw new Error('User ID not found')
-            }
-
-            req.body.file = path.join(userId, filename)
         }
 
         try {
