@@ -40,6 +40,7 @@
         "@types/mocha": "^10.0.1",
         "@types/multer": "^1.4.7",
         "@types/multer-s3": "^3.0.3",
+        "@types/node": "^24.19.2",
         "@types/rimraf": "^4.0.5",
         "@types/supertest": "^2.0.12",
         "@types/swagger-ui-express": "^4.1.3",
