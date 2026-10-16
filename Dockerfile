@@ -7,6 +7,7 @@ COPY . .
 
 ARG APP_VERSION=dev
 ENV APP_VERSION=$APP_VERSION
+ENV NODE_ENV=production
 
 RUN npm run swagger-autogen
 RUN npm run build
