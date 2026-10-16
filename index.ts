@@ -4,9 +4,6 @@ import { author, name as application_name } from './package.json'
 import express, { Request, Response } from 'express'
 import cors from 'cors'
 import promBundle from 'express-prom-bundle'
-import oidcAuth from '@moreillon/express-oidc'
-import legacyAuth from '@moreillon/express_identification_middleware'
-import group_auth from '@moreillon/express_group_based_authorization_middleware'
 import * as db from './db'
 import { S3_BUCKET, S3_ENDPOINT, S3_REGION, s3Client } from './fileStorage/s3'
 import { uploadsDirectoryPath, tempDirectoryPath } from './fileStorage/local'
@@ -16,14 +13,12 @@ import images_router from './routes/images'
 import import_router from './routes/import'
 import export_router from './routes/export'
 import fields_router from './routes/fields'
-import { createAuthMiddleware } from './auth'
+import { auth } from 'express-oauth2-jwt-bearer'
 
 const {
     APP_PORT = 80,
-    OIDC_JWKS_URI,
-    IDENTICATION_URL,
-    AUTHORIZED_GROUPS,
-    GROUP_AUTHORIZATION_URL,
+    OIDC_ISSUER_BASE_URL,
+    OIDC_AUDIENCE = 'account',
     TZ,
     APP_VERSION = 'dev',
 } = process.env
@@ -55,10 +50,8 @@ app.get('/', (_, res) => {
             connected: db.get_connected(),
         },
         auth: {
-            oidc_jwks_uri: OIDC_JWKS_URI,
-            legacy_auth_url: IDENTICATION_URL,
-            group_authorization_url: GROUP_AUTHORIZATION_URL,
-            authorized_groups: AUTHORIZED_GROUPS,
+            oidc_issuer_base_url: OIDC_ISSUER_BASE_URL,
+            oidc_audience: OIDC_AUDIENCE,
         },
         storage: {
             directories: !s3Client
@@ -79,15 +72,13 @@ app.get('/', (_, res) => {
 })
 
 // plug in the middleware
-app.use(createAuthMiddleware())
+if (OIDC_ISSUER_BASE_URL) {
+    const jwtCheck = auth({
+        issuerBaseURL: OIDC_ISSUER_BASE_URL,
+        audience: OIDC_AUDIENCE.split(','),
+    })
 
-if (AUTHORIZED_GROUPS && GROUP_AUTHORIZATION_URL) {
-    console.log(`Enabling group-based authorization`)
-    const group_auth_options = {
-        url: GROUP_AUTHORIZATION_URL,
-        groups: AUTHORIZED_GROUPS.split(','),
-    }
-    app.use(group_auth(group_auth_options))
+    app.use(jwtCheck)
 }
 
 app.use('/import', import_router)
