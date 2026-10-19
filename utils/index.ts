@@ -1,3 +1,5 @@
+import createHttpError from 'http-errors'
+
 export const parse_post_body = (body: any) => {
     const { json, data: bodyData, ...bodyRest } = body
 
@@ -18,7 +20,19 @@ const nestInDataField = (obj: any) =>
         {}
     )
 
+const assertNoOperatorKeys = (obj: Record<string, any>) => {
+    for (const key of Object.keys(obj)) {
+        if (key.startsWith('$'))
+            throw createHttpError(
+                400,
+                `Key "${key}" is not allowed in update body`
+            )
+    }
+}
+
 export const parseUpdateBody = (body: any) => {
     const { $unset = {}, ...$set } = body
+    assertNoOperatorKeys($set)
+    assertNoOperatorKeys($unset)
     return { $set: nestInDataField($set), $unset: nestInDataField($unset) }
 }

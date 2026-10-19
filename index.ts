@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import { author, name as application_name } from './package.json'
 
-import express, { Request, Response } from 'express'
+import express, { NextFunction, Request, Response } from 'express'
 import cors from 'cors'
 import promBundle from 'express-prom-bundle'
 import * as db from './db'
@@ -87,7 +87,7 @@ app.use('/images', images_router)
 app.use('/fields', fields_router)
 
 // Express error handling
-app.use((err: any, _: Request, res: Response) => {
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     console.error(err)
     const { statusCode = 500, message } = err
     res.status(statusCode).send(message)
