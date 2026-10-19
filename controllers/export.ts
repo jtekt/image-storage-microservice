@@ -3,7 +3,6 @@ import { Image, IImage } from '../models/image'
 import path from 'path'
 import fs from 'fs'
 import XLSX from 'xlsx'
-import { v4 as uuidv4 } from 'uuid'
 import { parse_query } from '../utils/query'
 import { Request, Response } from 'express'
 import { rimraf } from 'rimraf'
@@ -58,7 +57,7 @@ const generate_json = (data: IImage[], path: string) => {
 
 export const export_images = async (req: Request, res: Response) => {
     // Making zip name unique so as to allow parallel exports
-    const export_id = uuidv4()
+    const export_id = crypto.randomUUID()
 
     // Create temp directory if it does not exist
     create_directory_if_not_exists(tempDirectoryPath)
