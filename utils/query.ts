@@ -3,6 +3,10 @@ import type { SortOrder } from 'mongoose'
 
 const isNotUndefined = (value: any) => value && value !== 'undefined'
 
+// Escape all regex metacharacters so a client string is treated as a
+// literal substring match rather than a raw regex pattern (ReDoS prevention).
+const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
 const isPlainObject = (v: any) =>
     v !== null && typeof v === 'object' && !Array.isArray(v)
 
@@ -36,6 +40,19 @@ const dataFilters = (rest: Record<string, any>): Record<string, any> =>
     }, {})
 
 const stringIsValidDate = (s: string) => !isNaN(new Date(s).getTime())
+
+// Coerce a query-string value to number, boolean, or null when the caller
+// opts in via coerce=true.  Strings that cannot be unambiguously classified
+// are left as-is.  Empty strings and pure-whitespace strings are left as-is
+// to avoid unintended type changes.
+const coerceQueryValue = (s: string): any => {
+    if (s === 'true') return true
+    if (s === 'false') return false
+    if (s === 'null') return null
+    const trimmed = s.trim()
+    if (trimmed !== '' && !isNaN(Number(trimmed))) return Number(trimmed)
+    return s
+}
 
 // Query operators clients may use, in `filter` or as object values of other
 // query parameters. Anything else (e.g. $where, $expr, $function) is rejected
@@ -85,6 +102,7 @@ export const parse_query = (rawQuery: any) => {
         from,
         to,
         regex = false, // boolean toggling partial text search, not ideal
+        coerce = false, // opt-in: coerce query-string values to number/boolean/null
         file,
         filter,
         select,
@@ -97,7 +115,8 @@ export const parse_query = (rawQuery: any) => {
     let query: any = {}
 
     if (file) {
-        if (isNotUndefined(regex)) query.file = { $regex: file, $options: 'i' }
+        if (isNotUndefined(regex))
+            query.file = { $regex: escapeRegex(String(file)), $options: 'i' }
         else query.file = file
     }
 
@@ -110,8 +129,16 @@ export const parse_query = (rawQuery: any) => {
     }
 
     for (const [key, value] of Object.entries(dataFilters(rest))) {
-        if (isNotUndefined(regex)) query[key] = { $regex: value, $options: 'i' }
-        else query[key] = value
+        if (isNotUndefined(regex))
+            query[key] = {
+                $regex: escapeRegex(String(value)),
+                $options: 'i',
+            }
+        else
+            query[key] =
+                isNotUndefined(coerce) && typeof value === 'string'
+                    ? coerceQueryValue(value)
+                    : value
     }
 
     if (ids) {

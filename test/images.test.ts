@@ -459,6 +459,111 @@ describe('Image Storage API', () => {
     })
 
     // -----------------------------------------------------------------------
+    // GET /images — pagination validation
+    // -----------------------------------------------------------------------
+
+    describe('GET /images — pagination validation', () => {
+        beforeEach(async () => {
+            await insertImage({}, 'pag1.jpg')
+            await insertImage({}, 'pag2.jpg')
+            await insertImage({}, 'pag3.jpg')
+        })
+
+        it('uses the default limit (100) when limit is omitted', async () => {
+            const { status, body } = await request(app).get(
+                `/images?__test_marker=${TEST_RUN_ID}`
+            )
+            expect(status).to.equal(200)
+            expect(body.limit).to.equal(100)
+        })
+
+        it('accepts a valid limit within the maximum', async () => {
+            const { status, body } = await request(app).get(
+                `/images?__test_marker=${TEST_RUN_ID}&limit=2`
+            )
+            expect(status).to.equal(200)
+            expect(body.limit).to.equal(2)
+            expect(body.items.length).to.be.at.most(2)
+        })
+
+        it('accepts limit equal to the maximum (1000)', async () => {
+            const max = Number(process.env.LIST_MAX_LIMIT) || 1000
+            const { status, body } = await request(app).get(
+                `/images?__test_marker=${TEST_RUN_ID}&limit=${max}`
+            )
+            expect(status).to.equal(200)
+            expect(body.limit).to.equal(max)
+        })
+
+        it('returns 400 when limit exceeds the maximum', async () => {
+            const max = Number(process.env.LIST_MAX_LIMIT) || 1000
+            const { status } = await request(app).get(
+                `/images?limit=${max + 1}`
+            )
+            expect(status).to.equal(400)
+        })
+
+        it('uses the default limit when limit=0 (cannot disable the MongoDB limit)', async () => {
+            const { status, body } = await request(app).get(
+                `/images?__test_marker=${TEST_RUN_ID}&limit=0`
+            )
+            expect(status).to.equal(200)
+            expect(body.limit).to.equal(100)
+            // Must never return an unbounded result set
+            expect(body.limit).to.be.greaterThan(0)
+        })
+
+        it('uses the default limit when limit is negative', async () => {
+            const { status, body } = await request(app).get(
+                `/images?__test_marker=${TEST_RUN_ID}&limit=-5`
+            )
+            expect(status).to.equal(200)
+            expect(body.limit).to.equal(100)
+        })
+
+        it('uses the default limit when limit is non-numeric', async () => {
+            const { status, body } = await request(app).get(
+                `/images?__test_marker=${TEST_RUN_ID}&limit=abc`
+            )
+            expect(status).to.equal(200)
+            expect(body.limit).to.equal(100)
+        })
+
+        it('uses the default limit when limit is a decimal', async () => {
+            const { status, body } = await request(app).get(
+                `/images?__test_marker=${TEST_RUN_ID}&limit=2.5`
+            )
+            expect(status).to.equal(200)
+            expect(body.limit).to.equal(100)
+        })
+
+        it('treats negative skip as 0 (no error, returns results from start)', async () => {
+            const { status, body } = await request(app).get(
+                `/images?__test_marker=${TEST_RUN_ID}&skip=-1`
+            )
+            expect(status).to.equal(200)
+            expect(body.items.length).to.equal(3)
+        })
+
+        it('treats non-numeric skip as 0', async () => {
+            const { status, body } = await request(app).get(
+                `/images?__test_marker=${TEST_RUN_ID}&skip=abc`
+            )
+            expect(status).to.equal(200)
+            expect(body.items.length).to.equal(3)
+        })
+
+        it('treats decimal skip as its floor value', async () => {
+            const { status, body } = await request(app).get(
+                `/images?__test_marker=${TEST_RUN_ID}&skip=1.9`
+            )
+            expect(status).to.equal(200)
+            // floor(1.9) = 1, so skip 1 of 3 → 2 results
+            expect(body.items.length).to.equal(2)
+        })
+    })
+
+    // -----------------------------------------------------------------------
     // GET /images/:id
     // -----------------------------------------------------------------------
 
@@ -841,7 +946,11 @@ describe('Image Storage API', () => {
 
     describe('GET /export', () => {
         it('returns a zip archive when there are no images', async () => {
-            const { status, headers } = await request(app).get('/export')
+            // Scope to this test run so pre-existing DB documents do not
+            // push the total past EXPORT_MAX_LIMIT on a shared database.
+            const { status, headers } = await request(app).get(
+                `/export?__test_marker=${TEST_RUN_ID}`
+            )
 
             expect(status).to.equal(200)
             expect(headers['content-type']).to.include('application/zip')
@@ -851,7 +960,9 @@ describe('Image Storage API', () => {
             await insertImage({ exported: 'yes' }, 'exp1.jpg')
             await insertImage({ exported: 'yes' }, 'exp2.jpg')
 
-            const { status, headers } = await request(app).get('/export')
+            const { status, headers } = await request(app).get(
+                `/export?__test_marker=${TEST_RUN_ID}`
+            )
 
             expect(status).to.equal(200)
             expect(headers['content-type']).to.include('application/zip')
@@ -1029,7 +1140,7 @@ describe('Image Storage API', () => {
             await insertImage({}, outsideRelative)
 
             const { status, body } = await request(app)
-                .get('/export')
+                .get(`/export?__test_marker=${TEST_RUN_ID}`)
                 .buffer(true)
                 .parse((res, callback) => {
                     const chunks: Buffer[] = []
@@ -1096,6 +1207,219 @@ describe('Image Storage API', () => {
             expect(status).to.equal(200)
             expect(body).to.have.property('version')
             expect(body).to.have.property('mongodb')
+        })
+    })
+
+    // -----------------------------------------------------------------------
+    // Issue 1: regex=true escaping (ReDoS prevention)
+    // -----------------------------------------------------------------------
+
+    describe('GET /images — regex=true escaping', () => {
+        beforeEach(async () => {
+            await insertImage({ tag: 'value3' }, 'regex-a.jpg')
+            await insertImage({ tag: 'value.3' }, 'regex-b.jpg') // literal dot in value
+            await insertImage({ tag: 'VALUE3' }, 'regex-c.jpg') // different case
+        })
+
+        it('regex=true still performs case-insensitive partial matching', async () => {
+            const { status, body } = await request(app).get(
+                `/images?tag=value3&__test_marker=${TEST_RUN_ID}&regex=true`
+            )
+            expect(status).to.equal(200)
+            // Matches "value3" and "VALUE3" (case-insensitive), not "value.3"
+            expect(body.total).to.equal(2)
+        })
+
+        it('regex=true treats a dot in the search term as a literal dot, not a wildcard', async () => {
+            const { status, body } = await request(app).get(
+                `/images?tag=value.3&__test_marker=${TEST_RUN_ID}&regex=true`
+            )
+            expect(status).to.equal(200)
+            // Only "value.3" matches — the dot must not act as a regex wildcard
+            expect(body.total).to.equal(1)
+            expect(body.items[0].data.tag).to.equal('value.3')
+        })
+
+        it('regex=true with a catastrophic-regex-like string completes without hanging', async () => {
+            // "(a+)+" would be catastrophic as a raw regex — as a literal string it
+            // simply matches nothing and must return promptly.
+            const { status, body } = await request(app).get(
+                `/images?tag=${encodeURIComponent('(a+)+')}&__test_marker=${TEST_RUN_ID}&regex=true`
+            )
+            expect(status).to.equal(200)
+            expect(body.total).to.equal(0)
+        })
+
+        it('regex=true with special chars [, *, ^ matches literally', async () => {
+            await insertImage({ tag: 'a[b]c' }, 'regex-special.jpg')
+
+            const { status, body } = await request(app).get(
+                `/images?tag=${encodeURIComponent('a[b]c')}&__test_marker=${TEST_RUN_ID}&regex=true`
+            )
+            expect(status).to.equal(200)
+            expect(body.total).to.equal(1)
+        })
+
+        it('regex=false (default) is unaffected — plain equality match', async () => {
+            const { status, body } = await request(app).get(
+                `/images?tag=value3&__test_marker=${TEST_RUN_ID}`
+            )
+            expect(status).to.equal(200)
+            // Only exact match "value3", not "VALUE3" or "value.3"
+            expect(body.total).to.equal(1)
+        })
+    })
+
+    // -----------------------------------------------------------------------
+    // Issue 2: parseUpdateBody — reject $-prefixed keys with 400
+    // -----------------------------------------------------------------------
+
+    describe('PATCH /images/:id — operator key rejection', () => {
+        it('returns 400 when the body contains a $-prefixed key (e.g. $push)', async () => {
+            const doc = await insertImage({ x: '1' }, 'op-key.jpg')
+
+            const { status } = await request(app)
+                .patch(`/images/${doc._id}`)
+                .send({ $push: { x: '2' } })
+
+            expect(status).to.equal(400)
+        })
+
+        it('returns 400 when the $unset object contains a $-prefixed key', async () => {
+            const doc = await insertImage({ x: '1' }, 'op-unset.jpg')
+
+            const { status } = await request(app)
+                .patch(`/images/${doc._id}`)
+                .send({ $unset: { $where: '' } })
+
+            expect(status).to.equal(400)
+        })
+
+        it('still accepts $unset with valid field names', async () => {
+            const doc = await insertImage(
+                { keep: 'yes', remove: 'bye' },
+                'valid-unset.jpg'
+            )
+
+            const { status, body } = await request(app)
+                .patch(`/images/${doc._id}`)
+                .send({ $unset: { remove: '' } })
+
+            expect(status).to.equal(200)
+            expect(body.data).to.not.have.property('remove')
+            expect(body.data.keep).to.equal('yes')
+        })
+
+        it('still accepts nested-object values in PATCH body (dot-notation behavior unchanged)', async () => {
+            const doc = await insertImage({ x: '1' }, 'nested-patch.jpg')
+
+            const { status, body } = await request(app)
+                .patch(`/images/${doc._id}`)
+                .send({ nested: { prop1: 'a', prop2: 'b' } })
+
+            expect(status).to.equal(200)
+            expect(body.data.nested.prop1).to.equal('a')
+        })
+    })
+
+    describe('PATCH /images — bulk operator key rejection', () => {
+        it('returns 400 when the bulk PATCH body contains a $-prefixed key', async () => {
+            await insertImage({ x: '1' }, 'bulk-op.jpg')
+
+            const { status } = await request(app)
+                .patch(`/images?__test_marker=${TEST_RUN_ID}`)
+                .send({ $inc: { x: 1 } })
+
+            expect(status).to.equal(400)
+        })
+    })
+
+    // -----------------------------------------------------------------------
+    // Issue 3: coerce=true — opt-in type coercion for query-string values
+    // -----------------------------------------------------------------------
+
+    describe('GET /images — coerce=true type coercion', () => {
+        beforeEach(async () => {
+            // Insert via Image.create so numeric/boolean types are stored as-is
+            const numDoc = await Image.create({
+                file: `coerce-num-${TEST_RUN_ID}.jpg`,
+                data: { score: 99, active: true, __test_marker: TEST_RUN_ID },
+            })
+            const strDoc = await Image.create({
+                file: `coerce-str-${TEST_RUN_ID}.jpg`,
+                data: {
+                    score: '99',
+                    active: 'false',
+                    __test_marker: TEST_RUN_ID,
+                },
+            })
+            createdIds.push(numDoc._id.toString(), strDoc._id.toString())
+        })
+
+        it('without coerce=true, score=99 matches only the string "99", not the number 99', async () => {
+            const { status, body } = await request(app).get(
+                `/images?score=99&__test_marker=${TEST_RUN_ID}`
+            )
+            expect(status).to.equal(200)
+            // Only the string-stored doc matches
+            expect(body.total).to.equal(1)
+            expect(body.items[0].data.score).to.equal('99')
+        })
+
+        it('with coerce=true, score=99 matches the number 99 stored in MongoDB', async () => {
+            const { status, body } = await request(app).get(
+                `/images?score=99&__test_marker=${TEST_RUN_ID}&coerce=true`
+            )
+            expect(status).to.equal(200)
+            // Only the number-stored doc matches
+            expect(body.total).to.equal(1)
+            expect(body.items[0].data.score).to.equal(99)
+        })
+
+        it('with coerce=true, active=true matches the boolean true stored in MongoDB', async () => {
+            const { status, body } = await request(app).get(
+                `/images?active=true&__test_marker=${TEST_RUN_ID}&coerce=true`
+            )
+            expect(status).to.equal(200)
+            expect(body.total).to.equal(1)
+            expect(body.items[0].data.active).to.equal(true)
+        })
+
+        it('with coerce=true, active=false matches the string "false", not the boolean false', async () => {
+            // active=false: coerced to boolean false — matches the string-stored doc
+            // that has active: 'false' only if 'false' === false, which it does not.
+            // This test documents that coerce changes the filter value, not stored data.
+            const { status, body } = await request(app).get(
+                `/images?active=false&__test_marker=${TEST_RUN_ID}&coerce=true`
+            )
+            expect(status).to.equal(200)
+            // boolean false does NOT equal string 'false' in MongoDB strict equality
+            expect(body.total).to.equal(0)
+        })
+
+        it('with coerce=true, a plain string value is left as a string', async () => {
+            await insertImage({ label: 'hello' }, `coerce-str2-${TEST_RUN_ID}.jpg`)
+
+            const { status, body } = await request(app).get(
+                `/images?label=hello&__test_marker=${TEST_RUN_ID}&coerce=true`
+            )
+            expect(status).to.equal(200)
+            expect(body.total).to.equal(1)
+            expect(body.items[0].data.label).to.equal('hello')
+        })
+
+        it('with coerce=true, a mixed alphanumeric string like "123abc" stays a string', async () => {
+            await insertImage(
+                { code: '123abc' },
+                `coerce-alphanum-${TEST_RUN_ID}.jpg`
+            )
+
+            const { status, body } = await request(app).get(
+                `/images?code=123abc&__test_marker=${TEST_RUN_ID}&coerce=true`
+            )
+            expect(status).to.equal(200)
+            expect(body.total).to.equal(1)
+            expect(body.items[0].data.code).to.equal('123abc')
         })
     })
 })
