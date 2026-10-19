@@ -459,6 +459,111 @@ describe('Image Storage API', () => {
     })
 
     // -----------------------------------------------------------------------
+    // GET /images — pagination validation
+    // -----------------------------------------------------------------------
+
+    describe('GET /images — pagination validation', () => {
+        beforeEach(async () => {
+            await insertImage({}, 'pag1.jpg')
+            await insertImage({}, 'pag2.jpg')
+            await insertImage({}, 'pag3.jpg')
+        })
+
+        it('uses the default limit (100) when limit is omitted', async () => {
+            const { status, body } = await request(app).get(
+                `/images?__test_marker=${TEST_RUN_ID}`
+            )
+            expect(status).to.equal(200)
+            expect(body.limit).to.equal(100)
+        })
+
+        it('accepts a valid limit within the maximum', async () => {
+            const { status, body } = await request(app).get(
+                `/images?__test_marker=${TEST_RUN_ID}&limit=2`
+            )
+            expect(status).to.equal(200)
+            expect(body.limit).to.equal(2)
+            expect(body.items.length).to.be.at.most(2)
+        })
+
+        it('accepts limit equal to the maximum (1000)', async () => {
+            const max = Number(process.env.LIST_MAX_LIMIT) || 1000
+            const { status, body } = await request(app).get(
+                `/images?__test_marker=${TEST_RUN_ID}&limit=${max}`
+            )
+            expect(status).to.equal(200)
+            expect(body.limit).to.equal(max)
+        })
+
+        it('returns 400 when limit exceeds the maximum', async () => {
+            const max = Number(process.env.LIST_MAX_LIMIT) || 1000
+            const { status } = await request(app).get(
+                `/images?limit=${max + 1}`
+            )
+            expect(status).to.equal(400)
+        })
+
+        it('uses the default limit when limit=0 (cannot disable the MongoDB limit)', async () => {
+            const { status, body } = await request(app).get(
+                `/images?__test_marker=${TEST_RUN_ID}&limit=0`
+            )
+            expect(status).to.equal(200)
+            expect(body.limit).to.equal(100)
+            // Must never return an unbounded result set
+            expect(body.limit).to.be.greaterThan(0)
+        })
+
+        it('uses the default limit when limit is negative', async () => {
+            const { status, body } = await request(app).get(
+                `/images?__test_marker=${TEST_RUN_ID}&limit=-5`
+            )
+            expect(status).to.equal(200)
+            expect(body.limit).to.equal(100)
+        })
+
+        it('uses the default limit when limit is non-numeric', async () => {
+            const { status, body } = await request(app).get(
+                `/images?__test_marker=${TEST_RUN_ID}&limit=abc`
+            )
+            expect(status).to.equal(200)
+            expect(body.limit).to.equal(100)
+        })
+
+        it('uses the default limit when limit is a decimal', async () => {
+            const { status, body } = await request(app).get(
+                `/images?__test_marker=${TEST_RUN_ID}&limit=2.5`
+            )
+            expect(status).to.equal(200)
+            expect(body.limit).to.equal(100)
+        })
+
+        it('treats negative skip as 0 (no error, returns results from start)', async () => {
+            const { status, body } = await request(app).get(
+                `/images?__test_marker=${TEST_RUN_ID}&skip=-1`
+            )
+            expect(status).to.equal(200)
+            expect(body.items.length).to.equal(3)
+        })
+
+        it('treats non-numeric skip as 0', async () => {
+            const { status, body } = await request(app).get(
+                `/images?__test_marker=${TEST_RUN_ID}&skip=abc`
+            )
+            expect(status).to.equal(200)
+            expect(body.items.length).to.equal(3)
+        })
+
+        it('treats decimal skip as its floor value', async () => {
+            const { status, body } = await request(app).get(
+                `/images?__test_marker=${TEST_RUN_ID}&skip=1.9`
+            )
+            expect(status).to.equal(200)
+            // floor(1.9) = 1, so skip 1 of 3 → 2 results
+            expect(body.items.length).to.equal(2)
+        })
+    })
+
+    // -----------------------------------------------------------------------
     // GET /images/:id
     // -----------------------------------------------------------------------
 
@@ -841,7 +946,11 @@ describe('Image Storage API', () => {
 
     describe('GET /export', () => {
         it('returns a zip archive when there are no images', async () => {
-            const { status, headers } = await request(app).get('/export')
+            // Scope to this test run so pre-existing DB documents do not
+            // push the total past EXPORT_MAX_LIMIT on a shared database.
+            const { status, headers } = await request(app).get(
+                `/export?__test_marker=${TEST_RUN_ID}`
+            )
 
             expect(status).to.equal(200)
             expect(headers['content-type']).to.include('application/zip')
@@ -851,7 +960,9 @@ describe('Image Storage API', () => {
             await insertImage({ exported: 'yes' }, 'exp1.jpg')
             await insertImage({ exported: 'yes' }, 'exp2.jpg')
 
-            const { status, headers } = await request(app).get('/export')
+            const { status, headers } = await request(app).get(
+                `/export?__test_marker=${TEST_RUN_ID}`
+            )
 
             expect(status).to.equal(200)
             expect(headers['content-type']).to.include('application/zip')
@@ -1029,7 +1140,7 @@ describe('Image Storage API', () => {
             await insertImage({}, outsideRelative)
 
             const { status, body } = await request(app)
-                .get('/export')
+                .get(`/export?__test_marker=${TEST_RUN_ID}`)
                 .buffer(true)
                 .parse((res, callback) => {
                     const chunks: Buffer[] = []

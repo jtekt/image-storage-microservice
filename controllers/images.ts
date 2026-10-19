@@ -7,7 +7,7 @@ import { s3Client, streamFileFromS3, deleteFileFromS3 } from '../fileStorage/s3'
 import { downloadLocalFile, removeLocalFile } from '../fileStorage/local'
 import { removeImageFiles } from '../fileStorage/common'
 import { assertSafeFilePath } from '../fileStorage/paths'
-import { defaultLimit } from '../config'
+import { defaultLimit, maxListLimit } from '../config'
 
 interface NewImage extends IImage {
     time: Date
@@ -52,14 +52,36 @@ export const read_images = async (req: Request, res: Response) => {
     const {
         query,
         sortStatement,
-        limit = defaultLimit,
+        limit: requestedLimit,
         skip,
         select,
     } = parse_query(req.query)
 
+    // Validate limit: reject values above the maximum, treat 0/negative/invalid as default
+    let limit: number
+    if (requestedLimit === undefined) {
+        limit = defaultLimit
+    } else {
+        const parsed = Number(requestedLimit)
+        if (!Number.isInteger(parsed) || parsed <= 0) {
+            limit = defaultLimit
+        } else if (parsed > maxListLimit) {
+            throw createHttpError(
+                400,
+                `Limit exceeds maximum of ${maxListLimit}`
+            )
+        } else {
+            limit = parsed
+        }
+    }
+
+    // Clamp skip: treat negative, non-numeric, or decimal values as 0
+    const parsedSkip = Math.max(0, Math.floor(Number(skip)))
+    const safeSkip = Number.isFinite(parsedSkip) ? parsedSkip : 0
+
     const items = await Image.find(query)
         .sort(sortStatement)
-        .skip(Number(skip))
+        .skip(safeSkip)
         .limit(limit)
         .select(select)
 
