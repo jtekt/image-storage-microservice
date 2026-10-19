@@ -1,10 +1,49 @@
 import { Request, Response } from 'express'
 import path from 'path'
 import { Client } from 'minio'
-import multerMinIOStorage from 'multer-minio-storage'
 import { parse_post_body } from '../utils'
 import { StorageEngine } from 'multer'
 import { assertSafeFilePath } from './paths'
+
+// Minimal Multer storage engine for MinIO (replaces multer-minio-storage).
+// Only implements the features actually used by this project: streaming upload
+// and removal.  The `key` callback follows the same signature as multer-s3.
+function minioStorage(opts: {
+    minioClient: Client
+    bucket: string
+    key: (
+        req: Request,
+        file: Express.Multer.File,
+        cb: (err: any, key?: string) => void
+    ) => void
+}): StorageEngine {
+    return {
+        _handleFile(req, file, cb) {
+            opts.key(req, file, (err, key) => {
+                if (err) return cb(err)
+                if (!key) return cb(new Error('MinIO storage: key is required'))
+                opts.minioClient
+                    .putObject(opts.bucket, key, file.stream)
+                    .then((result) =>
+                        cb(null, {
+                            bucket: opts.bucket,
+                            key,
+                            etag: result.etag,
+                            versionId: result.versionId,
+                        } as any)
+                    )
+                    .catch(cb)
+            })
+        },
+        _removeFile(req, file: any, cb) {
+            opts.minioClient
+                .removeObject(opts.bucket, file.key)
+                .then(() => cb(null))
+                .catch(cb)
+        },
+    }
+}
+
 export const {
     S3_REGION,
     S3_ACCESS_KEY_ID = '',
@@ -30,7 +69,7 @@ if (S3_BUCKET) {
         region: S3_REGION,
     })
 
-    s3Storage = multerMinIOStorage({
+    s3Storage = minioStorage({
         minioClient: s3Client,
         bucket: S3_BUCKET,
         key: (req: Request, { originalname }, callback) => {
