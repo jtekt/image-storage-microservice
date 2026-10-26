@@ -1197,6 +1197,132 @@ describe('Image Storage API', () => {
     })
 
     // -----------------------------------------------------------------------
+    // Null / empty metadata handling
+    // -----------------------------------------------------------------------
+
+    describe('POST /images — null metadata handling', () => {
+        it('succeeds when the data field is the JSON null literal "null"', async () => {
+            const { status, body } = await request(app)
+                .post('/images')
+                .field('data', 'null')
+                .field('__test_marker', TEST_RUN_ID)
+                .attach('image', SAMPLE_JPG)
+
+            expect(status).to.equal(200)
+            expect(body).to.have.property('_id')
+            // data must be an object, never null
+            expect(body.data).to.be.an('object').and.not.equal(null)
+            if (body._id) createdIds.push(body._id)
+        })
+
+        it('succeeds when the json field is the JSON null literal "null"', async () => {
+            const { status, body } = await request(app)
+                .post('/images')
+                .field('json', 'null')
+                .attach('image', SAMPLE2_JPG)
+
+            expect(status).to.equal(200)
+            expect(body).to.have.property('_id')
+            expect(body.data).to.be.an('object').and.not.equal(null)
+            if (body._id) createdIds.push(body._id)
+        })
+
+        it('succeeds and preserves data when data field is a valid JSON object', async () => {
+            const { status, body } = await request(app)
+                .post('/images')
+                .field('data', JSON.stringify({ category: 'ok', __test_marker: TEST_RUN_ID }))
+                .attach('image', SAMPLE_JPG)
+
+            expect(status).to.equal(200)
+            expect(body.data.category).to.equal('ok')
+            if (body._id) createdIds.push(body._id)
+        })
+    })
+
+    describe('POST /import — null metadata handling', () => {
+        const IMPORT_NULL_FILE = `import_null_test_${TEST_RUN_ID}.jpg`
+
+        /** Build a zip WITHOUT mongodb_data.json so data comes solely from the field */
+        async function buildImportZipNoJson(): Promise<Buffer> {
+            const archive = archiver('zip', { store: true })
+            const chunks: Buffer[] = []
+            archive.on('data', (chunk: Buffer) => chunks.push(chunk))
+            const done = new Promise<void>((resolve) => archive.on('end', resolve))
+            archive.append(fs.readFileSync(SAMPLE_JPG), { name: IMPORT_NULL_FILE })
+            await archive.finalize()
+            await done
+            return Buffer.concat(chunks)
+        }
+
+        afterEach(() => {
+            const { uploadsDirectoryPath: realUploads } = require('../fileStorage/local')
+            const extracted = path.join(realUploads, IMPORT_NULL_FILE)
+            if (fs.existsSync(extracted)) fs.rmSync(extracted, { force: true })
+        })
+
+        it('stores data:{} (not null) when data field is "null" and zip has no mongodb_data.json', async () => {
+            const zip = await buildImportZipNoJson()
+
+            const { status } = await request(app)
+                .post('/import')
+                .attach('archive', zip, {
+                    filename: 'import_null_test.zip',
+                    contentType: 'application/zip',
+                })
+                .field('data', 'null')
+
+            expect(status).to.equal(200)
+
+            const doc = await Image.findOne({ file: IMPORT_NULL_FILE })
+            expect(doc).to.not.be.null
+            // data must be stored as an object, never as null
+            expect(doc!.data).to.be.an('object').and.not.equal(null)
+            if (doc) createdIds.push(doc._id.toString())
+        })
+
+        it('preserves existing mongodb_data.json metadata when data field is "null"', async () => {
+            const archive = archiver('zip', { store: true })
+            const chunks: Buffer[] = []
+            archive.on('data', (chunk: Buffer) => chunks.push(chunk))
+            const done = new Promise<void>((resolve) => archive.on('end', resolve))
+
+            const IMPORT_WITH_JSON_FILE = `import_withjson_${TEST_RUN_ID}.jpg`
+            const mongoData = JSON.stringify([
+                {
+                    file: IMPORT_WITH_JSON_FILE,
+                    time: new Date().toISOString(),
+                    data: { source: 'backup', __test_marker: TEST_RUN_ID },
+                },
+            ])
+            archive.append(fs.readFileSync(SAMPLE_JPG), { name: IMPORT_WITH_JSON_FILE })
+            archive.append(mongoData, { name: 'mongodb_data.json' })
+            await archive.finalize()
+            await done
+            const zip = Buffer.concat(chunks)
+
+            const { status } = await request(app)
+                .post('/import')
+                .attach('archive', zip, {
+                    filename: 'import_withjson_test.zip',
+                    contentType: 'application/zip',
+                })
+                .field('data', 'null')
+
+            expect(status).to.equal(200)
+
+            const doc = await Image.findOne({ file: IMPORT_WITH_JSON_FILE })
+            expect(doc).to.not.be.null
+            // Metadata from mongodb_data.json must be preserved
+            expect(doc!.data.source).to.equal('backup')
+            if (doc) createdIds.push(doc._id.toString())
+
+            const { uploadsDirectoryPath: realUploads } = require('../fileStorage/local')
+            const extracted = path.join(realUploads, IMPORT_WITH_JSON_FILE)
+            if (fs.existsSync(extracted)) fs.rmSync(extracted, { force: true })
+        })
+    })
+
+    // -----------------------------------------------------------------------
     // GET /  (health / info endpoint)
     // -----------------------------------------------------------------------
 
