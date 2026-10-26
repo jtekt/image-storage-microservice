@@ -44,15 +44,17 @@ function minioStorage(opts: {
     }
 }
 
+import { env } from '../config/env'
+
 export const {
     S3_REGION,
-    S3_ACCESS_KEY_ID = '',
-    S3_SECRET_ACCESS_KEY = '',
-    S3_ENDPOINT = 's3.amazonaws.com',
+    S3_ACCESS_KEY_ID,
+    S3_SECRET_ACCESS_KEY,
+    S3_ENDPOINT,
     S3_PORT,
     S3_BUCKET,
     S3_USE_SSL,
-} = process.env
+} = env
 
 export let s3Client: Client
 export let s3Storage: StorageEngine

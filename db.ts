@@ -1,19 +1,17 @@
 import mongoose from 'mongoose'
-import dotenv from 'dotenv'
-
-dotenv.config()
+import { env } from './config/env'
 
 const {
     MONGODB_CONNECTION_STRING,
-    MONGODB_PROTOCOL = 'mongodb',
+    MONGODB_PROTOCOL,
     MONGODB_USERNAME,
     MONGODB_PASSWORD,
-    MONGODB_HOST = 'localhost',
+    MONGODB_HOST,
     MONGODB_PORT,
-    MONGODB_DB = 'image_storage',
-    MONGODB_OPTIONS = '',
-    MONGODB_URL, // legacy
-} = process.env
+    MONGODB_DB,
+    MONGODB_OPTIONS,
+    MONGODB_URL,
+} = env
 
 const mongodbPort = MONGODB_PORT ? `:${MONGODB_PORT}` : ''
 

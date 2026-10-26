@@ -4,8 +4,9 @@ import { Response } from 'express'
 import { diskStorage } from 'multer'
 import { parse_post_body } from '../utils'
 import { assertSafeFilePath, resolveInside } from './paths'
+import { env } from '../config/env'
 
-export const { UPLOADS_DIRECTORY = 'uploads' } = process.env
+export const UPLOADS_DIRECTORY = env.UPLOADS_DIRECTORY
 
 export const uploadsDirectoryPath = path.resolve(UPLOADS_DIRECTORY)
 export const tempDirectoryPath = path.resolve('./temp')

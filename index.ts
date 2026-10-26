@@ -1,4 +1,5 @@
 import 'dotenv/config'
+import { env } from './config/env'
 import { author, name as application_name } from './package.json'
 
 import express, { NextFunction, Request, Response } from 'express'
@@ -15,13 +16,7 @@ import export_router from './routes/export'
 import fields_router from './routes/fields'
 import { auth } from 'express-oauth2-jwt-bearer'
 
-const {
-    APP_PORT = 80,
-    OIDC_ISSUER_BASE_URL,
-    OIDC_AUDIENCE = 'account',
-    TZ,
-    APP_VERSION = 'dev',
-} = process.env
+const { APP_PORT, OIDC_ISSUER_BASE_URL, OIDC_AUDIENCE, TZ, APP_VERSION } = env
 
 process.env.TZ = TZ || 'Asia/Tokyo'
 

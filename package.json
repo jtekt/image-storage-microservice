@@ -6,7 +6,7 @@
         "dev": "nodemon index.ts --ignore ./uploads --ignore ./temp",
         "build": "tsc --outdir ./build -p . ",
         "start": "node ./build/index.js",
-        "test": "mocha -r ts-node/register test/images.test.ts --timeout 10000 --exit",
+        "test": "mocha -r ts-node/register 'test/*.test.ts' --timeout 10000 --exit",
         "coverage": "nyc npm run test",
         "swagger-autogen": "ts-node swagger.ts"
     },
@@ -28,7 +28,8 @@
         "swagger-autogen": "^2.23.1",
         "swagger-ui-express": "^4.6.3",
         "unzipper": "^0.10.11",
-        "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+        "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
+        "zod": "^4.6.7"
     },
     "devDependencies": {
         "@types/archiver": "^5.3.2",
