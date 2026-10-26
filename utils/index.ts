@@ -5,13 +5,14 @@ export const parse_post_body = (body: any) => {
 
     // Check if parsable jsonData
     const jsonData = json || bodyData
-    return jsonData ? JSON.parse(jsonData) : bodyRest
+    const parsed = jsonData ? JSON.parse(jsonData) : bodyRest
+    return parsed ?? {}
 }
 
 export const parse_formdata_fields = (body: { json?: any; data?: any }) => {
     const json_data = body.data || body.json
     const data = json_data ? JSON.parse(json_data) : body
-    return data
+    return data ?? {}
 }
 
 const nestInDataField = (obj: any) =>
