@@ -1323,6 +1323,90 @@ describe('Image Storage API', () => {
     })
 
     // -----------------------------------------------------------------------
+    // GET /images — shorthand filter deprecation
+    // -----------------------------------------------------------------------
+
+    describe('GET /images — shorthand filter deprecation', () => {
+        beforeEach(async () => {
+            await insertImage({ label: 'cat' }, 'dep1.jpg')
+            await insertImage({ label: 'dog' }, 'dep2.jpg')
+        })
+
+        it('shorthand filter ?key=value returns Deprecation: true header', async () => {
+            const { status, headers } = await request(app).get(
+                `/images?label=cat&__test_marker=${TEST_RUN_ID}`
+            )
+
+            expect(status).to.equal(200)
+            expect(headers).to.have.property('deprecation', 'true')
+        })
+
+        it('explicit dot notation ?data.key=value does NOT return Deprecation header', async () => {
+            // Use data.__test_marker to scope and avoid mixing in bare shorthand
+            const { status, headers } = await request(app).get(
+                `/images?data.label=cat&data.__test_marker=${TEST_RUN_ID}`
+            )
+
+            expect(status).to.equal(200)
+            expect(headers).to.not.have.property('deprecation')
+        })
+
+        it('explicit bracket notation ?data[key]=value does NOT return Deprecation header', async () => {
+            const { status, headers } = await request(app).get(
+                `/images?data[label]=cat&data[__test_marker]=${TEST_RUN_ID}`
+            )
+
+            expect(status).to.equal(200)
+            expect(headers).to.not.have.property('deprecation')
+        })
+
+        it('a request with only reserved params (no data filters) does NOT return Deprecation header', async () => {
+            const { status, headers } = await request(app).get('/images?limit=10')
+
+            expect(status).to.equal(200)
+            expect(headers).to.not.have.property('deprecation')
+        })
+
+        it('shorthand filter on PATCH /images returns Deprecation: true header', async () => {
+            const { status, headers } = await request(app)
+                .patch(`/images?label=cat&__test_marker=${TEST_RUN_ID}`)
+                .send({ patched: 'yes' })
+
+            expect(status).to.equal(200)
+            expect(headers).to.have.property('deprecation', 'true')
+        })
+
+        it('explicit filter on PATCH /images does NOT return Deprecation header', async () => {
+            const { status, headers } = await request(app)
+                .patch(
+                    `/images?data.label=cat&data.__test_marker=${TEST_RUN_ID}`
+                )
+                .send({ patched: 'yes' })
+
+            expect(status).to.equal(200)
+            expect(headers).to.not.have.property('deprecation')
+        })
+
+        it('shorthand filter on DELETE /images returns Deprecation: true header', async () => {
+            const { status, headers } = await request(app).delete(
+                `/images?label=cat&__test_marker=${TEST_RUN_ID}`
+            )
+
+            expect(status).to.equal(200)
+            expect(headers).to.have.property('deprecation', 'true')
+        })
+
+        it('explicit filter on DELETE /images does NOT return Deprecation header', async () => {
+            const { status, headers } = await request(app).delete(
+                `/images?data.label=dog&data.__test_marker=${TEST_RUN_ID}`
+            )
+
+            expect(status).to.equal(200)
+            expect(headers).to.not.have.property('deprecation')
+        })
+    })
+
+    // -----------------------------------------------------------------------
     // GET /  (health / info endpoint)
     // -----------------------------------------------------------------------
 

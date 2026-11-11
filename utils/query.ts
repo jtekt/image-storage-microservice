@@ -22,8 +22,14 @@ const flattenPaths = (obj: any, prefix = ''): Record<string, any> =>
         return { ...acc, [path]: v }
     }, {})
 
-const dataFilters = (rest: Record<string, any>): Record<string, any> =>
-    Object.entries(rest).reduce((acc, [key, value]) => {
+interface DataFiltersResult {
+    filters: Record<string, any>
+    hasShorthand: boolean
+}
+
+const dataFilters = (rest: Record<string, any>): DataFiltersResult => {
+    let hasShorthand = false
+    const filters = Object.entries(rest).reduce((acc, [key, value]) => {
         // data[key]=value, already parsed into { data: { key: value } } by
         // the extended query parser
         if (key === 'data' && isPlainObject(value))
@@ -35,9 +41,12 @@ const dataFilters = (rest: Record<string, any>): Record<string, any> =>
                 return { ...acc, ...flattenPaths(value, normalized) }
             return { ...acc, [normalized]: value }
         }
-        // bare key=value — nest under data (deprecated path)
+        // bare key=value — nest under data (deprecated shorthand path)
+        hasShorthand = true
         return { ...acc, [`data.${key}`]: value }
-    }, {})
+    }, {} as Record<string, any>)
+    return { filters, hasShorthand }
+}
 
 const stringIsValidDate = (s: string) => !isNaN(new Date(s).getTime())
 
@@ -128,7 +137,8 @@ export const parse_query = (rawQuery: any) => {
         }
     }
 
-    for (const [key, value] of Object.entries(dataFilters(rest))) {
+    const { filters: dataFilterEntries, hasShorthand } = dataFilters(rest)
+    for (const [key, value] of Object.entries(dataFilterEntries)) {
         if (isNotUndefined(regex))
             query[key] = {
                 $regex: escapeRegex(String(value)),
@@ -174,5 +184,6 @@ export const parse_query = (rawQuery: any) => {
         skip,
         select,
         sortStatement,
+        hasShorthand,
     }
 }

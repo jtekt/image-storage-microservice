@@ -38,6 +38,50 @@ API documentation is available on `/docs`
 | /export           | GET    | Export the current content as a .zip archive (experimental) |
 | /import           | POST   | Upload an exported .zip archive (experimental)              |
 
+## Filtering user-defined fields
+
+Images can be filtered by their user-defined `data` fields using explicit field path syntax in query parameters.
+
+### Supported syntax
+
+**Dot notation**
+
+```
+GET /images?data.label=cat
+```
+
+**Bracket notation**
+
+```
+GET /images?data[label]=cat
+```
+
+**Nested fields**
+
+```
+GET /images?data[parentKey][nestedKey]=value
+GET /images?data.parentKey.nestedKey=value
+```
+
+Both notations are equivalent and may be combined with other query parameters such as `sort`, `select`, `filter`, `limit`, `skip`, `from`, and `to`.
+
+### Deprecated shorthand syntax
+
+> **Deprecated** — The shorthand syntax `?key=value` (without the `data.` prefix) is deprecated and will be removed in the next major version.
+
+The shorthand syntax still works in the current version for backward compatibility:
+
+```
+GET /images?label=cat   # deprecated — use ?data.label=cat instead
+```
+
+When a request uses the shorthand syntax, the server:
+
+- Returns a `Deprecation: true` response header.
+- Logs a warning on the server side.
+
+Migrate to the explicit `data.` prefix to avoid issues with the next major version and to filter fields whose names would otherwise conflict with reserved query parameters (`file`, `sort`, `order`, `limit`, `skip`, `from`, `to`, `regex`, `filter`, `select`, `ids`).
+
 ## Environment variables
 
 | Variable                    | Description                                                                                               | Default                | Required |

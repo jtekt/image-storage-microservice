@@ -47,6 +47,18 @@ export const upload_image = async (req: Request, res: Response) => {
     res.send(newImage)
 }
 
+const warnShorthand = (res: Response) => {
+    // Emit a standard Deprecation header (RFC 8594) and a server-side log so
+    // operators can detect clients still using the shorthand syntax.
+    res.setHeader('Deprecation', 'true')
+    console.warn(
+        '[DEPRECATED] Shorthand user-defined field filters (e.g. ?key=value) ' +
+            'are deprecated. Use explicit paths instead: ?data.key=value or ' +
+            '?data[key]=value. Shorthand support will be removed in the next ' +
+            'major version.'
+    )
+}
+
 export const read_images = async (req: Request, res: Response) => {
     // Limiting here because parse_query also used in export
     const {
@@ -55,7 +67,10 @@ export const read_images = async (req: Request, res: Response) => {
         limit: requestedLimit,
         skip,
         select,
+        hasShorthand,
     } = parse_query(req.query)
+
+    if (hasShorthand) warnShorthand(res)
 
     // Validate limit: reject values above the maximum, treat 0/negative/invalid as default
     let limit: number
@@ -118,7 +133,8 @@ export const read_image_file = async (req: Request, res: Response) => {
 }
 
 export const update_images = async (req: Request, res: Response) => {
-    const { query } = parse_query(req.query)
+    const { query, hasShorthand } = parse_query(req.query)
+    if (hasShorthand) warnShorthand(res)
     const { $set, $unset } = parseUpdateBody(req.body)
 
     const result = await Image.updateMany(query, { $set, $unset })
@@ -157,7 +173,8 @@ export const replace_image_data = async (req: Request, res: Response) => {
 }
 
 export const delete_images = async (req: Request, res: Response) => {
-    const { query } = parse_query(req.query)
+    const { query, hasShorthand } = parse_query(req.query)
+    if (hasShorthand) warnShorthand(res)
 
     const items = await Image.find(query)
 

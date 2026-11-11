@@ -3,7 +3,7 @@ import requests
 
 STORAGE_SERVCICE_URL = 'http://localhost:7070'
 
-api_url = f'{STORAGE_SERVCICE_URL}/images?part_number=200-004'
+api_url = f'{STORAGE_SERVCICE_URL}/images?data.part_number=200-004'
 
 properties = {"label": "golgo12", "myProperty": "test", "nested": {"prop1": "1", "prop2": "2"}}
 response = requests.patch(api_url, json=properties)

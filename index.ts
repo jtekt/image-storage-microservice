@@ -27,7 +27,7 @@ process.env.TZ = TZ || 'Asia/Tokyo'
 
 const promOptions = { includeMethod: true, includePath: true }
 const corsOptions = {
-    exposedHeaders: 'Content-Disposition',
+    exposedHeaders: ['Content-Disposition', 'Deprecation'],
 }
 
 db.connect()
