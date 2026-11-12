@@ -89,6 +89,14 @@ app.use('/fields', fields_router)
 // Express error handling
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     console.error(err)
+    // MulterError does not carry statusCode; map known codes to HTTP status.
+    if (err.name === 'MulterError') {
+        const status =
+            err.code === 'LIMIT_FILE_SIZE' || err.code === 'LIMIT_PART_COUNT'
+                ? 413
+                : 400
+        return res.status(status).send(err.message)
+    }
     const { statusCode = 500, message } = err
     res.status(statusCode).send(message)
 })
