@@ -6,7 +6,12 @@ import unzipper, { File } from 'unzipper' // NOTE: Unzipper is advertized as hav
 import { Image, IImage } from '../models/image'
 import { parse_formdata_fields } from '../utils'
 import { Request, Response } from 'express'
-import { mongodb_export_file_name, export_excel_file_name, importMaxEntryCount, importMaxUncompressedSize } from '../config'
+import {
+    mongodb_export_file_name,
+    export_excel_file_name,
+    importMaxEntryCount,
+    importMaxUncompressedSize,
+} from '../config'
 import { rimraf } from 'rimraf'
 import { S3_BUCKET, s3Client } from '../fileStorage/s3'
 import {
@@ -19,8 +24,7 @@ import { assertSafeFilePath, resolveInside } from '../fileStorage/paths'
 const formatBytes = (bytes: number): string => {
     if (bytes >= 1024 * 1024 * 1024)
         return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GiB`
-    if (bytes >= 1024 * 1024)
-        return `${(bytes / (1024 * 1024)).toFixed(1)} MiB`
+    if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MiB`
     if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)} KiB`
     return `${bytes} B`
 }
@@ -93,7 +97,10 @@ async function runWithConcurrency<T>(
         }
     }
 
-    const workers = Array.from({ length: Math.min(concurrency, tasks.length) }, worker)
+    const workers = Array.from(
+        { length: Math.min(concurrency, tasks.length) },
+        worker
+    )
     await Promise.all(workers)
     return results
 }
@@ -231,14 +238,13 @@ export const import_images = async (req: Request, res: Response) => {
                 filePathMap?.get(path.basename(file.path)) ?? file.path
 
             if (s3Client && S3_BUCKET) {
-                await s3Client.putObject(
-                    S3_BUCKET,
-                    resolvedPath,
-                    file.stream()
-                )
+                await s3Client.putObject(S3_BUCKET, resolvedPath, file.stream())
                 extractedS3Keys.push(resolvedPath)
             } else {
-                const destination = resolveInside(uploadsDirectoryPath, resolvedPath)
+                const destination = resolveInside(
+                    uploadsDirectoryPath,
+                    resolvedPath
+                )
                 await extract_single_file(file, destination, onBytes)
                 extractedLocalPaths.push(destination)
             }
@@ -275,7 +281,10 @@ export const import_images = async (req: Request, res: Response) => {
                 try {
                     if (fs.existsSync(p)) fs.rmSync(p, { force: true })
                 } catch (cleanupErr) {
-                    console.error(`[Import] Failed to remove ${p} during rollback:`, cleanupErr)
+                    console.error(
+                        `[Import] Failed to remove ${p} during rollback:`,
+                        cleanupErr
+                    )
                 }
             }
         }
@@ -287,7 +296,10 @@ export const import_images = async (req: Request, res: Response) => {
                 try {
                     await s3Client.removeObject(S3_BUCKET, key)
                 } catch (cleanupErr) {
-                    console.error(`[Import] Failed to remove S3 key ${key} during rollback:`, cleanupErr)
+                    console.error(
+                        `[Import] Failed to remove S3 key ${key} during rollback:`,
+                        cleanupErr
+                    )
                 }
             }
         }
