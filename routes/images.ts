@@ -13,11 +13,23 @@ import {
 } from '../controllers/images'
 import { localStorage } from '../fileStorage/local'
 import { s3Storage } from '../fileStorage/s3'
+import { maxUploadFileSize, maxUploadFiles } from '../config'
 
 const router = Router({ mergeParams: true })
 
 const getStorage = () => s3Storage || localStorage
-const upload = multer({ storage: { _handleFile: (req, file, cb) => getStorage()._handleFile(req, file, cb), _removeFile: (req, file, cb) => getStorage()._removeFile(req, file, cb) } })
+const upload = multer({
+    storage: {
+        _handleFile: (req, file, cb) =>
+            getStorage()._handleFile(req, file, cb),
+        _removeFile: (req, file, cb) =>
+            getStorage()._removeFile(req, file, cb),
+    },
+    limits: {
+        fileSize: maxUploadFileSize,
+        files: maxUploadFiles,
+    },
+})
 
 router
     .route('/')
