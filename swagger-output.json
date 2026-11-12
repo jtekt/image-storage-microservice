@@ -46,11 +46,38 @@
         }
       },
       "post": {
-        "description": "",
-        "parameters": [],
+        "description": "Upload a single image file with optional metadata fields. The file must not exceed the configured UPLOAD_MAX_FILE_SIZE limit (default 100 MiB). Requests exceeding this limit return HTTP 413.",
+        "consumes": ["multipart/form-data"],
+        "parameters": [
+          {
+            "name": "image",
+            "in": "formData",
+            "required": true,
+            "type": "file",
+            "description": "The image file to upload. Maximum size is controlled by UPLOAD_MAX_FILE_SIZE (default: 100 MiB)."
+          },
+          {
+            "name": "file",
+            "in": "formData",
+            "type": "string",
+            "description": "Optional custom storage path for the image (e.g. folder/image.jpg). Must not contain '..' or be absolute."
+          },
+          {
+            "name": "data",
+            "in": "formData",
+            "type": "string",
+            "description": "JSON-encoded user-defined metadata object to associate with the image."
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request — missing file, invalid path, or disallowed operator"
+          },
+          "413": {
+            "description": "Payload Too Large — uploaded file exceeds UPLOAD_MAX_FILE_SIZE"
           }
         }
       },
@@ -175,6 +202,38 @@
         "responses": {
           "200": {
             "description": "OK"
+          }
+        }
+      }
+    },
+    "/import/": {
+      "post": {
+        "description": "Import a previously exported ZIP archive. The archive must not exceed UPLOAD_MAX_FILE_SIZE (default 100 MiB). The number of extracted entries must not exceed IMPORT_MAX_ENTRY_COUNT (default 10000). The total uncompressed size of all entries must not exceed IMPORT_MAX_UNCOMPRESSED_SIZE (default 10 GiB). Violations return HTTP 400 or HTTP 413 without extracting any files.",
+        "consumes": ["multipart/form-data"],
+        "parameters": [
+          {
+            "name": "archive",
+            "in": "formData",
+            "required": true,
+            "type": "file",
+            "description": "ZIP archive to import. Accepted MIME types: application/zip, application/x-zip-compressed, application/octet-stream. Maximum size is controlled by UPLOAD_MAX_FILE_SIZE (default: 100 MiB)."
+          },
+          {
+            "name": "data",
+            "in": "formData",
+            "type": "string",
+            "description": "Optional JSON-encoded metadata object applied to all imported images that do not have metadata in the archive's mongodb_data.json."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK — archive imported successfully"
+          },
+          "400": {
+            "description": "Bad Request — missing file, unsupported MIME type, malformed archive, entry count limit exceeded, uncompressed size limit exceeded, or path traversal attempt"
+          },
+          "413": {
+            "description": "Payload Too Large — uploaded archive exceeds UPLOAD_MAX_FILE_SIZE"
           }
         }
       }
