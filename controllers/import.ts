@@ -117,7 +117,7 @@ export const import_images = async (req: Request, res: Response) => {
 
         // Extract all files in parallel, resolving destination path from JSON metadata if available
         await Promise.all(
-            filteredFiles.map((file) => {
+            filteredFiles.filter((file) => file.type !== 'Directory').map((file) => {
                 // Use the full path from JSON if available, otherwise fall back to zip entry path
                 const resolvedPath =
                     filePathMap?.get(path.basename(file.path)) ?? file.path
@@ -145,10 +145,12 @@ export const import_images = async (req: Request, res: Response) => {
         } else {
             // No backup is provided
             console.log(`[Import] importing without restoring MongoDB data`)
-            const mongodbData: IImage[] = filteredFiles.map((f) => ({
-                file: f.path,
-                data: userDefinedData,
-            }))
+            const mongodbData: IImage[] = filteredFiles
+                .filter((f) => f.type !== 'Directory')
+                .map((f) => ({
+                    file: f.path,
+                    data: userDefinedData,
+                }))
             await mongodb_data_import(mongodbData)
         }
     } finally {
